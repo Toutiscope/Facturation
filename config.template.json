@@ -1,0 +1,31 @@
+{
+  "company": {
+    "companyName": "",
+    "companyId": "",
+    "address": "",
+    "postalCode": "",
+    "city": "",
+    "email": "",
+    "phoneNumber": "",
+    "webSite": ""
+  },
+  "rib": {
+    "iban": "",
+    "bic": "",
+    "holder": "",
+    "bank": ""
+  },
+  "chorusPro": {
+    "identifier": "",
+    "password": "",
+    "apiKey": "",
+    "urlApi": "https://chorus-pro.gouv.fr/api/"
+  },
+  "billing": {
+    "legalNotice": "Dispensé d'immatriculation au registre du commerce et des sociétés (RCS) et au répertoire des métiers (RM).",
+    "paymentTerms": "Paiement à 30 jours",
+    "latePenalties": "En cas de retard de paiement, application de pénalités de retard au taux de 10% par an et d'une indemnité forfaitaire pour frais de recouvrement de 40€.",
+    "latestQuoteNumber": 0,
+    "latestInvoiceNumber": 0
+  }
+}

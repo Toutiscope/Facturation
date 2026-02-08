@@ -1,0 +1,73 @@
+@use 'variables' as *;
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: $bg-primary;
+  box-shadow: $shadow-md;
+  border-radius: $radius-md;
+  overflow: hidden;
+
+  thead {
+    background: $bg-secondary;
+
+    th {
+      padding: $spacing-md;
+      text-align: left;
+      font-weight: 600;
+      font-size: $font-size-sm;
+      color: $text-primary;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid $border-color;
+      transition: $transition-base;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background: $bg-secondary;
+      }
+
+      td {
+        padding: $spacing-md;
+        font-size: $font-size-sm;
+        color: $text-primary;
+      }
+    }
+  }
+}
+
+.status-badge {
+  display: inline-block;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: 500;
+  text-transform: uppercase;
+
+  &.status-brouillon {
+    background: rgba($text-secondary, 0.1);
+    color: $text-secondary;
+  }
+
+  &.status-envoyé {
+    background: rgba($info-color, 0.1);
+    color: $info-color;
+  }
+
+  &.status-accepté {
+    background: rgba($success-color, 0.1);
+    color: $success-color;
+  }
+
+  &.status-refusé {
+    background: rgba($error-color, 0.1);
+    color: $error-color;
+  }
+}

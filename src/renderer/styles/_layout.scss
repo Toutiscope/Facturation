@@ -1,0 +1,35 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.container {
+  padding: $spacing-xl;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card {
+  @include card;
+}
+
+.errors-list {
+  background: rgba($error-color, 0.1);
+  border-left: 4px solid $error-color;
+  padding: $spacing-md;
+  margin-bottom: $spacing-lg;
+  border-radius: $radius-md;
+
+  h3 {
+    color: $error-color;
+    margin-bottom: $spacing-sm;
+  }
+
+  ul {
+    list-style: disc;
+    margin-left: $spacing-lg;
+  }
+
+  li {
+    margin-bottom: $spacing-xs;
+    color: $error-color;
+  }
+}

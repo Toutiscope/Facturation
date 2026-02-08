@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-electron/
+out/
+
+# Data (CRITIQUE - données sensibles utilisateur)
+data/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code local settings
+.claude/
+*.swp
+*.swo
+*~
+
+# Electron
+.electron-builder.yml.cache
+
+# Temporary files
+tmp/
+temp/
+
+# Environment variables
+.env
+.env.local

@@ -1,0 +1,99 @@
+@use 'variables' as *;
+
+.form-group {
+  // margin-bottom: $spacing-sm;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacing-md;
+  // margin-bottom: $spacing-md;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+  width: 100%;
+  padding: $spacing-sm;
+  border: 1px solid $border-color;
+  border-radius: $radius-md;
+  font-size: $font-size-base;
+  background: $bg-primary;
+  color: $text-primary;
+  transition: $transition-base;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+
+  &:disabled {
+    background: $bg-secondary;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &.error {
+    border-color: $error-color;
+  }
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.error-message {
+  display: block;
+  color: $error-color;
+  font-size: $font-size-sm;
+  margin-top: $spacing-xs;
+}
+
+.success-message {
+  background: rgba($success-color, 0.1);
+  color: $success-color;
+  padding: $spacing-md;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-md;
+  border-left: 4px solid $success-color;
+}
+
+.form-actions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: flex-end;
+  padding-top: $spacing-lg;
+  margin-top: $spacing-lg;
+  border-top: 1px solid $border-color;
+}
+
+.form-section {
+  margin-bottom: $spacing-xl;
+  padding-bottom: $spacing-xl;
+  border-bottom: 1px solid $border-color;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  h2 {
+    font-size: $font-size-xl;
+    color: $text-primary;
+    margin-bottom: $spacing-lg;
+    padding-bottom: $spacing-sm;
+    border-bottom: 2px solid $border-color;
+  }
+
+  h3 {
+    font-size: $font-size-lg;
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+  }
+}

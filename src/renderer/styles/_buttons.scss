@@ -1,0 +1,110 @@
+@use '@/styles/mixins' as *;
+@use 'variables' as *;
+
+.btn {
+  padding: $spacing-sm $spacing-lg;
+  border: none;
+  border-radius: 50px;
+  font-size: $font-size-base;
+  font-weight: 500;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.btn-success {
+    background-color: $success;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: darken($success, 10%);
+    }
+  }
+
+  &.btn-outline {
+    background-color: white;
+    color: $primary-color;
+    border: 1px solid $primary-color;
+
+    &:hover:not(:disabled) {
+      background-color: rgba($primary-color, 0.1);
+    }
+  }
+}
+
+.btn-primary {
+  background: $primary-color;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: darken($primary-color, 10%);
+  }
+
+  &:active:not(:disabled) {
+    background: darken($primary-color, 15%);
+  }
+}
+
+.btn-secondary {
+  background: $bg-secondary;
+  color: $text-primary;
+  border: 1px solid $border-color;
+
+  &:hover:not(:disabled) {
+    background: darken($bg-secondary, 5%);
+  }
+
+  &:active:not(:disabled) {
+    background: darken($bg-secondary, 10%);
+  }
+}
+
+.btn-danger {
+  background: $error-color;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: darken($error-color, 10%);
+  }
+
+  &:active:not(:disabled) {
+    background: darken($error-color, 15%);
+  }
+}
+
+.btn-action {
+  background: transparent;
+  border: none;
+  padding: $spacing-xs;
+  cursor: pointer;
+  font-size: $font-size-lg;
+  transition: $transition-base;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  &.btn-danger:hover {
+    color: $error-color;
+  }
+}
+
+.back-button {
+  height: 50px;
+  width: 50px;
+  border: none;
+  border-radius: 100%;
+  background: white;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: grey;
+  }
+}

@@ -1,0 +1,40 @@
+@use 'variables' as *;
+
+h1 {
+  font-size: $font-size-3xl;
+  color: $text-primary;
+}
+
+h2 {
+  font-size: $font-size-2xl;
+  color: $text-primary;
+}
+
+h3 {
+  font-size: $font-size-xl;
+  color: $text-primary;
+}
+
+h4 {
+  font-size: $font-size-lg;
+  color: $text-primary;
+}
+
+p {
+  font-size: $font-size-base;
+  color: $text-primary;
+  line-height: 1.6;
+}
+
+small {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+}
+
+label {
+  display: block;
+  margin-bottom: $spacing-xs;
+  font-weight: 500;
+  font-size: $font-size-sm;
+  color: $text-primary;
+}
