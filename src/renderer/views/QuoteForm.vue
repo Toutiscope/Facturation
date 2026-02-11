@@ -2,7 +2,7 @@
   <MainLayout class="quote-form-view">
     <div class="container">
       <div class="header">
-        <h1>{{ isEditMode ? 'Modifier le devis' : 'Nouveau devis' }}</h1>
+        <h1>{{ isEditMode ? "Modifier le devis" : "Nouveau devis" }}</h1>
         <p>{{ quote.status }}</p>
       </div>
 
@@ -10,7 +10,12 @@
       <div v-else-if="error" class="error">{{ error }}</div>
 
       <form v-else @submit.prevent="handleSubmit" class="form">
-        <div class="form__info">
+        <div class="form__info grid grid--6-4 gap-16">
+          <!-- Formulaire client -->
+          <section class="card">
+            <CustomerForm v-model="quote.customer" />
+          </section>
+
           <div>
             <!-- Informations du devis -->
             <section class="card">
@@ -28,7 +33,9 @@
                     pattern="D\d{6}"
                     required
                   />
-                  <small class="form-text">Format conseillé&nbsp;: D suivi de 6 chiffres</small>
+                  <small class="form-text"
+                    >Format conseillé&nbsp;: D suivi de 6 chiffres</small
+                  >
                 </div>
 
                 <div class="form-group">
@@ -43,7 +50,9 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="validityDate" class="required">Date de validité</label>
+                  <label for="validityDate" class="required"
+                    >Date de validité</label
+                  >
                   <input
                     id="validityDate"
                     type="date"
@@ -54,13 +63,13 @@
                 </div>
               </div>
             </section>
-            
+
             <!-- Notes internes -->
             <section class="card">
               <div class="form-group">
-              <label for="quoteNotes">Notes internes</label>
+                <label for="quoteNotes">Notes internes</label>
                 <textarea
-                  id="quoteNotes"                  
+                  id="quoteNotes"
                   v-model="quote.notes"
                   placeholder="Notes internes (optionnel)"
                   class="form-control"
@@ -69,12 +78,7 @@
               </div>
             </section>
           </div>
-
-          <!-- Formulaire client -->
-          <section class="card">
-            <CustomerForm v-model="quote.customer" />
-          </section>
-          </div>
+        </div>
 
         <!-- Tableau des prestations -->
         <section class="card">
@@ -110,7 +114,7 @@
             class="btn btn-primary"
             :disabled="saving || generatingPDF"
           >
-            {{ generatingPDF ? 'Génération PDF...' : 'Générer le PDF' }}
+            {{ generatingPDF ? "Génération PDF..." : "Générer le PDF" }}
           </button>
         </div>
       </form>
@@ -119,110 +123,110 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import MainLayout from '@/components/layout/MainLayout.vue'
-import { useRouter, useRoute } from 'vue-router'
-import CustomerForm from '@/components/forms/CustomerForm.vue'
-import ServiceLinesTable from '@/components/forms/ServiceLinesTable.vue'
-import { useDocuments } from '@/composables/useDocuments'
-import { useNumbering } from '@/composables/useNumbering'
+import { ref, onMounted, computed } from "vue";
+import MainLayout from "@/components/layout/MainLayout.vue";
+import { useRouter, useRoute } from "vue-router";
+import CustomerForm from "@/components/forms/CustomerForm.vue";
+import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
+import { useDocuments } from "@/composables/useDocuments";
+import { useNumbering } from "@/composables/useNumbering";
 
-const router = useRouter()
-const route = useRoute()
+const router = useRouter();
+const route = useRoute();
 
-const { loadOne, save, validate } = useDocuments('devis')
-const { nextNumber, loadConfig, incrementNumber } = useNumbering('devis')
+const { loadOne, save, validate } = useDocuments("devis");
+const { nextNumber, loadConfig, incrementNumber } = useNumbering("devis");
 
-const serviceLinesRef = ref(null)
+const serviceLinesRef = ref(null);
 const quote = ref({
-  id: '',
-  type: 'devis',
-  numero: '',
-  date: new Date().toISOString().split('T')[0],
+  id: "",
+  type: "devis",
+  numero: "",
+  date: new Date().toISOString().split("T")[0],
   validityDate: getValidityDate(),
-  status: 'brouillon',
+  status: "brouillon",
   customer: {
-    customerName: '',
-    companyName: '',
-    companyId: '',
-    address: '',
-    postalCode: '',
-    city: '',
-    email: '',
-    clientType: 'particulier'
+    customerName: "",
+    companyName: "",
+    companyId: "",
+    address: "",
+    postalCode: "",
+    city: "",
+    email: "",
+    clientType: "professionnel",
   },
   services: [],
   totals: {
     totalHT: 0,
     VAT: 0,
     VATRate: 0,
-    totalTTC: 0
+    totalTTC: 0,
   },
-  notes: '',
-  createdAt: '',
-  editedAt: ''
-})
+  notes: "",
+  createdAt: "",
+  editedAt: "",
+});
 
-const loading = ref(false)
-const saving = ref(false)
-const generatingPDF = ref(false)
-const error = ref(null)
-const validationErrors = ref([])
+const loading = ref(false);
+const saving = ref(false);
+const generatingPDF = ref(false);
+const error = ref(null);
+const validationErrors = ref([]);
 
-const isEditMode = computed(() => !!route.params.id)
+const isEditMode = computed(() => !!route.params.id);
 
 onMounted(async () => {
   try {
-    await loadConfig()
+    await loadConfig();
 
     if (isEditMode.value) {
       // Mode édition : charger le devis existant
-      loading.value = true
-      const existingQuote = await loadOne(route.params.id)
-      quote.value = { ...existingQuote }
+      loading.value = true;
+      const existingQuote = await loadOne(route.params.id);
+      quote.value = { ...existingQuote };
     } else {
       // Mode création : numéro auto
-      quote.value.numero = nextNumber.value
+      quote.value.numero = nextNumber.value;
     }
   } catch (err) {
-    error.value = err.message || 'Erreur lors du chargement'
+    error.value = err.message || "Erreur lors du chargement";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-})
+});
 
 function getValidityDate() {
-  const date = new Date()
-  date.setDate(date.getDate() + 30)
-  return date.toISOString().split('T')[0]
+  const date = new Date();
+  date.setDate(date.getDate() + 30);
+  return date.toISOString().split("T")[0];
 }
 
 async function handleSubmit() {
-  await saveQuote(false)
-  await handleGeneratePDF()
+  await saveQuote(false);
+  await handleGeneratePDF();
 }
 
 async function saveAsDraft() {
-  quote.value.status = 'brouillon'
-  await saveQuote(true)
+  quote.value.status = "brouillon";
+  await saveQuote(true);
 }
 
 async function saveQuote(isDraft = false) {
-  saving.value = true
-  validationErrors.value = []
+  saving.value = true;
+  validationErrors.value = [];
 
   try {
     // Récupérer les totaux depuis le composant ServiceLinesTable
     if (serviceLinesRef.value) {
-      quote.value.totals = serviceLinesRef.value.totals
+      quote.value.totals = serviceLinesRef.value.totals;
     }
 
     // Valider seulement si ce n'est pas un brouillon
     if (!isDraft) {
-      const validation = await validate(quote.value)
+      const validation = await validate(quote.value);
       if (!validation.valid) {
-        validationErrors.value = validation.errors
-        return
+        validationErrors.value = validation.errors;
+        return;
       }
     }
 
@@ -230,78 +234,81 @@ async function saveQuote(isDraft = false) {
     const quoteToSave = {
       ...quote.value,
       date: formatDateToFrench(quote.value.date),
-      validityDate: formatDateToFrench(quote.value.validityDate)
-    }
+      validityDate: formatDateToFrench(quote.value.validityDate),
+    };
 
     // Sauvegarder
-    await save(quoteToSave)
+    await save(quoteToSave);
 
     // Incrémenter le compteur si nouveau devis
     if (!isEditMode.value) {
-      await incrementNumber(quote.value.numero)
+      await incrementNumber(quote.value.numero);
     }
 
     // Rediriger vers la liste
-    router.push('/devis')
+    router.push("/devis");
   } catch (err) {
-    error.value = err.message || 'Erreur lors de la sauvegarde'
+    error.value = err.message || "Erreur lors de la sauvegarde";
   } finally {
-    saving.value = false
+    saving.value = false;
   }
 }
 
 function formatDateToFrench(isoDate) {
-  if (!isoDate) return ''
-  const [year, month, day] = isoDate.split('-')
-  return `${day}/${month}/${year}`
+  if (!isoDate) return "";
+  const [year, month, day] = isoDate.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 async function handleGeneratePDF() {
-  generatingPDF.value = true
-  validationErrors.value = []
+  generatingPDF.value = true;
+  validationErrors.value = [];
 
   try {
     // Récupérer les totaux depuis le composant ServiceLinesTable
     if (serviceLinesRef.value) {
-      quote.value.totals = serviceLinesRef.value.totals
+      quote.value.totals = serviceLinesRef.value.totals;
     }
 
     // Valider le document avant génération
-    const validation = await validate(quote.value)
+    const validation = await validate(quote.value);
     if (!validation.valid) {
-      validationErrors.value = validation.errors
-      alert('Le document contient des erreurs. Veuillez les corriger avant de générer le PDF.')
-      return
+      validationErrors.value = validation.errors;
+      alert(
+        "Le document contient des erreurs. Veuillez les corriger avant de générer le PDF.",
+      );
+      return;
     }
 
     // Formater les dates pour le PDF
     const quoteForPDF = {
       ...quote.value,
       date: formatDateToFrench(quote.value.date),
-      validityDate: formatDateToFrench(quote.value.validityDate)
-    }
+      validityDate: formatDateToFrench(quote.value.validityDate),
+    };
 
     // Générer le PDF
-    const filePath = await window.electronAPI.generatePDF('devis', quoteForPDF)
+    const filePath = await window.electronAPI.generatePDF("devis", quoteForPDF);
 
     if (filePath) {
-      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`)
+      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);
     }
   } catch (err) {
-    error.value = err.message || 'Erreur lors de la génération du PDF'
-    alert(`Erreur lors de la génération du PDF : ${err.message}`)
+    error.value = err.message || "Erreur lors de la génération du PDF";
+    alert(`Erreur lors de la génération du PDF : ${err.message}`);
   } finally {
-    generatingPDF.value = false
+    generatingPDF.value = false;
   }
 }
 
 function cancel() {
-  router.push('/devis')
+  router.push("/devis");
 }
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/variables' as *;
+@use "sass:color";
+@use "@/styles/variables" as *;
 
 .quote-form-view {
   .header {
@@ -326,17 +333,11 @@ function cancel() {
   }
 
   .error {
-    background-color: lighten($error, 40%);
+    background-color: color.scale($error, $lightness: 40%);
     color: $error;
   }
 
   .form {
-    &__info {
-      display: grid;
-      grid-template-columns: 4fr 6fr;
-      gap: 16px;
-    }
-
     .card {
       background: white;
       padding: $spacing-lg;
@@ -344,7 +345,8 @@ function cancel() {
       box-shadow: $shadow-sm;
       margin-bottom: $spacing-md;
 
-      h2, h3 {
+      h2,
+      h3 {
         font-size: $font-size-lg;
         font-weight: 600;
         margin-bottom: $spacing-md;
@@ -359,7 +361,7 @@ function cancel() {
           color: $text-primary;
 
           &.required::after {
-            content: ' *';
+            content: " *";
             color: $error;
           }
         }
@@ -400,7 +402,7 @@ function cancel() {
     }
 
     .errors-list {
-      background-color: lighten($error, 40%);
+      background-color: color.scale($error, $lightness: 40%);
       border: 1px solid $error;
       border-radius: $border-radius-md;
       padding: $spacing-md;

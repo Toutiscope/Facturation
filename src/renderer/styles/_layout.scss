@@ -33,3 +33,40 @@
     color: $error-color;
   }
 }
+
+.grid {
+  display: grid;
+
+  @for $i from 1 through 9 {
+    $j: 10 - $i;
+    &--#{$i}-#{$j} {
+      grid-template-columns: #{$i}fr #{$j}fr;
+    }
+  }
+}
+
+.flex {
+  display: flex;
+
+  &-center {
+    justify-content: center;
+  }
+
+  &-vertical-center {
+    align-items: center;
+  }
+}
+
+$percents: 20, 30, 40, 50, 60, 80;
+@each $percent in $percents {
+  .col-#{$percent} {
+    width: calc($percent * 1%);
+  }
+}
+
+$sizes: 2, 4, 8, 16, 24, 32, 48, 64;
+@each $size in $sizes {
+  .gap-#{$size} {
+    gap: calc($size * 1px);
+  }
+}

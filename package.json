@@ -2,11 +2,16 @@
   "name": "facturation",
   "version": "1.0.0",
   "description": "Application de facturation conforme 2027 pour Entrepreneur Individuel",
-  "main": "src/main/index.js",
-  "author": "Votre Nom",
+  "main": "dist-electron/index.js",
+  "author": "Toutiscope",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Toutiscope/Facturation"
+  },
   "scripts": {
     "dev": "vite",
+    "build:renderer": "vite build",
     "build": "vite build && electron-builder",
     "build:win": "vite build && electron-builder --win",
     "postinstall": "electron-builder install-app-deps"
@@ -33,37 +38,23 @@
     "vite-plugin-electron-renderer": "^0.14.5"
   },
   "build": {
-    "appId": "com.facturation.app",
+    "appId": "com.facturation.qbmaker.app",
     "productName": "Facturation",
     "directories": {
       "output": "out",
       "buildResources": "build"
     },
     "files": [
-      "dist/**/*",
       "dist-electron/**/*",
+      "dist/**/*",
       "package.json"
     ],
+    "extraMetadata": {
+      "main": "dist-electron/index.js"
+    },
     "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
+      "target": "nsis",
       "icon": "build/icon.ico"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
-    },
-    "publish": {
-      "provider": "github",
-      "owner": "votre-username",
-      "repo": "Facturation"
     }
   }
 }

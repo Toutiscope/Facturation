@@ -1,89 +1,5 @@
-<script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-const loading = ref(true)
-const saving = ref(false)
-const config = ref(null)
-const errors = ref({})
-const successMessage = ref('')
-
-onMounted(async () => {
-  try {
-    config.value = await window.electronAPI.loadConfig()
-  } catch (error) {
-    console.error('Failed to load config:', error)
-    errors.value.general = 'Impossible de charger la configuration'
-  } finally {
-    loading.value = false
-  }
-})
-
-function validateForm() {
-  errors.value = {}
-
-  // Validation entreprise
-  if (!config.value.company.companyName) {
-    errors.value.companyName = 'Nom de l\'entreprise requis'
-  }
-
-  if (!config.value.company.companyId) {
-    errors.value.companyId = 'SIRET requis'
-  } else if (!/^\d{14}$/.test(config.value.company.companyId.replace(/\s/g, ''))) {
-    errors.value.companyId = 'SIRET invalide (14 chiffres requis)'
-  }
-
-  if (!config.value.company.address) {
-    errors.value.address = 'Adresse requise'
-  }
-
-  if (!config.value.company.postalCode) {
-    errors.value.postalCode = 'Code postal requis'
-  } else if (!/^\d{5}$/.test(config.value.company.postalCode)) {
-    errors.value.postalCode = 'Code postal invalide (5 chiffres)'
-  }
-
-  if (!config.value.company.city) {
-    errors.value.city = 'Ville requise'
-  }
-
-  if (!config.value.company.email) {
-    errors.value.email = 'Email requis'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.value.company.email)) {
-    errors.value.email = 'Email invalide'
-  }
-
-  return Object.keys(errors.value).length === 0
-}
-
-async function saveConfig() {
-  if (!validateForm()) {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    return
-  }
-
-  saving.value = true
-  successMessage.value = ''
-
-  try {
-    await window.electronAPI.saveConfig(config.value)
-    successMessage.value = 'Configuration sauvegardée avec succès !'
-
-    setTimeout(() => {
-      router.push('/')
-    }, 1500)
-  } catch (error) {
-    console.error('Failed to save config:', error)
-    errors.value.general = 'Erreur lors de la sauvegarde: ' + error.message
-  } finally {
-    saving.value = false
-  }
-}
-</script>
-
 <template>
-  <div class="settings">
+  <MainLayout class="settings">
     <header>
       <h1>Configuration</h1>
     </header>
@@ -107,7 +23,7 @@ async function saveConfig() {
 
       <!-- Section Entreprise -->
       <section class="form-section">
-        <h2>Informations entreprise</h2>
+        <h2>Informations de mon entreprise</h2>
 
         <div class="form-group">
           <label>Nom de l'entreprise *</label>
@@ -358,18 +274,104 @@ async function saveConfig() {
 
       <!-- Actions -->
       <div class="form-actions">
-        <button type="button" @click="router.push('/')" class="btn-secondary">
+        <button type="button" @click="router.push('/')" class="btn btn-secondary">
           Annuler
         </button>
-        <button type="submit" :disabled="saving" class="btn-primary">
+        <button type="submit" :disabled="saving" class="btn btn-primary">
           {{ saving ? 'Sauvegarde en cours...' : 'Sauvegarder la configuration' }}
         </button>
       </div>
     </form>
-  </div>
+  </MainLayout>
 </template>
 
+<script setup>
+import { ref, onMounted } from 'vue'
+import MainLayout from '@/components/layout/MainLayout.vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const loading = ref(true)
+const saving = ref(false)
+const config = ref(null)
+const errors = ref({})
+const successMessage = ref('')
+
+onMounted(async () => {
+  try {
+    config.value = await window.electronAPI.loadConfig()
+  } catch (error) {
+    console.error('Failed to load config:', error)
+    errors.value.general = 'Impossible de charger la configuration'
+  } finally {
+    loading.value = false
+  }
+})
+
+function validateForm() {
+  errors.value = {}
+
+  // Validation entreprise
+  if (!config.value.company.companyName) {
+    errors.value.companyName = 'Nom de l\'entreprise requis'
+  }
+
+  if (!config.value.company.companyId) {
+    errors.value.companyId = 'SIRET requis'
+  } else if (!/^\d{14}$/.test(config.value.company.companyId.replace(/\s/g, ''))) {
+    errors.value.companyId = 'SIRET invalide (14 chiffres requis)'
+  }
+
+  if (!config.value.company.address) {
+    errors.value.address = 'Adresse requise'
+  }
+
+  if (!config.value.company.postalCode) {
+    errors.value.postalCode = 'Code postal requis'
+  } else if (!/^\d{5}$/.test(config.value.company.postalCode)) {
+    errors.value.postalCode = 'Code postal invalide (5 chiffres)'
+  }
+
+  if (!config.value.company.city) {
+    errors.value.city = 'Ville requise'
+  }
+
+  if (!config.value.company.email) {
+    errors.value.email = 'Email requis'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.value.company.email)) {
+    errors.value.email = 'Email invalide'
+  }
+
+  return Object.keys(errors.value).length === 0
+}
+
+async function saveConfig() {
+  // if (!validateForm()) {
+  //   window.scrollTo({ top: 0, behavior: 'smooth' })
+  //   return
+  // }
+
+  saving.value = true
+  successMessage.value = ''
+
+  try {
+    await window.electronAPI.saveConfig(config.value)
+    successMessage.value = 'Configuration sauvegardée avec succès !'
+
+    setTimeout(() => {
+      router.push('/')
+    }, 1500)
+  } catch (error) {
+    console.error('Failed to save config:', error)
+    errors.value.general = 'Erreur lors de la sauvegarde: ' + error.message
+  } finally {
+    saving.value = false
+  }
+}
+</script>
+
 <style lang="scss" scoped>
+@use '@/styles/mixins' as *;
 @use '@/styles/variables' as *;
 @use '@/styles/mixins' as *;
 

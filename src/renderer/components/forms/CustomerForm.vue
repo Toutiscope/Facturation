@@ -2,22 +2,18 @@
   <div class="customer-form">
     <h3>Informations du client</h3>
 
-    <div class="form-group">
-      <label for="clientType" class="required">Type de client</label>
-      <select
-        id="clientType"
-        v-model="localCustomer.clientType"
-        @change="handleClientTypeChange"
-        class="form-control"
-      >
-        <option value="particulier">Particulier</option>
-        <option value="professionnel">Professionnel</option>
-      </select>
-    </div>
+    <SegmentedControl
+      v-model="localCustomer.clientType"
+      @change="handleClientTypeChange"
+    />
 
     <div class="form-row">
       <div class="form-group">
-        <label for="customerName" :class="{required: localCustomer.clientType !== 'professionnel'}">Nom du client</label>
+        <label
+          for="customerName"
+          :class="{ required: localCustomer.clientType !== 'professionnel' }"
+          >Nom du client</label
+        >
         <input
           id="customerName"
           type="text"
@@ -29,7 +25,10 @@
         />
       </div>
 
-      <div v-if="localCustomer.clientType === 'professionnel'" class="form-group">
+      <div
+        v-if="localCustomer.clientType === 'professionnel'"
+        class="form-group"
+      >
         <label for="companyName" :class="required">Nom de l'entreprise</label>
         <input
           id="companyName"
@@ -116,49 +115,54 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch } from "vue";
+import SegmentedControl from "@/components/common/SegmentedControl.vue";
 
 const props = defineProps({
   modelValue: {
     type: Object,
     required: true,
     default: () => ({
-      customerName: '',
-      companyName: '',
-      companyId: '',
-      address: '',
-      postalCode: '',
-      city: '',
-      email: '',
-      clientType: 'particulier'
-    })
-  }
-})
+      customerName: "",
+      companyName: "",
+      companyId: "",
+      address: "",
+      postalCode: "",
+      city: "",
+      email: "",
+      clientType: "professionnel",
+    }),
+  },
+});
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 
-const localCustomer = ref({ ...props.modelValue })
+const localCustomer = ref({ ...props.modelValue });
 
 // Synchroniser les changements du parent
-watch(() => props.modelValue, (newValue) => {
-  localCustomer.value = { ...newValue }
-}, { deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    localCustomer.value = { ...newValue };
+  },
+  { deep: true },
+);
 
 function emitUpdate() {
-  emit('update:modelValue', { ...localCustomer.value })
+  emit("update:modelValue", { ...localCustomer.value });
 }
 
 function handleClientTypeChange() {
   // Réinitialiser le SIRET si on passe à particulier
-  if (localCustomer.value.clientType !== 'professionnel') {
-    localCustomer.value.companyId = ''
+  if (localCustomer.value.clientType !== "professionnel") {
+    localCustomer.value.companyId = "";
   }
-  emitUpdate()
+  emitUpdate();
 }
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/variables' as *;
+@use "@/styles/variables" as *;
 
 .customer-form {
   h3 {
@@ -178,7 +182,7 @@ function handleClientTypeChange() {
       color: $text-primary;
 
       &.required::after {
-        content: ' *';
+        content: " *";
         color: $error;
       }
     }

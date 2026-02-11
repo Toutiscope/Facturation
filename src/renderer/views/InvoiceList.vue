@@ -85,7 +85,9 @@
               <td class="numero">{{ invoice.numero }}</td>
               <td>{{ invoice.date }}</td>
               <td class="client-name">{{ invoice.customer.customerName }}</td>
-              <td class="amount">{{ formatCurrency(invoice.totals.totalTTC) }}</td>
+              <td class="amount">
+                {{ formatCurrency(invoice.totals.totalTTC) }}
+              </td>
               <td>{{ invoice.dueDate }}</td>
               <td>
                 <span :class="['status-badge', `status-${invoice.status}`]">
@@ -144,87 +146,88 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useDocuments } from '@/composables/useDocuments'
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useDocuments } from "@/composables/useDocuments";
 
-const router = useRouter()
-const { documents, loading, error, loadAll, remove } = useDocuments('factures')
+const router = useRouter();
+const { documents, loading, error, loadAll, remove } = useDocuments("factures");
 
-const currentYear = new Date().getFullYear()
+const currentYear = new Date().getFullYear();
 const filters = ref({
-  search: '',
-  status: '',
-  year: currentYear
-})
+  search: "",
+  status: "",
+  year: currentYear,
+});
 
-const showDeleteModal = ref(false)
-const invoiceToDelete = ref(null)
+const showDeleteModal = ref(false);
+const invoiceToDelete = ref(null);
 
 onMounted(async () => {
-  await applyFilters()
-})
+  await applyFilters();
+});
 
 async function applyFilters() {
   await loadAll({
     year: filters.value.year,
     status: filters.value.status || undefined,
-    search: filters.value.search || undefined
-  })
+    search: filters.value.search || undefined,
+  });
 }
 
 function createNew() {
-  router.push('/factures/nouvelle')
+  router.push("/factures/nouvelle");
 }
 
 function edit(id) {
-  router.push(`/factures/${id}`)
+  router.push(`/factures/${id}`);
 }
 
 function confirmDelete(invoice) {
-  invoiceToDelete.value = invoice
-  showDeleteModal.value = true
+  invoiceToDelete.value = invoice;
+  showDeleteModal.value = true;
 }
 
 function cancelDelete() {
-  invoiceToDelete.value = null
-  showDeleteModal.value = false
+  invoiceToDelete.value = null;
+  showDeleteModal.value = false;
 }
 
 async function deleteInvoice() {
-  if (!invoiceToDelete.value) return
+  if (!invoiceToDelete.value) return;
 
   try {
-    await remove(invoiceToDelete.value.id)
-    showDeleteModal.value = false
-    invoiceToDelete.value = null
+    await remove(invoiceToDelete.value.id);
+    showDeleteModal.value = false;
+    invoiceToDelete.value = null;
   } catch (err) {
-    console.error('Failed to delete invoice:', err)
+    console.error("Failed to delete invoice:", err);
   }
 }
 
 async function generatePDF(invoice) {
   try {
-    const filePath = await window.electronAPI.generatePDF('factures', invoice)
+    const filePath = await window.electronAPI.generatePDF("factures", invoice);
     if (filePath) {
-      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`)
+      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);
     }
   } catch (err) {
-    console.error('Failed to generate PDF:', err)
-    alert(`Erreur lors de la génération du PDF : ${err.message}`)
+    console.error("Failed to generate PDF:", err);
+    alert(`Erreur lors de la génération du PDF : ${err.message}`);
   }
 }
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(value || 0)
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  }).format(value || 0);
 }
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/variables' as *;
+@use "sass:color";
+@use "@/styles/variables" as *;
 
 .invoice-list-view {
   padding: $spacing-lg;
@@ -320,7 +323,7 @@ function formatCurrency(value) {
   }
 
   .error {
-    background-color: lighten($error, 40%);
+    background-color: color.scale($error, $lightness: 40%);
     color: $error;
   }
 
@@ -409,7 +412,7 @@ function formatCurrency(value) {
               }
 
               &.status-en.retard {
-                background-color: lighten($error, 40%);
+                background-color: color.scale($error, $lightness: 40%);
                 color: darken($error, 10%);
               }
             }

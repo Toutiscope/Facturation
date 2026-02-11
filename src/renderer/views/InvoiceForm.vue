@@ -2,7 +2,7 @@
   <MainLayout class="invoice-form-view">
     <div class="container">
       <div class="header">
-        <h1>{{ isEditMode ? 'Modifier la facture' : 'Nouvelle facture' }}</h1>
+        <h1>{{ isEditMode ? "Modifier la facture" : "Nouvelle facture" }}</h1>
       </div>
 
       <div v-if="loading" class="loading">Chargement...</div>
@@ -87,14 +87,19 @@
             </p>
             <p>
               <strong>Statut :</strong>
-              <span :class="['status-badge', `status-${invoice.chorusPro.status}`]">
+              <span
+                :class="['status-badge', `status-${invoice.chorusPro.status}`]"
+              >
                 {{ invoice.chorusPro.status }}
               </span>
             </p>
             <div v-if="invoice.chorusPro.errors?.length > 0" class="errors">
               <strong>Erreurs :</strong>
               <ul>
-                <li v-for="(err, index) in invoice.chorusPro.errors" :key="index">
+                <li
+                  v-for="(err, index) in invoice.chorusPro.errors"
+                  :key="index"
+                >
                   {{ err }}
                 </li>
               </ul>
@@ -115,7 +120,7 @@
         <!-- Notes internes -->
         <section class="card">
           <div class="form-group">
-          <label for="invoiceNotes">Notes internes</label>
+            <label for="invoiceNotes">Notes internes</label>
             <textarea
               id="invoiceNotes"
               v-model="invoice.notes"
@@ -155,7 +160,7 @@
             class="btn btn-primary"
             :disabled="saving || generatingPDF"
           >
-            {{ generatingPDF ? 'Génération PDF...' : 'Générer le PDF' }}
+            {{ generatingPDF ? "Génération PDF..." : "Générer le PDF" }}
           </button>
           <!-- <button
             type="submit"
@@ -171,98 +176,98 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import MainLayout from '@/components/layout/MainLayout.vue'
-import { useRouter, useRoute } from 'vue-router'
-import CustomerForm from '@/components/forms/CustomerForm.vue'
-import ServiceLinesTable from '@/components/forms/ServiceLinesTable.vue'
-import { useDocuments } from '@/composables/useDocuments'
-import { useNumbering } from '@/composables/useNumbering'
+import { ref, onMounted, computed } from "vue";
+import MainLayout from "@/components/layout/MainLayout.vue";
+import { useRouter, useRoute } from "vue-router";
+import CustomerForm from "@/components/forms/CustomerForm.vue";
+import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
+import { useDocuments } from "@/composables/useDocuments";
+import { useNumbering } from "@/composables/useNumbering";
 
-const router = useRouter()
-const route = useRoute()
+const router = useRouter();
+const route = useRoute();
 
-const { loadOne, save, validate } = useDocuments('factures')
-const { nextNumber, loadConfig, incrementNumber } = useNumbering('factures')
+const { loadOne, save, validate } = useDocuments("factures");
+const { nextNumber, loadConfig, incrementNumber } = useNumbering("factures");
 
-const serviceLinesRef = ref(null)
+const serviceLinesRef = ref(null);
 const invoice = ref({
-  id: '',
-  type: 'facture',
-  numero: '',
-  date: new Date().toISOString().split('T')[0],
+  id: "",
+  type: "facture",
+  numero: "",
+  date: new Date().toISOString().split("T")[0],
   dueDate: getDueDate(),
-  status: 'brouillon',
+  status: "brouillon",
   customer: {
-    customerName: '',
-    companyName: '',
-    companyId: '',
-    address: '',
-    postalCode: '',
-    city: '',
-    email: '',
-    clientType: 'particulier'
+    customerName: "",
+    companyName: "",
+    companyId: "",
+    address: "",
+    postalCode: "",
+    city: "",
+    email: "",
+    clientType: "professionnel",
   },
   services: [],
   totals: {
     totalHT: 0,
     VAT: 0,
     VATRate: 0,
-    totalTTC: 0
+    totalTTC: 0,
   },
-  notes: '',
-  associatedQuote: '',
+  notes: "",
+  associatedQuote: "",
   chorusPro: {
     isSent: false,
     dateSending: null,
     depositNumber: null,
-    status: 'brouillon',
-    errors: []
+    status: "brouillon",
+    errors: [],
   },
-  createdAt: '',
-  editedAt: ''
-})
+  createdAt: "",
+  editedAt: "",
+});
 
-const loading = ref(false)
-const saving = ref(false)
-const generatingPDF = ref(false)
-const error = ref(null)
-const validationErrors = ref([])
+const loading = ref(false);
+const saving = ref(false);
+const generatingPDF = ref(false);
+const error = ref(null);
+const validationErrors = ref([]);
 
-const isEditMode = computed(() => !!route.params.id)
+const isEditMode = computed(() => !!route.params.id);
 
 onMounted(async () => {
   try {
-    await loadConfig()
+    await loadConfig();
 
     if (isEditMode.value) {
       // Mode édition : charger la facture existante
-      loading.value = true
-      const existingInvoice = await loadOne(route.params.id)
-      invoice.value = { ...existingInvoice }
+      loading.value = true;
+      const existingInvoice = await loadOne(route.params.id);
+      invoice.value = { ...existingInvoice };
     } else {
       // Mode création : vérifier si conversion depuis devis
-      const quoteToConvert = sessionStorage.getItem('quoteToConvert')
+      const quoteToConvert = sessionStorage.getItem("quoteToConvert");
       if (quoteToConvert) {
-        const quote = JSON.parse(quoteToConvert)
-        convertQuoteToInvoice(quote)
-        sessionStorage.removeItem('quoteToConvert')
+        const quote = JSON.parse(quoteToConvert);
+        convertQuoteToInvoice(quote);
+        sessionStorage.removeItem("quoteToConvert");
       } else {
         // Numéro auto
-        invoice.value.numero = nextNumber.value
+        invoice.value.numero = nextNumber.value;
       }
     }
   } catch (err) {
-    error.value = err.message || 'Erreur lors du chargement'
+    error.value = err.message || "Erreur lors du chargement";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-})
+});
 
 function getDueDate() {
-  const date = new Date()
-  date.setDate(date.getDate() + 30)
-  return date.toISOString().split('T')[0]
+  const date = new Date();
+  date.setDate(date.getDate() + 30);
+  return date.toISOString().split("T")[0];
 }
 
 function convertQuoteToInvoice(quote) {
@@ -271,39 +276,39 @@ function convertQuoteToInvoice(quote) {
     ...invoice.value,
     customer: { ...quote.customer },
     services: [...quote.services],
-    notes: quote.notes || '',
+    notes: quote.notes || "",
     associatedQuote: quote.numero,
     numero: nextNumber.value,
-    date: new Date().toISOString().split('T')[0],
-    dueDate: getDueDate()
-  }
+    date: new Date().toISOString().split("T")[0],
+    dueDate: getDueDate(),
+  };
 }
 
 async function handleSubmit() {
-  await saveInvoice(false)
+  await saveInvoice(false);
 }
 
 async function saveAsDraft() {
-  invoice.value.status = 'brouillon'
-  await saveInvoice(true)
+  invoice.value.status = "brouillon";
+  await saveInvoice(true);
 }
 
 async function saveInvoice(isDraft = false) {
-  saving.value = true
-  validationErrors.value = []
+  saving.value = true;
+  validationErrors.value = [];
 
   try {
     // Récupérer les totaux depuis le composant ServiceLinesTable
     if (serviceLinesRef.value) {
-      invoice.value.totals = serviceLinesRef.value.totals
+      invoice.value.totals = serviceLinesRef.value.totals;
     }
 
     // Valider seulement si ce n'est pas un brouillon
     if (!isDraft) {
-      const validation = await validate(invoice.value)
+      const validation = await validate(invoice.value);
       if (!validation.valid) {
-        validationErrors.value = validation.errors
-        return
+        validationErrors.value = validation.errors;
+        return;
       }
     }
 
@@ -311,79 +316,85 @@ async function saveInvoice(isDraft = false) {
     const invoiceToSave = {
       ...invoice.value,
       date: formatDateToFrench(invoice.value.date),
-      dueDate: formatDateToFrench(invoice.value.dueDate)
-    }
+      dueDate: formatDateToFrench(invoice.value.dueDate),
+    };
 
     // Sauvegarder
-    await save(invoiceToSave)
+    await save(invoiceToSave);
 
     // Incrémenter le compteur si nouvelle facture
     if (!isEditMode.value) {
-      await incrementNumber(invoice.value.numero)
+      await incrementNumber(invoice.value.numero);
     }
 
     // Rediriger vers la liste
-    router.push('/factures')
+    router.push("/factures");
   } catch (err) {
-    error.value = err.message || 'Erreur lors de la sauvegarde'
+    error.value = err.message || "Erreur lors de la sauvegarde";
   } finally {
-    saving.value = false
+    saving.value = false;
   }
 }
 
 function formatDateToFrench(isoDate) {
-  if (!isoDate) return ''
-  const [year, month, day] = isoDate.split('-')
-  return `${day}/${month}/${year}`
+  if (!isoDate) return "";
+  const [year, month, day] = isoDate.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 async function handleGeneratePDF() {
-  generatingPDF.value = true
-  validationErrors.value = []
+  generatingPDF.value = true;
+  validationErrors.value = [];
 
   try {
     // Récupérer les totaux depuis le composant ServiceLinesTable
     if (serviceLinesRef.value) {
-      invoice.value.totals = serviceLinesRef.value.totals
+      invoice.value.totals = serviceLinesRef.value.totals;
     }
 
     // Valider le document avant génération
-    const validation = await validate(invoice.value)
+    const validation = await validate(invoice.value);
     if (!validation.valid) {
-      validationErrors.value = validation.errors
-      alert('Le document contient des erreurs. Veuillez les corriger avant de générer le PDF.')
-      return
+      validationErrors.value = validation.errors;
+      alert(
+        "Le document contient des erreurs. Veuillez les corriger avant de générer le PDF.",
+      );
+      return;
     }
 
     // Formater les dates pour le PDF
     const invoiceForPDF = {
       ...invoice.value,
       date: formatDateToFrench(invoice.value.date),
-      dueDate: formatDateToFrench(invoice.value.dueDate)
-    }
+      dueDate: formatDateToFrench(invoice.value.dueDate),
+    };
 
     // Générer le PDF
-    const filePath = await window.electronAPI.generatePDF('factures', invoiceForPDF)
+    const filePath = await window.electronAPI.generatePDF(
+      "factures",
+      invoiceForPDF,
+    );
 
     if (filePath) {
-      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`)
+      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);
     }
   } catch (err) {
-    error.value = err.message || 'Erreur lors de la génération du PDF'
-    alert(`Erreur lors de la génération du PDF : ${err.message}`)
+    error.value = err.message || "Erreur lors de la génération du PDF";
+    alert(`Erreur lors de la génération du PDF : ${err.message}`);
   } finally {
-    generatingPDF.value = false
+    generatingPDF.value = false;
   }
 }
 
 function cancel() {
-  router.push('/factures')
+  router.push("/factures");
 }
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/variables' as *;
-@use '@/styles/buttons' as *;
+@use "sass:color";
+@use "@/styles/variables" as *;
+@use "@/styles/buttons" as *;
 
 .invoice-form-view {
   .header {
@@ -408,7 +419,7 @@ function cancel() {
   }
 
   .error {
-    background-color: lighten($error, 40%);
+    background-color: color.scale($error, $lightness: 40%);
     color: $error;
   }
 
@@ -420,7 +431,8 @@ function cancel() {
       box-shadow: $shadow-sm;
       margin-bottom: $spacing-lg;
 
-      h2, h3 {
+      h2,
+      h3 {
         font-size: $font-size-lg;
         font-weight: 600;
         margin-bottom: $spacing-md;
@@ -437,7 +449,7 @@ function cancel() {
           color: $text-primary;
 
           &.required::after {
-            content: ' *';
+            content: " *";
             color: $error;
           }
         }
@@ -497,35 +509,6 @@ function cancel() {
           }
         }
 
-        .status-badge {
-          display: inline-block;
-          padding: $spacing-xs $spacing-sm;
-          border-radius: $border-radius-sm;
-          font-size: $font-size-xs;
-          font-weight: 500;
-          text-transform: capitalize;
-
-          &.status-brouillon {
-            background-color: lighten($gray-300, 10%);
-            color: $text-secondary;
-          }
-
-          &.status-envoyé {
-            background-color: lighten($primary-color, 40%);
-            color: darken($primary-color, 10%);
-          }
-
-          &.status-accepté {
-            background-color: lighten($success, 40%);
-            color: darken($success, 10%);
-          }
-
-          &.status-rejeté {
-            background-color: lighten($error, 40%);
-            color: darken($error, 10%);
-          }
-        }
-
         .errors {
           margin-top: $spacing-sm;
           color: $error;
@@ -545,7 +528,7 @@ function cancel() {
     }
 
     .errors-list {
-      background-color: lighten($error, 40%);
+      background-color: color.scale($error, $lightness: 40%);
       border: 1px solid $error;
       border-radius: $border-radius-md;
       padding: $spacing-md;

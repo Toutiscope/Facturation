@@ -1,57 +1,46 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import electron from 'vite-plugin-electron'
-import renderer from 'vite-plugin-electron-renderer'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import electron from "vite-plugin-electron";
+import renderer from "vite-plugin-electron-renderer";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  root: path.resolve(__dirname, 'src/renderer'),
   plugins: [
     vue(),
+
     electron([
       {
-        entry: path.resolve(__dirname, 'src/main/index.js'),
-        vite: {
-          build: {
-            outDir: path.resolve(__dirname, 'dist-electron/main'),
-            minify: false,
-            rollupOptions: {
-              external: ['electron', 'electron-log']
-            }
-          }
-        }
+        entry: path.resolve(__dirname, "src/main/index.js"),
       },
       {
-        entry: path.resolve(__dirname, 'src/preload/index.js'),
-        vite: {
-          build: {
-            outDir: path.resolve(__dirname, 'dist-electron/preload'),
-            rollupOptions: {
-              external: ['electron']
-            }
-          }
-        },
-        onstart(options) {
-          options.reload()
-        }
-      }
+        entry: path.resolve(__dirname, "src/preload/index.js"),
+      },
     ]),
-    renderer()
+
+    renderer(),
   ],
+
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src/renderer')
-    }
+      "@": path.resolve(__dirname, "src/renderer"),
+    },
   },
-  base: './',
+
+  base: "./",
+
   build: {
-    outDir: path.resolve(__dirname, 'dist'),
-    emptyOutDir: true
+    outDir: "dist",
+    emptyOutDir: true,
+
+    rollupOptions: {
+      input: path.resolve(__dirname, "src/renderer/index.html"),
+    },
   },
+
   server: {
-    port: 5173
-  }
-})
+    port: 5173,
+  },
+});

@@ -1,6 +1,7 @@
 <script setup>
 import { RouterView } from 'vue-router'
 import { provide, ref, onMounted } from 'vue'
+import UpdateNotification from './components/UpdateNotification.vue'
 
 const config = ref(null)
 const loading = ref(true)
@@ -32,7 +33,10 @@ provide('config', config)
       <p>{{ error }}</p>
       <p>Veuillez vérifier que l'application a bien été installée.</p>
     </div>
-    <RouterView v-else />
+    <template v-else>
+      <UpdateNotification />
+      <RouterView />
+    </template>
   </div>
 </template>
 

@@ -55,9 +55,9 @@ app.whenReady().then(async () => {
     // Créer fenêtre principale
     createWindow()
 
-    // Setup auto-updater (Phase 5)
-    // const { setupAutoUpdater } = require('./autoUpdater')
-    // setupAutoUpdater(mainWindow)
+    // Setup auto-updater
+    const { setupAutoUpdater } = require('./autoUpdater')
+    setupAutoUpdater(mainWindow)
 
     log.info('Application started successfully')
   } catch (error) {

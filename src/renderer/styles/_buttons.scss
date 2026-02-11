@@ -1,5 +1,6 @@
-@use '@/styles/mixins' as *;
-@use 'variables' as *;
+@use "sass:color";
+@use "@/styles/mixins" as *;
+@use "variables" as *;
 
 .btn {
   padding: $spacing-sm $spacing-lg;
@@ -20,7 +21,7 @@
     color: white;
 
     &:hover:not(:disabled) {
-      background-color: darken($success, 10%);
+      background-color: color.scale($success, $lightness: 1-0%);
     }
   }
 
@@ -40,11 +41,11 @@
   color: white;
 
   &:hover:not(:disabled) {
-    background: darken($primary-color, 10%);
+    background: color.scale($primary-color, $lightness: -10%);
   }
 
   &:active:not(:disabled) {
-    background: darken($primary-color, 15%);
+    background: color.scale($primary-color, $lightness: -15%);
   }
 }
 
@@ -54,11 +55,11 @@
   border: 1px solid $border-color;
 
   &:hover:not(:disabled) {
-    background: darken($bg-secondary, 5%);
+    background: color.scale($bg-secondary, $lightness: -5%);
   }
 
   &:active:not(:disabled) {
-    background: darken($bg-secondary, 10%);
+    background: color.scale($bg-secondary, $lightness: -10%);
   }
 }
 
@@ -67,11 +68,11 @@
   color: white;
 
   &:hover:not(:disabled) {
-    background: darken($error-color, 10%);
+    background: color.scale($error-color, $lightness: -10%);
   }
 
   &:active:not(:disabled) {
-    background: darken($error-color, 15%);
+    background: color.scale($error-color, $lightness: -15%);
   }
 }
 
@@ -93,16 +94,23 @@
 }
 
 .back-button {
-  height: 50px;
-  width: 50px;
+  width: auto;
   border: none;
-  border-radius: 100%;
+  border-radius: 50px;
   background: white;
   position: absolute;
   top: 20px;
   left: 20px;
   z-index: 1;
   cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 16px;
+
+  svg {
+    width: 24px;
+  }
 
   &:hover {
     background: grey;

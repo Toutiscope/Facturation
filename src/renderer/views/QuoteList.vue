@@ -84,7 +84,9 @@
               <td class="numero">{{ quote.numero }}</td>
               <td>{{ quote.date }}</td>
               <td class="client-name">{{ quote.customer.customerName }}</td>
-              <td class="amount">{{ formatCurrency(quote.totals.totalTTC) }}</td>
+              <td class="amount">
+                {{ formatCurrency(quote.totals.totalTTC) }}
+              </td>
               <td>
                 <span :class="['status-badge', `status-${quote.status}`]">
                   {{ quote.status }}
@@ -139,9 +141,7 @@
           <button @click="cancelDelete" class="btn btn-secondary">
             Annuler
           </button>
-          <button @click="deleteQuote" class="btn btn-danger">
-            Supprimer
-          </button>
+          <button @click="deleteQuote" class="btn btn-danger">Supprimer</button>
         </div>
       </div>
     </div>
@@ -149,93 +149,94 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useDocuments } from '@/composables/useDocuments'
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useDocuments } from "@/composables/useDocuments";
 
-const router = useRouter()
-const { documents, loading, error, loadAll, remove } = useDocuments('devis')
+const router = useRouter();
+const { documents, loading, error, loadAll, remove } = useDocuments("devis");
 
-const currentYear = new Date().getFullYear()
+const currentYear = new Date().getFullYear();
 const filters = ref({
-  search: '',
-  status: '',
-  year: currentYear
-})
+  search: "",
+  status: "",
+  year: currentYear,
+});
 
-const showDeleteModal = ref(false)
-const quoteToDelete = ref(null)
+const showDeleteModal = ref(false);
+const quoteToDelete = ref(null);
 
 onMounted(async () => {
-  await applyFilters()
-})
+  await applyFilters();
+});
 
 async function applyFilters() {
   await loadAll({
     year: filters.value.year,
     status: filters.value.status || undefined,
-    search: filters.value.search || undefined
-  })
+    search: filters.value.search || undefined,
+  });
 }
 
 function createNew() {
-  router.push('/devis/nouveau')
+  router.push("/devis/nouveau");
 }
 
 function edit(id) {
-  router.push(`/devis/${id}`)
+  router.push(`/devis/${id}`);
 }
 
 function convertToInvoice(quote) {
   // Stocker le devis dans sessionStorage pour pré-remplir la facture
-  sessionStorage.setItem('quoteToConvert', JSON.stringify(quote))
-  router.push('/factures/nouvelle')
+  sessionStorage.setItem("quoteToConvert", JSON.stringify(quote));
+  router.push("/factures/nouvelle");
 }
 
 function confirmDelete(quote) {
-  quoteToDelete.value = quote
-  showDeleteModal.value = true
+  quoteToDelete.value = quote;
+  showDeleteModal.value = true;
 }
 
 function cancelDelete() {
-  quoteToDelete.value = null
-  showDeleteModal.value = false
+  quoteToDelete.value = null;
+  showDeleteModal.value = false;
 }
 
 async function deleteQuote() {
-  if (!quoteToDelete.value) return
+  if (!quoteToDelete.value) return;
 
   try {
-    await remove(quoteToDelete.value.id)
-    showDeleteModal.value = false
-    quoteToDelete.value = null
+    await remove(quoteToDelete.value.id);
+    showDeleteModal.value = false;
+    quoteToDelete.value = null;
   } catch (err) {
-    console.error('Failed to delete quote:', err)
+    console.error("Failed to delete quote:", err);
   }
 }
 
 async function generatePDF(quote) {
   try {
-    const filePath = await window.electronAPI.generatePDF('devis', quote)
+    const filePath = await window.electronAPI.generatePDF("devis", quote);
     if (filePath) {
-      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`)
+      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);
     }
   } catch (err) {
-    console.error('Failed to generate PDF:', err)
-    alert(`Erreur lors de la génération du PDF : ${err.message}`)
+    console.error("Failed to generate PDF:", err);
+    alert(`Erreur lors de la génération du PDF : ${err.message}`);
   }
 }
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(value || 0)
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  }).format(value || 0);
 }
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/variables' as *;
+@use "sass:color";
+@use "@/styles/variables" as *;
 
 .quote-list-view {
   padding: $spacing-lg;
@@ -331,7 +332,7 @@ function formatCurrency(value) {
   }
 
   .error {
-    background-color: lighten($error, 40%);
+    background-color: color.scale($error, $lightness: 40%);
     color: $error;
   }
 
@@ -394,35 +395,6 @@ function formatCurrency(value) {
             &.amount {
               font-weight: 600;
               text-align: right;
-            }
-
-            .status-badge {
-              display: inline-block;
-              padding: $spacing-xs $spacing-sm;
-              border-radius: $border-radius-sm;
-              font-size: $font-size-xs;
-              font-weight: 500;
-              text-transform: capitalize;
-
-              &.status-brouillon {
-                background-color: lighten($gray-300, 10%);
-                color: $text-secondary;
-              }
-
-              &.status-envoyé {
-                background-color: lighten($primary-color, 40%);
-                color: darken($primary-color, 10%);
-              }
-
-              &.status-accepté {
-                background-color: lighten($success, 40%);
-                color: darken($success, 10%);
-              }
-
-              &.status-refusé {
-                background-color: lighten($error, 40%);
-                color: darken($error, 10%);
-              }
             }
 
             &.actions-cell {
