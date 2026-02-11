@@ -43,6 +43,7 @@ const handleClick = (value) => {
 
 <style lang="scss" scoped>
 @use "sass:color";
+@use "@/styles/colors" as *;
 @use "@/styles/variables" as *;
 
 .segmented-control {

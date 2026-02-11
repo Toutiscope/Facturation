@@ -1,11 +1,11 @@
 @use "sass:color";
-@use "@/styles/mixins" as *;
+@use "colors" as *;
 @use "variables" as *;
 
 .btn {
   padding: $spacing-sm $spacing-lg;
   border: none;
-  border-radius: 50px;
+  border-radius: $border-radius-pill;
   font-size: $font-size-base;
   font-weight: 500;
   cursor: pointer;
@@ -17,16 +17,16 @@
   }
 
   &.btn-success {
-    background-color: $success;
-    color: white;
+    background-color: $success-color;
+    color: $white;
 
     &:hover:not(:disabled) {
-      background-color: color.scale($success, $lightness: 1-0%);
+      background-color: color.scale($success-color, $lightness: -10%);
     }
   }
 
   &.btn-outline {
-    background-color: white;
+    background-color: $white;
     color: $primary-color;
     border: 1px solid $primary-color;
 
@@ -38,7 +38,7 @@
 
 .btn-primary {
   background: $primary-color;
-  color: white;
+  color: $white;
 
   &:hover:not(:disabled) {
     background: color.scale($primary-color, $lightness: -10%);
@@ -65,7 +65,7 @@
 
 .btn-danger {
   background: $error-color;
-  color: white;
+  color: $white;
 
   &:hover:not(:disabled) {
     background: color.scale($error-color, $lightness: -10%);
@@ -73,6 +73,31 @@
 
   &:active:not(:disabled) {
     background: color.scale($error-color, $lightness: -15%);
+  }
+}
+
+// Bouton d'action (icône emoji)
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: $font-size-lg;
+  padding: $spacing-xs;
+  transition: $transition-base;
+  margin-right: $spacing-xs;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.1);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  &.btn-danger:hover {
+    color: $error-color;
+    filter: brightness(1.2);
   }
 }
 
@@ -96,23 +121,23 @@
 .back-button {
   width: auto;
   border: none;
-  border-radius: 50px;
-  background: white;
+  border-radius: $border-radius-pill;
+  background: $white;
   position: absolute;
   top: 20px;
   left: 20px;
   z-index: 1;
   cursor: pointer;
   display: flex;
-  gap: 8px;
+  gap: $spacing-sm;
   align-items: center;
-  padding: 8px 16px;
+  padding: $spacing-sm $spacing-md;
 
   svg {
     width: 24px;
   }
 
   &:hover {
-    background: grey;
+    background: $gray-40;
   }
 }

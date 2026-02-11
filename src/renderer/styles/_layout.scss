@@ -1,3 +1,5 @@
+@use "sass:color";
+@use 'colors' as *;
 @use 'variables' as *;
 @use 'mixins' as *;
 
@@ -9,17 +11,21 @@
 
 .card {
   @include card;
+  margin-bottom: $spacing-lg;
 }
 
+// Bloc d'erreurs de validation
 .errors-list {
   background: rgba($error-color, 0.1);
   border-left: 4px solid $error-color;
   padding: $spacing-md;
   margin-bottom: $spacing-lg;
-  border-radius: $radius-md;
+  border-radius: $border-radius-md;
 
   h3 {
     color: $error-color;
+    font-size: $font-size-base;
+    font-weight: 600;
     margin-bottom: $spacing-sm;
   }
 
@@ -31,9 +37,15 @@
   li {
     margin-bottom: $spacing-xs;
     color: $error-color;
+    font-size: $font-size-sm;
+
+    strong {
+      font-weight: 600;
+    }
   }
 }
 
+// Grilles utilitaires
 .grid {
   display: grid;
 
@@ -69,4 +81,99 @@ $sizes: 2, 4, 8, 16, 24, 32, 48, 64;
   .gap-#{$size} {
     gap: calc($size * 1px);
   }
+}
+
+// Page header (titre + bouton action)
+.page-header {
+  @include page-header;
+}
+
+// États de chargement et erreur
+.loading {
+  @include state-box;
+  background-color: $bg-secondary;
+  color: $text-secondary;
+}
+
+.error {
+  @include state-box;
+  background-color: color.scale($error-color, $lightness: 40%);
+  color: $error-color;
+}
+
+.loading-spinner {
+  @include spinner;
+  margin-bottom: $spacing-md;
+}
+
+// État vide
+.empty-state {
+  text-align: center;
+  padding: $spacing-2xl;
+  color: $text-secondary;
+
+  p {
+    margin-bottom: $spacing-md;
+    font-size: $font-size-lg;
+  }
+}
+
+// Modal
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba($black, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: $white;
+  padding: $spacing-xl;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-lg;
+  max-width: 500px;
+  width: 90%;
+
+  h3 {
+    font-size: $font-size-xl;
+    font-weight: 600;
+    margin-bottom: $spacing-md;
+    color: $text-primary;
+  }
+
+  p {
+    margin-bottom: $spacing-sm;
+    color: $text-secondary;
+
+    &.warning {
+      color: $error-color;
+      font-weight: 500;
+    }
+
+    strong {
+      color: $text-primary;
+      font-weight: 600;
+    }
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: $spacing-md;
+    justify-content: flex-end;
+    margin-top: $spacing-lg;
+  }
+}
+
+// Barre d'actions de formulaire (variante sans border-top)
+.actions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: flex-end;
+  padding-top: $spacing-lg;
 }

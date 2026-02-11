@@ -1,10 +1,10 @@
-const { z } = require('zod')
-const log = require('electron-log')
+import { z } from 'zod';
+import log from 'electron-log';
 
 /**
  * Schéma de validation pour un client
  */
-const customerSchema = z.object({
+export const customerSchema = z.object({
   customerName: z.string().min(1, 'Le nom du client est requis'),
   companyName: z.string().min(1, 'Le nom de l\'entreprise est requis'),
   companyId: z.string().optional(),
@@ -20,7 +20,7 @@ const customerSchema = z.object({
 /**
  * Schéma de validation pour une prestation/service
  */
-const serviceSchema = z.object({
+export const serviceSchema = z.object({
   id: z.number().int().positive(),
   description: z.string().min(1, 'La description est requise'),
   quantity: z.number().positive('La quantité doit être positive'),
@@ -34,7 +34,7 @@ const serviceSchema = z.object({
 /**
  * Schéma de validation pour les totaux
  */
-const totalsSchema = z.object({
+export const totalsSchema = z.object({
   totalHT: z.number().nonnegative(),
   VAT: z.number().nonnegative(),
   VATRate: z.number().nonnegative(),
@@ -44,7 +44,7 @@ const totalsSchema = z.object({
 /**
  * Schéma de validation pour un devis
  */
-const quoteSchema = z.object({
+export const quoteSchema = z.object({
   id: z.string().min(1),
   type: z.literal('devis'),
   numero: z.string().regex(/^D\d{6}$/, 'Le numéro de devis doit être au format D000001'),
@@ -64,7 +64,7 @@ const quoteSchema = z.object({
 /**
  * Schéma de validation pour Chorus Pro
  */
-const chorusProSchema = z.object({
+export const chorusProSchema = z.object({
   isSent: z.boolean(),
   dateSending: z.string().nullable().optional(),
   depositNumber: z.string().nullable().optional(),
@@ -75,7 +75,7 @@ const chorusProSchema = z.object({
 /**
  * Schéma de validation pour une facture
  */
-const invoiceSchema = quoteSchema.extend({
+export const invoiceSchema = quoteSchema.extend({
   type: z.literal('facture'),
   numero: z.string().regex(/^F\d{6}$/, 'Le numéro de facture doit être au format F000001'),
   dueDate: z.string().min(1, 'La date d\'échéance est requise'),
@@ -89,7 +89,7 @@ const invoiceSchema = quoteSchema.extend({
  * @param {Object} document - Document à valider
  * @returns {Object} { valid: boolean, errors: Array<{path: string, message: string}> }
  */
-function validateDocument(type, document) {
+export function validateDocument(type, document) {
   try {
     // Sélectionner le bon schéma
     const schema = type === 'devis' ? quoteSchema : invoiceSchema
@@ -164,12 +164,4 @@ function validateDocument(type, document) {
       errors: [{ path: 'general', message: 'Erreur lors de la validation' }]
     }
   }
-}
-
-module.exports = {
-  validateDocument,
-  customerSchema,
-  serviceSchema,
-  quoteSchema,
-  invoiceSchema
 }

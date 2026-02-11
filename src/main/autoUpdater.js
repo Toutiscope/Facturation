@@ -1,6 +1,6 @@
-const { autoUpdater } = require("electron-updater");
-const { app } = require("electron");
-const log = require("electron-log");
+import { autoUpdater } from "electron-updater";
+import { app } from "electron";
+import log from "electron-log";
 
 const CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 heures
 
@@ -66,4 +66,4 @@ function setupAutoUpdater(mainWindow) {
   }, CHECK_INTERVAL);
 }
 
-module.exports = { setupAutoUpdater };
+export { setupAutoUpdater };

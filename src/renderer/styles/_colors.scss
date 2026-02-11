@@ -1,0 +1,44 @@
+// _colors.scss
+// ============================================
+// Palette de couleurs - Source unique de vérité
+// ============================================
+
+@use "sass:color";
+
+// Couleurs primaires
+$primary-color: #3b008e;
+$primary-light: color.scale($primary-color, $lightness: 30%);
+$primary-dark: color.scale($primary-color, $lightness: -10%);
+
+// Couleurs neutres
+$white: #ffffff;
+$black: #000000;
+
+$gray-10: #eef0f5;
+$gray-20: color.scale($gray-10, $lightness: -5%);
+$gray-30: color.scale($gray-10, $lightness: -10%);
+$gray-40: color.scale($gray-10, $lightness: -20%);
+$gray-50: color.scale($gray-10, $lightness: -30%);
+$gray-60: color.scale($gray-10, $lightness: -40%);
+$gray-70: color.scale($gray-10, $lightness: -50%);
+$gray-80: color.scale($gray-10, $lightness: -60%);
+$gray-90: color.scale($gray-10, $lightness: -70%);
+
+// Couleurs sémantiques
+$success-color: #10b981;
+$success: $success-color;
+$warning-color: #f59e0b;
+$error-color: #ef4444;
+$error: $error-color;
+$info-color: #3b82f6;
+
+// Couleurs secondaires
+$secondary-color: #475569;
+
+// Couleurs fonctionnelles
+$text-primary: #102b41;
+$text-secondary: #64748b;
+$text-muted: $gray-60;
+$bg-primary: $white;
+$bg-secondary: #f8fafc;
+$border-color: #e2e8f0;

@@ -1,15 +1,75 @@
+@use 'colors' as *;
 @use 'variables' as *;
 
+// Flexbox helpers
 @mixin flex-center {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// Card
 @mixin card {
   background: $bg-primary;
   border: 1px solid $border-color;
-  border-radius: $radius-md;
+  border-radius: $border-radius-md;
   padding: $spacing-lg;
   box-shadow: $shadow-sm;
+}
+
+// Truncate text
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Focus ring pour inputs
+@mixin focus-ring($color: $primary-color) {
+  outline: none;
+  border-color: $color;
+  box-shadow: 0 0 0 3px rgba($color, 0.1);
+}
+
+// Page header (titre + bouton)
+@mixin page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-xl;
+
+  h1 {
+    font-size: $font-size-3xl;
+    font-weight: 700;
+    color: $text-primary;
+  }
+}
+
+// États loading / error
+@mixin state-box {
+  padding: $spacing-md;
+  border-radius: $border-radius-md;
+  text-align: center;
+}
+
+// Spinner
+@mixin spinner($size: 50px, $border-width: 4px) {
+  width: $size;
+  height: $size;
+  border: $border-width solid $border-color;
+  border-top-color: $primary-color;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -162,6 +162,7 @@ function handleClientTypeChange() {
 </script>
 
 <style scoped lang="scss">
+@use "@/styles/colors" as *;
 @use "@/styles/variables" as *;
 
 .customer-form {
@@ -172,52 +173,8 @@ function handleClientTypeChange() {
     color: $text-primary;
   }
 
-  .form-group {
-    margin-bottom: $spacing-md;
-
-    label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: $spacing-xs;
-      color: $text-primary;
-
-      &.required::after {
-        content: " *";
-        color: $error;
-      }
-    }
-
-    .form-control {
-      width: 100%;
-      padding: $spacing-sm;
-      border: 1px solid $border-color;
-      border-radius: $border-radius-sm;
-      font-size: $font-size-base;
-      transition: $transition-base;
-
-      &:focus {
-        outline: none;
-        border-color: $primary-color;
-        box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
-      }
-
-      &:invalid {
-        border-color: $error;
-      }
-    }
-
-    .form-text {
-      display: block;
-      margin-top: $spacing-xs;
-      font-size: $font-size-sm;
-      color: $text-secondary;
-    }
-  }
-
   .form-row {
-    display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: $spacing-md;
 
     @media (max-width: 768px) {
       grid-template-columns: 1fr;

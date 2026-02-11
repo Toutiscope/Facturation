@@ -44,6 +44,7 @@ const router = useRouter()
 </template>
 
 <style lang="scss" scoped>
+@use '@/styles/colors' as *;
 @use '@/styles/variables' as *;
 
 .dashboard {

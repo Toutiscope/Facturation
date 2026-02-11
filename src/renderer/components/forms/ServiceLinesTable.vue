@@ -198,8 +198,8 @@ if (localServices.value.length === 0) {
 </script>
 
 <style scoped lang="scss">
+@use '@/styles/colors' as *;
 @use '@/styles/variables' as *;
-@use '@/styles/buttons' as *;
 
 .services-table {
   h3 {
@@ -217,7 +217,7 @@ if (localServices.value.length === 0) {
   .table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
+    background: $white;
     border: 1px solid $border-color;
     border-radius: $border-radius-md;
 
@@ -251,16 +251,8 @@ if (localServices.value.length === 0) {
         padding: $spacing-xs;
 
         .form-control {
-          width: 100%;
           padding: $spacing-xs $spacing-sm;
-          border: 1px solid $border-color;
-          border-radius: $border-radius-sm;
           font-size: $font-size-sm;
-
-          &:focus {
-            outline: none;
-            border-color: $primary-color;
-          }
         }
 
         &.total-cell {
@@ -269,24 +261,6 @@ if (localServices.value.length === 0) {
           padding-right: $spacing-sm;
         }
       }
-    }
-  }
-
-  .btn-icon {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: $font-size-lg;
-    padding: $spacing-xs;
-    transition: $transition-base;
-
-    &:hover:not(:disabled) {
-      transform: scale(1.1);
-    }
-
-    &:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
     }
   }
 

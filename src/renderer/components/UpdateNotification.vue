@@ -66,6 +66,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+@use "@/styles/colors" as *;
 @use "@/styles/variables" as *;
 
 .update-banner {
@@ -79,7 +80,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   font-size: $font-size-sm;
-  color: #fff;
+  color: $white;
 
   &.downloading {
     background-color: $info-color;
@@ -115,21 +116,21 @@ onMounted(() => {
     transition: $transition-base;
 
     &--install {
-      background-color: #fff;
+      background-color: $white;
       color: $success-color;
 
       &:hover {
-        background-color: rgba(255, 255, 255, 0.9);
+        background-color: rgba($white, 0.9);
       }
     }
 
     &--later {
       background-color: transparent;
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.5);
+      color: $white;
+      border: 1px solid rgba($white, 0.5);
 
       &:hover {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: rgba($white, 0.1);
       }
     }
   }
@@ -137,7 +138,7 @@ onMounted(() => {
   &__close {
     background: none;
     border: none;
-    color: #fff;
+    color: $white;
     font-size: $font-size-xl;
     cursor: pointer;
     padding: 0 $spacing-xs;

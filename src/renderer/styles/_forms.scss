@@ -1,36 +1,37 @@
+@use 'colors' as *;
 @use 'variables' as *;
+@use 'mixins' as *;
 
 .form-group {
-  // margin-bottom: $spacing-sm;
+  margin-bottom: $spacing-md;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: $spacing-md;
-  // margin-bottom: $spacing-md;
 }
 
+// Style commun pour tous les champs de formulaire
 input[type="text"],
 input[type="email"],
 input[type="tel"],
 input[type="number"],
 input[type="date"],
 select,
-textarea {
+textarea,
+.form-control {
   width: 100%;
   padding: $spacing-sm;
   border: 1px solid $border-color;
-  border-radius: $radius-md;
+  border-radius: $border-radius-sm;
   font-size: $font-size-base;
   background: $bg-primary;
   color: $text-primary;
   transition: $transition-base;
 
   &:focus {
-    outline: none;
-    border-color: $primary-color;
-    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+    @include focus-ring;
   }
 
   &:disabled {
@@ -47,8 +48,26 @@ textarea {
 textarea {
   resize: vertical;
   min-height: 100px;
+  font-family: inherit;
 }
 
+// Label avec marqueur obligatoire
+label {
+  &.required::after {
+    content: " *";
+    color: $error-color;
+  }
+}
+
+// Texte d'aide sous les champs
+.form-text {
+  display: block;
+  margin-top: $spacing-xs;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+}
+
+// Messages d'erreur et de succès
 .error-message {
   display: block;
   color: $error-color;
@@ -60,11 +79,12 @@ textarea {
   background: rgba($success-color, 0.1);
   color: $success-color;
   padding: $spacing-md;
-  border-radius: $radius-md;
+  border-radius: $border-radius-md;
   margin-bottom: $spacing-md;
   border-left: 4px solid $success-color;
 }
 
+// Barre d'actions en bas de formulaire
 .form-actions {
   display: flex;
   gap: $spacing-md;
@@ -74,6 +94,7 @@ textarea {
   border-top: 1px solid $border-color;
 }
 
+// Section de formulaire
 .form-section {
   margin-bottom: $spacing-xl;
   padding-bottom: $spacing-xl;

@@ -226,8 +226,9 @@ function formatCurrency(value) {
 </script>
 
 <style scoped lang="scss">
-@use "sass:color";
+@use "@/styles/colors" as *;
 @use "@/styles/variables" as *;
+@use "@/styles/mixins" as *;
 
 .invoice-list-view {
   padding: $spacing-lg;
@@ -238,40 +239,7 @@ function formatCurrency(value) {
   }
 
   .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: $spacing-xl;
-
-    h1 {
-      font-size: $font-size-3xl;
-      font-weight: 700;
-      color: $text-primary;
-    }
-
-    .btn-primary {
-      padding: $spacing-sm $spacing-lg;
-      background-color: $primary-color;
-      color: white;
-      border: none;
-      border-radius: $border-radius-md;
-      font-size: $font-size-base;
-      font-weight: 500;
-      cursor: pointer;
-      transition: $transition-base;
-
-      &:hover {
-        background-color: darken($primary-color, 10%);
-      }
-    }
-  }
-
-  .card {
-    background: white;
-    padding: $spacing-lg;
-    border-radius: $border-radius-md;
-    box-shadow: $shadow-sm;
-    margin-bottom: $spacing-lg;
+    @include page-header;
   }
 
   .filters {
@@ -287,66 +255,20 @@ function formatCurrency(value) {
 
     .filter-group {
       label {
-        display: block;
-        font-weight: 500;
-        margin-bottom: $spacing-xs;
-        color: $text-primary;
         font-size: $font-size-sm;
       }
-
-      .form-control {
-        width: 100%;
-        padding: $spacing-sm;
-        border: 1px solid $border-color;
-        border-radius: $border-radius-sm;
-        font-size: $font-size-base;
-        transition: $transition-base;
-
-        &:focus {
-          outline: none;
-          border-color: $primary-color;
-          box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
-        }
-      }
     }
-  }
-
-  .loading,
-  .error {
-    padding: $spacing-md;
-    border-radius: $border-radius-md;
-    text-align: center;
-  }
-
-  .loading {
-    background-color: $gray-100;
-  }
-
-  .error {
-    background-color: color.scale($error, $lightness: 40%);
-    color: $error;
   }
 
   .table-wrapper {
     overflow-x: auto;
-
-    .empty-state {
-      text-align: center;
-      padding: $spacing-2xl;
-      color: $text-secondary;
-
-      p {
-        margin-bottom: $spacing-md;
-        font-size: $font-size-lg;
-      }
-    }
 
     .table {
       width: 100%;
       border-collapse: collapse;
 
       thead {
-        background-color: $gray-100;
+        background-color: $bg-secondary;
         border-bottom: 2px solid $border-color;
 
         th {
@@ -377,10 +299,8 @@ function formatCurrency(value) {
             }
 
             &.client-name {
+              @include truncate;
               max-width: 300px;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
             }
 
             &.amount {
@@ -388,111 +308,12 @@ function formatCurrency(value) {
               text-align: right;
             }
 
-            .status-badge {
-              display: inline-block;
-              padding: $spacing-xs $spacing-sm;
-              border-radius: $border-radius-sm;
-              font-size: $font-size-xs;
-              font-weight: 500;
-              text-transform: capitalize;
-
-              &.status-brouillon {
-                background-color: lighten($gray-300, 10%);
-                color: $text-secondary;
-              }
-
-              &.status-envoyé {
-                background-color: lighten($primary-color, 40%);
-                color: darken($primary-color, 10%);
-              }
-
-              &.status-payé {
-                background-color: lighten($success, 40%);
-                color: darken($success, 10%);
-              }
-
-              &.status-en.retard {
-                background-color: color.scale($error, $lightness: 40%);
-                color: darken($error, 10%);
-              }
-            }
-
             &.actions-cell {
               white-space: nowrap;
-
-              .btn-icon {
-                background: none;
-                border: none;
-                cursor: pointer;
-                font-size: $font-size-lg;
-                padding: $spacing-xs;
-                transition: $transition-base;
-                margin-right: $spacing-xs;
-
-                &:hover {
-                  transform: scale(1.1);
-                }
-
-                &.btn-danger:hover {
-                  filter: brightness(1.2);
-                }
-              }
             }
           }
         }
       }
-    }
-  }
-
-  // Modal styles
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-
-  .modal {
-    background: white;
-    padding: $spacing-xl;
-    border-radius: $border-radius-lg;
-    box-shadow: $shadow-lg;
-    max-width: 500px;
-    width: 90%;
-
-    h3 {
-      font-size: $font-size-xl;
-      font-weight: 600;
-      margin-bottom: $spacing-md;
-      color: $text-primary;
-    }
-
-    p {
-      margin-bottom: $spacing-sm;
-      color: $text-secondary;
-
-      &.warning {
-        color: $error;
-        font-weight: 500;
-      }
-
-      strong {
-        color: $text-primary;
-        font-weight: 600;
-      }
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: $spacing-md;
-      justify-content: flex-end;
-      margin-top: $spacing-lg;
     }
   }
 }

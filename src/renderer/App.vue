@@ -41,51 +41,33 @@ provide('config', config)
 </template>
 
 <style lang="scss">
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@use '@/styles/colors' as *;
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
 
 #app {
   width: 100%;
   height: 100vh;
-}
 
-.loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  font-size: 1.5rem;
-  color: #475569;
-}
-
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #e2e8f0;
-  border-top-color: #2563eb;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+  > .loading {
+    @include flex-center;
+    flex-direction: column;
+    height: 100vh;
+    font-size: $font-size-2xl;
+    color: $text-secondary;
   }
-}
 
-.error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  padding: 2rem;
-  text-align: center;
-  color: #ef4444;
+  > .loading .loading-spinner {
+    @include spinner;
+  }
+
+  > .error {
+    @include flex-center;
+    flex-direction: column;
+    height: 100vh;
+    padding: $spacing-xl;
+    text-align: center;
+    color: $error-color;
+  }
 }
 </style>

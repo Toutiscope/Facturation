@@ -1,20 +1,21 @@
-const { ipcMain, shell, app } = require("electron");
-const {
+import { ipcMain, shell, app } from "electron";
+import {
   loadConfig,
   saveConfig,
   loadDocuments,
   loadDocument,
   saveDocument,
   deleteDocument,
-} = require("./fileManager");
-const { validateDocument } = require("./validator");
-const { generatePDF } = require("./pdfGenerator");
-const log = require("electron-log");
+} from "./fileManager";
+import { validateDocument } from "./validator";
+import { generatePDF } from "./pdfGenerator";
+import { autoUpdater } from "electron-updater";
+import log from "electron-log";
 
 /**
  * Initialise tous les handlers IPC
  */
-function initializeIPC() {
+export function initializeIPC() {
   // ==================== Configuration ====================
 
   ipcMain.handle("load-config", async () => {
@@ -135,11 +136,9 @@ function initializeIPC() {
 
   ipcMain.handle("install-update", () => {
     log.info("Installing update and restarting...");
-    const { autoUpdater } = require("electron-updater");
     autoUpdater.quitAndInstall();
   });
 
   log.info("IPC handlers initialized");
 }
 
-module.exports = { initializeIPC };

@@ -392,9 +392,8 @@ function cancel() {
 </script>
 
 <style scoped lang="scss">
-@use "sass:color";
+@use "@/styles/colors" as *;
 @use "@/styles/variables" as *;
-@use "@/styles/buttons" as *;
 
 .invoice-form-view {
   .header {
@@ -407,85 +406,14 @@ function cancel() {
     }
   }
 
-  .loading,
-  .error {
-    padding: $spacing-md;
-    border-radius: $border-radius-md;
-    text-align: center;
-  }
-
-  .loading {
-    background-color: $gray-100;
-  }
-
-  .error {
-    background-color: color.scale($error, $lightness: 40%);
-    color: $error;
-  }
-
   .form {
     .card {
-      background: white;
-      padding: $spacing-lg;
-      border-radius: $border-radius-md;
-      box-shadow: $shadow-sm;
-      margin-bottom: $spacing-lg;
-
       h2,
       h3 {
         font-size: $font-size-lg;
         font-weight: 600;
         margin-bottom: $spacing-md;
         color: $text-primary;
-      }
-
-      .form-group {
-        margin-bottom: $spacing-md;
-
-        label {
-          display: block;
-          font-weight: 500;
-          margin-bottom: $spacing-xs;
-          color: $text-primary;
-
-          &.required::after {
-            content: " *";
-            color: $error;
-          }
-        }
-
-        .form-control {
-          width: 100%;
-          padding: $spacing-sm;
-          border: 1px solid $border-color;
-          border-radius: $border-radius-sm;
-          font-size: $font-size-base;
-          transition: $transition-base;
-
-          &:focus {
-            outline: none;
-            border-color: $primary-color;
-            box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
-          }
-        }
-
-        textarea.form-control {
-          resize: vertical;
-          font-family: inherit;
-        }
-
-        .form-text {
-          display: block;
-          margin-top: $spacing-xs;
-          font-size: $font-size-sm;
-          color: $text-secondary;
-        }
-      }
-
-      .form-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: $spacing-md;
       }
 
       .chorus-status {
@@ -511,7 +439,7 @@ function cancel() {
 
         .errors {
           margin-top: $spacing-sm;
-          color: $error;
+          color: $error-color;
 
           ul {
             list-style: disc;
@@ -525,44 +453,6 @@ function cancel() {
           }
         }
       }
-    }
-
-    .errors-list {
-      background-color: color.scale($error, $lightness: 40%);
-      border: 1px solid $error;
-      border-radius: $border-radius-md;
-      padding: $spacing-md;
-      margin-bottom: $spacing-lg;
-
-      h3 {
-        color: $error;
-        font-size: $font-size-base;
-        font-weight: 600;
-        margin-bottom: $spacing-sm;
-      }
-
-      ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-
-        li {
-          margin-bottom: $spacing-xs;
-          color: $error;
-          font-size: $font-size-sm;
-
-          strong {
-            font-weight: 600;
-          }
-        }
-      }
-    }
-
-    .actions {
-      display: flex;
-      gap: $spacing-md;
-      justify-content: flex-end;
-      padding-top: $spacing-lg;
     }
   }
 }

@@ -176,7 +176,7 @@
       <!-- Section Chorus Pro -->
       <section class="form-section">
         <h2>Chorus Pro (optionnel - Phase 4)</h2>
-        <p style="color: #64748b; margin-bottom: 1rem;">
+        <p class="form-text">
           Configuration pour l'envoi de factures électroniques à l'administration.
         </p>
 
@@ -371,7 +371,7 @@ async function saveConfig() {
 </script>
 
 <style lang="scss" scoped>
-@use '@/styles/mixins' as *;
+@use '@/styles/colors' as *;
 @use '@/styles/variables' as *;
 @use '@/styles/mixins' as *;
 
@@ -391,19 +391,7 @@ async function saveConfig() {
   flex-direction: column;
 
   .loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid $border-color;
-    border-top-color: $primary-color;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: $spacing-md;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
+    @include spinner;
   }
 }
 </style>
