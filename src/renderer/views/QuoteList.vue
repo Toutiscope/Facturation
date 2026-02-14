@@ -149,7 +149,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, toRaw } from "vue";
 import { useRouter } from "vue-router";
 import { useDocuments } from "@/composables/useDocuments";
 
@@ -216,7 +216,8 @@ async function deleteQuote() {
 
 async function generatePDF(quote) {
   try {
-    const filePath = await window.electronAPI.generatePDF("devis", quote);
+    const raw = JSON.parse(JSON.stringify(toRaw(quote)));
+    const filePath = await window.electronAPI.generatePDF("devis", raw);
     if (filePath) {
       alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);
     }

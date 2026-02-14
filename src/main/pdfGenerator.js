@@ -5,12 +5,6 @@ import log from "electron-log";
 import { loadConfig } from "./fileManager";
 
 /**
- * Génère un PDF pour un devis ou une facture
- * @param {string} type - 'devis' ou 'factures'
- * @param {Object} document - Document à exporter
- * @returns {Promise<string>} Chemin du fichier PDF créé
- */
-/**
  * Convertit une valeur en nombre (0 si invalide)
  */
 function num(value) {
@@ -18,15 +12,24 @@ function num(value) {
   return isNaN(n) ? 0 : n;
 }
 
+/**
+ * Génère un PDF pour un devis ou une facture
+ * @param {string} type - 'devis' ou 'factures'
+ * @param {Object} document - Document à exporter
+ * @returns {Promise<string>} Chemin du fichier PDF créé
+ */
 export async function generatePDF(type, document) {
   try {
     // Charger la configuration
     const config = await loadConfig();
+    const company = config?.company || {};
+    const billing = config?.billing || {};
+    const rib = config?.rib || {};
 
     // Dialogue pour choisir l'emplacement de sauvegarde
     const { filePath, canceled } = await dialog.showSaveDialog({
       title: `Enregistrer le ${type === "devis" ? "devis" : "la facture"}`,
-      defaultPath: `${document.numero}.pdf`,
+      defaultPath: `${document.numero || "document"}.pdf`,
       filters: [{ name: "PDF", extensions: ["pdf"] }],
     });
 
@@ -39,8 +42,8 @@ export async function generatePDF(type, document) {
       size: "A4",
       margin: 50,
       info: {
-        Title: `${type === "devis" ? "Devis" : "Facture"} ${document.numero}`,
-        Author: config.company.companyName,
+        Title: `${type === "devis" ? "Devis" : "Facture"} ${document.numero || ""}`,
+        Author: company.companyName || "",
       },
     });
 
@@ -49,11 +52,11 @@ export async function generatePDF(type, document) {
     doc.pipe(stream);
 
     // Rendre le contenu
-    renderHeader(doc, config, type, document);
-    renderCustomer(doc, document.customer);
-    renderServices(doc, document.services);
-    renderTotals(doc, document.totals);
-    renderFooter(doc, config, type, document);
+    renderHeader(doc, company, type, document);
+    renderCustomer(doc, document.customer || {});
+    renderServices(doc, document.services || []);
+    renderTotals(doc, document.totals || {});
+    renderFooter(doc, billing, rib, type);
 
     // Finaliser le PDF
     doc.end();
@@ -68,14 +71,14 @@ export async function generatePDF(type, document) {
     return filePath;
   } catch (error) {
     log.error("Failed to generate PDF:", error);
-    throw new Error("Erreur lors de la génération du PDF");
+    throw new Error(`Erreur lors de la génération du PDF : ${error.message}`);
   }
 }
 
 /**
  * Rendre l'en-tête du document
  */
-function renderHeader(doc, config, type, document) {
+function renderHeader(doc, company, type, document) {
   const pageWidth = doc.page.width;
   const margin = doc.page.margins.left;
 
@@ -92,30 +95,30 @@ function renderHeader(doc, config, type, document) {
   doc
     .fontSize(10)
     .font("Helvetica-Bold")
-    .text(config.company.companyName || "", rightX, 50)
+    .text(company.companyName || "", rightX, 50)
     .font("Helvetica")
-    .text(config.company.address || "", rightX, 65)
-    .text(`${config.company.postalCode || ""} ${config.company.city || ""}`, rightX, 78)
-    .text(`SIRET: ${config.company.companyId || ""}`, rightX, 91)
-    .text(config.company.email || "", rightX, 104);
+    .text(company.address || "", rightX, 65)
+    .text(`${company.postalCode || ""} ${company.city || ""}`, rightX, 78)
+    .text(`SIRET: ${company.companyId || ""}`, rightX, 91)
+    .text(company.email || "", rightX, 104);
 
-  if (config.company.phoneNumber) {
-    doc.text(config.company.phoneNumber, rightX, 117);
+  if (company.phoneNumber) {
+    doc.text(company.phoneNumber, rightX, 117);
   }
 
   // Numéro et dates
   doc
     .fontSize(12)
     .font("Helvetica-Bold")
-    .text(`N° ${document.numero}`, margin, 140)
+    .text(`N° ${document.numero || ""}`, margin, 140)
     .font("Helvetica")
     .fontSize(10)
-    .text(`Date: ${document.date}`, margin, 158);
+    .text(`Date: ${document.date || ""}`, margin, 158);
 
   if (type === "devis") {
-    doc.text(`Valable jusqu'au: ${document.validityDate}`, margin, 173);
+    doc.text(`Valable jusqu'au: ${document.validityDate || ""}`, margin, 173);
   } else {
-    doc.text(`Échéance: ${document.dueDate}`, margin, 173);
+    doc.text(`Échéance: ${document.dueDate || ""}`, margin, 173);
   }
 
   // Ligne de séparation
@@ -302,7 +305,7 @@ function renderTotals(doc, totals) {
 /**
  * Rendre le pied de page avec mentions légales
  */
-function renderFooter(doc, config, type, document) {
+function renderFooter(doc, billing, rib, type) {
   const margin = doc.page.margins.left;
   const pageWidth = doc.page.width;
   const pageHeight = doc.page.height;
@@ -325,13 +328,13 @@ function renderFooter(doc, config, type, document) {
   doc.moveDown(1);
 
   // Conditions de paiement (pour factures)
-  if (type === "factures" && config.billing.paymentTerms) {
+  if (type === "factures" && billing.paymentTerms) {
     doc
       .fontSize(9)
       .font("Helvetica-Bold")
       .text("Conditions de paiement:", margin, doc.y)
       .font("Helvetica")
-      .text(config.billing.paymentTerms, margin, doc.y + 12, {
+      .text(billing.paymentTerms, margin, doc.y + 12, {
         width: pageWidth - 2 * margin,
       });
 
@@ -339,12 +342,12 @@ function renderFooter(doc, config, type, document) {
   }
 
   // Pénalités de retard (pour factures)
-  if (type === "factures" && config.billing.latePenalties) {
+  if (type === "factures" && billing.latePenalties) {
     doc
       .fontSize(9)
       .font("Helvetica")
       .fillColor("#64748b")
-      .text(config.billing.latePenalties, margin, doc.y, {
+      .text(billing.latePenalties, margin, doc.y, {
         width: pageWidth - 2 * margin,
       });
 
@@ -352,11 +355,11 @@ function renderFooter(doc, config, type, document) {
   }
 
   // Mention légale
-  if (config.billing.legalNotice) {
+  if (billing.legalNotice) {
     doc
       .fontSize(8)
       .fillColor("#64748b")
-      .text(config.billing.legalNotice, margin, doc.y, {
+      .text(billing.legalNotice, margin, doc.y, {
         width: pageWidth - 2 * margin,
       });
 
@@ -364,7 +367,7 @@ function renderFooter(doc, config, type, document) {
   }
 
   // RIB si configuré
-  if (config.rib.iban) {
+  if (rib.iban) {
     doc
       .fontSize(9)
       .font("Helvetica-Bold")
@@ -374,17 +377,17 @@ function renderFooter(doc, config, type, document) {
     doc
       .font("Helvetica")
       .fontSize(8)
-      .text(`IBAN: ${config.rib.iban}`, margin, doc.y + 12);
+      .text(`IBAN: ${rib.iban}`, margin, doc.y + 12);
 
-    if (config.rib.bic) {
-      doc.text(`BIC: ${config.rib.bic}`, margin, doc.y + 24);
+    if (rib.bic) {
+      doc.text(`BIC: ${rib.bic}`, margin, doc.y + 24);
     }
 
-    if (config.rib.bank) {
+    if (rib.bank) {
       doc.text(
-        `Banque: ${config.rib.bank}`,
+        `Banque: ${rib.bank}`,
         margin,
-        doc.y + (config.rib.bic ? 36 : 24),
+        doc.y + (rib.bic ? 36 : 24),
       );
     }
   }
@@ -393,7 +396,7 @@ function renderFooter(doc, config, type, document) {
   doc
     .fontSize(8)
     .fillColor("#64748b")
-    .text(`Page 1`, margin, pageHeight - 30, {
+    .text("Page 1", margin, pageHeight - 30, {
       align: "center",
       width: pageWidth - 2 * margin,
     });

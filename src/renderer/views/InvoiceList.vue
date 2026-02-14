@@ -146,7 +146,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, toRaw } from "vue";
 import { useRouter } from "vue-router";
 import { useDocuments } from "@/composables/useDocuments";
 
@@ -207,7 +207,8 @@ async function deleteInvoice() {
 
 async function generatePDF(invoice) {
   try {
-    const filePath = await window.electronAPI.generatePDF("factures", invoice);
+    const raw = JSON.parse(JSON.stringify(toRaw(invoice)));
+    const filePath = await window.electronAPI.generatePDF("factures", raw);
     if (filePath) {
       alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);
     }
