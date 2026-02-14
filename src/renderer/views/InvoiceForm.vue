@@ -8,7 +8,7 @@
       <div v-if="loading" class="loading">Chargement...</div>
       <div v-else-if="error" class="error">{{ error }}</div>
 
-      <form v-else @submit.prevent="handleSubmit" class="form">
+      <form v-else @submit.prevent class="form">
         <!-- Informations de la facture -->
         <section class="card">
           <h2>Informations de la facture</h2>
@@ -131,16 +131,6 @@
           </div>
         </section>
 
-        <!-- Erreurs de validation -->
-        <div v-if="validationErrors.length > 0" class="errors-list">
-          <h3>Erreurs de validation :</h3>
-          <ul>
-            <li v-for="(err, index) in validationErrors" :key="index">
-              <strong>{{ err.path }}</strong> : {{ err.message }}
-            </li>
-          </ul>
-        </div>
-
         <!-- Actions -->
         <div class="actions">
           <button type="button" @click="cancel" class="btn btn-secondary">
@@ -155,8 +145,8 @@
             Enregistrer le brouillon
           </button>
           <button
-            type="submit"
-            @click="handleGeneratePDF"
+            type="button"
+            @click="saveAndGeneratePDF"
             class="btn btn-primary"
             :disabled="saving || generatingPDF"
           >
@@ -176,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, toRaw } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import CustomerForm from "@/components/forms/CustomerForm.vue";
 import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
@@ -186,7 +176,7 @@ import { useNumbering } from "@/composables/useNumbering";
 const router = useRouter();
 const route = useRoute();
 
-const { loadOne, save, validate } = useDocuments("factures");
+const { loadOne, save } = useDocuments("factures");
 const { nextNumber, loadConfig, incrementNumber } = useNumbering("factures");
 
 const serviceLinesRef = ref(null);
@@ -231,7 +221,6 @@ const loading = ref(false);
 const saving = ref(false);
 const generatingPDF = ref(false);
 const error = ref(null);
-const validationErrors = ref([]);
 
 const isEditMode = computed(() => !!route.params.id);
 
@@ -283,18 +272,20 @@ function convertQuoteToInvoice(quote) {
   };
 }
 
-async function handleSubmit() {
-  await saveInvoice(false);
-}
-
 async function saveAsDraft() {
   invoice.value.status = "brouillon";
-  await saveInvoice(true);
+  await saveInvoice();
+  router.push("/factures");
 }
 
-async function saveInvoice(isDraft = false) {
+async function saveAndGeneratePDF() {
+  await saveInvoice();
+  await handleGeneratePDF();
+  router.push("/factures");
+}
+
+async function saveInvoice() {
   saving.value = true;
-  validationErrors.value = [];
 
   try {
     // Récupérer les totaux depuis le composant ServiceLinesTable
@@ -302,34 +293,21 @@ async function saveInvoice(isDraft = false) {
       invoice.value.totals = serviceLinesRef.value.totals;
     }
 
-    // Valider seulement si ce n'est pas un brouillon
-    if (!isDraft) {
-      const validation = await validate(invoice.value);
-      if (!validation.valid) {
-        validationErrors.value = validation.errors;
-        return;
-      }
-    }
-
-    // Formater les dates au format français pour le JSON
-    const invoiceToSave = {
-      ...invoice.value,
-      date: formatDateToFrench(invoice.value.date),
-      dueDate: formatDateToFrench(invoice.value.dueDate),
-    };
+    // Convertir le proxy réactif en objet brut pour l'IPC
+    const raw = JSON.parse(JSON.stringify(toRaw(invoice.value)));
+    raw.date = formatDateToFrench(invoice.value.date);
+    raw.dueDate = formatDateToFrench(invoice.value.dueDate);
 
     // Sauvegarder
-    await save(invoiceToSave);
+    await save(raw);
 
     // Incrémenter le compteur si nouvelle facture
     if (!isEditMode.value) {
       await incrementNumber(invoice.value.numero);
     }
-
-    // Rediriger vers la liste
-    router.push("/factures");
   } catch (err) {
     error.value = err.message || "Erreur lors de la sauvegarde";
+    throw err;
   } finally {
     saving.value = false;
   }
@@ -343,7 +321,6 @@ function formatDateToFrench(isoDate) {
 
 async function handleGeneratePDF() {
   generatingPDF.value = true;
-  validationErrors.value = [];
 
   try {
     // Récupérer les totaux depuis le composant ServiceLinesTable
@@ -351,28 +328,13 @@ async function handleGeneratePDF() {
       invoice.value.totals = serviceLinesRef.value.totals;
     }
 
-    // Valider le document avant génération
-    const validation = await validate(invoice.value);
-    if (!validation.valid) {
-      validationErrors.value = validation.errors;
-      alert(
-        "Le document contient des erreurs. Veuillez les corriger avant de générer le PDF.",
-      );
-      return;
-    }
-
-    // Formater les dates pour le PDF
-    const invoiceForPDF = {
-      ...invoice.value,
-      date: formatDateToFrench(invoice.value.date),
-      dueDate: formatDateToFrench(invoice.value.dueDate),
-    };
+    // Convertir le proxy réactif en objet brut pour l'IPC
+    const raw = JSON.parse(JSON.stringify(toRaw(invoice.value)));
+    raw.date = formatDateToFrench(invoice.value.date);
+    raw.dueDate = formatDateToFrench(invoice.value.dueDate);
 
     // Générer le PDF
-    const filePath = await window.electronAPI.generatePDF(
-      "factures",
-      invoiceForPDF,
-    );
+    const filePath = await window.electronAPI.generatePDF("factures", raw);
 
     if (filePath) {
       alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);

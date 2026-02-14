@@ -1,114 +1,255 @@
-<script setup>
-import { useRouter } from "vue-router";
-
-const router = useRouter();
-</script>
-
 <template>
   <div class="dashboard">
-    <header>
-      <h1>Tableau de bord</h1>
-    </header>
+    <div class="container">
+      <div class="header">
+        <h1>Tableau de bord</h1>
+      </div>
 
-    <div class="welcome card">
-      <h2>Bienvenue dans votre application de facturation !</h2>
-      <p>Phase 2 terminée ! Gestion complète des devis et factures.</p>
-
-      <div class="quick-actions">
-        <h3>Actions rapides</h3>
-        <div class="actions-grid">
-          <button @click="router.push('/configuration')" class="btn-primary">
-            ⚙️ Configurer l'application
-          </button>
-          <button @click="router.push('/devis/nouveau')" class="btn-primary">
-            📄 Nouveau devis
-          </button>
-          <button
-            @click="router.push('/factures/nouvelle')"
-            class="btn-primary"
-          >
-            💰 Nouvelle facture
-          </button>
+      <!-- Tableau des devis -->
+      <section class="dashboard-section">
+        <div class="section-header">
+          <h2>Devis</h2>
+          <router-link to="/devis" class="btn btn-outline btn-sm">
+            Voir tout
+          </router-link>
         </div>
-      </div>
 
-      <div class="info-box">
-        <h3>Prochaines étapes</h3>
-        <ul>
-          <li>✓ Phase 1: Structure de base et configuration</li>
-          <li>✓ Phase 2: Gestion des devis et factures</li>
-          <li>⏳ Phase 3: Export PDF</li>
-          <li>⏳ Phase 4: Intégration Chorus Pro</li>
-          <li>⏳ Phase 5: Finitions et déploiement</li>
-        </ul>
-      </div>
+        <div v-if="quotesLoading" class="loading">Chargement...</div>
+        <div v-else-if="quotesError" class="error">{{ quotesError }}</div>
+        <div v-else class="table-wrapper card">
+          <div v-if="quotes.length === 0" class="empty-state">
+            <p>Aucun devis</p>
+          </div>
+          <table v-else class="table">
+            <thead>
+              <tr>
+                <th>Numero</th>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Montant TTC</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="quote in quotes" :key="quote.id">
+                <td class="numero">{{ quote.numero }}</td>
+                <td>{{ quote.date }}</td>
+                <td class="client-name">{{ quote.customer?.customerName }}</td>
+                <td class="amount">
+                  {{ formatCurrency(quote.totals?.totalTTC) }}
+                </td>
+                <td>
+                  <span :class="['status-badge', `status-${quote.status}`]">
+                    {{ quote.status }}
+                  </span>
+                </td>
+                <td class="actions-cell">
+                  <button
+                    @click="router.push(`/devis/${quote.id}`)"
+                    class="btn-icon"
+                    title="Modifier"
+                  >
+                    ✏️
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tableau des factures -->
+      <section class="dashboard-section">
+        <div class="section-header">
+          <h2>Factures</h2>
+          <router-link to="/factures" class="btn btn-outline btn-sm">
+            Voir tout
+          </router-link>
+        </div>
+
+        <div v-if="invoicesLoading" class="loading">Chargement...</div>
+        <div v-else-if="invoicesError" class="error">{{ invoicesError }}</div>
+        <div v-else class="table-wrapper card">
+          <div v-if="invoices.length === 0" class="empty-state">
+            <p>Aucune facture</p>
+          </div>
+          <table v-else class="table">
+            <thead>
+              <tr>
+                <th>Numero</th>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Montant TTC</th>
+                <th>Echeance</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="invoice in invoices" :key="invoice.id">
+                <td class="numero">{{ invoice.numero }}</td>
+                <td>{{ invoice.date }}</td>
+                <td class="client-name">
+                  {{ invoice.customer?.customerName }}
+                </td>
+                <td class="amount">
+                  {{ formatCurrency(invoice.totals?.totalTTC) }}
+                </td>
+                <td>{{ invoice.dueDate }}</td>
+                <td>
+                  <span
+                    :class="['status-badge', `status-${invoice.status}`]"
+                  >
+                    {{ invoice.status }}
+                  </span>
+                </td>
+                <td class="actions-cell">
+                  <button
+                    @click="router.push(`/factures/${invoice.id}`)"
+                    class="btn-icon"
+                    title="Modifier"
+                  >
+                    ✏️
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
+<script setup>
+import { onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useDocuments } from "@/composables/useDocuments";
+
+const router = useRouter();
+
+const {
+  documents: quotes,
+  loading: quotesLoading,
+  error: quotesError,
+  loadAll: loadQuotes,
+} = useDocuments("devis");
+
+const {
+  documents: invoices,
+  loading: invoicesLoading,
+  error: invoicesError,
+  loadAll: loadInvoices,
+} = useDocuments("factures");
+
+const currentYear = new Date().getFullYear();
+
+onMounted(async () => {
+  await Promise.all([
+    loadQuotes({ year: currentYear }),
+    loadInvoices({ year: currentYear }),
+  ]);
+});
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  }).format(value || 0);
+}
+</script>
+
 <style lang="scss" scoped>
 @use "@/styles/colors" as *;
 @use "@/styles/variables" as *;
+@use "@/styles/mixins" as *;
 
 .dashboard {
-  padding: $spacing-xl;
+  padding: $spacing-lg;
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .header {
+    @include page-header;
+  }
 }
 
-.welcome {
-  max-width: 800px;
-  margin: 0 auto;
+.dashboard-section {
+  margin-bottom: $spacing-2xl;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
 
   h2 {
-    color: $primary-color;
-    margin-bottom: $spacing-md;
-  }
-
-  > p {
-    color: $grey-80;
-    margin-bottom: $spacing-2xl;
+    margin: 0;
   }
 }
 
-.quick-actions {
-  margin-bottom: $spacing-2xl;
-
-  h3 {
-    margin-bottom: $spacing-md;
-  }
+.btn-sm {
+  padding: $spacing-xs $spacing-md;
+  font-size: $font-size-sm;
 }
 
-.actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: $spacing-md;
+.table-wrapper {
+  overflow-x: auto;
 
-  button {
-    padding: $spacing-lg;
-    font-size: $font-size-lg;
-  }
-}
+  .table {
+    width: 100%;
+    border-collapse: collapse;
 
-.info-box {
-  background: $grey-20;
-  padding: $spacing-lg;
-  border-radius: $radius-md;
-  border-left: 4px solid $primary-color;
+    thead {
+      background-color: $grey-20;
+      border-bottom: 2px solid $grey-30;
 
-  h3 {
-    margin-bottom: $spacing-md;
-    color: $primary-color;
-  }
-
-  ul {
-    list-style: none;
-
-    li {
-      padding: $spacing-xs 0;
-      color: $grey-100;
-
-      &:first-child {
-        color: $success-color;
+      th {
+        padding: $spacing-sm $spacing-md;
+        text-align: left;
         font-weight: 600;
+        color: $grey-100;
+        font-size: $font-size-sm;
+      }
+    }
+
+    tbody {
+      tr {
+        border-bottom: 1px solid $grey-30;
+        transition: $transition-base;
+
+        &:hover {
+          background-color: $grey-50;
+        }
+
+        td {
+          padding: $spacing-sm $spacing-md;
+          color: $grey-100;
+
+          &.numero {
+            font-weight: 600;
+            font-family: monospace;
+          }
+
+          &.client-name {
+            @include truncate;
+            max-width: 300px;
+          }
+
+          &.amount {
+            font-weight: 600;
+            text-align: right;
+          }
+
+          &.actions-cell {
+            white-space: nowrap;
+          }
+        }
       }
     }
   }

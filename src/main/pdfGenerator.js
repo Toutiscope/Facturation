@@ -10,6 +10,14 @@ import { loadConfig } from "./fileManager";
  * @param {Object} document - Document à exporter
  * @returns {Promise<string>} Chemin du fichier PDF créé
  */
+/**
+ * Convertit une valeur en nombre (0 si invalide)
+ */
+function num(value) {
+  const n = parseFloat(value);
+  return isNaN(n) ? 0 : n;
+}
+
 export async function generatePDF(type, document) {
   try {
     // Charger la configuration
@@ -84,12 +92,12 @@ function renderHeader(doc, config, type, document) {
   doc
     .fontSize(10)
     .font("Helvetica-Bold")
-    .text(config.company.companyName, rightX, 50)
+    .text(config.company.companyName || "", rightX, 50)
     .font("Helvetica")
-    .text(config.company.address, rightX, 65)
-    .text(`${config.company.postalCode} ${config.company.city}`, rightX, 78)
-    .text(`SIRET: ${config.company.companyId}`, rightX, 91)
-    .text(config.company.email, rightX, 104);
+    .text(config.company.address || "", rightX, 65)
+    .text(`${config.company.postalCode || ""} ${config.company.city || ""}`, rightX, 78)
+    .text(`SIRET: ${config.company.companyId || ""}`, rightX, 91)
+    .text(config.company.email || "", rightX, 104);
 
   if (config.company.phoneNumber) {
     doc.text(config.company.phoneNumber, rightX, 117);
@@ -132,21 +140,21 @@ function renderCustomer(doc, customer) {
   doc
     .fontSize(10)
     .font("Helvetica")
-    .text(customer.customerName, margin, startY + 20)
-    .text(customer.companyName, margin, startY + 35);
+    .text(customer.customerName || "", margin, startY + 20)
+    .text(customer.companyName || "", margin, startY + 35);
 
   if (customer.companyId) {
     doc.text(`SIRET: ${customer.companyId}`, margin, startY + 50);
   }
 
   doc
-    .text(customer.address, margin, startY + (customer.companyId ? 65 : 50))
+    .text(customer.address || "", margin, startY + (customer.companyId ? 65 : 50))
     .text(
-      `${customer.postalCode} ${customer.city}`,
+      `${customer.postalCode || ""} ${customer.city || ""}`,
       margin,
       startY + (customer.companyId ? 80 : 65),
     )
-    .text(customer.email, margin, startY + (customer.companyId ? 95 : 80));
+    .text(customer.email || "", margin, startY + (customer.companyId ? 95 : 80));
 
   doc.moveDown(3);
 }
@@ -212,24 +220,24 @@ function renderServices(doc, services) {
 
     doc
       .fillColor("#1e293b")
-      .text(service.description, margin + 5, y + 8, {
+      .text(service.description || "", margin + 5, y + 8, {
         width: col1Width - 10,
         height: rowHeight - 16,
       })
-      .text(service.quantity.toString(), margin + col1Width + 5, y + 8, {
+      .text(String(num(service.quantity)), margin + col1Width + 5, y + 8, {
         width: col2Width - 10,
       })
-      .text(service.unit, margin + col1Width + col2Width + 5, y + 8, {
+      .text(service.unit || "", margin + col1Width + col2Width + 5, y + 8, {
         width: col3Width - 10,
       })
       .text(
-        `${service.unitPriceHT.toFixed(2)} €`,
+        `${num(service.unitPriceHT).toFixed(2)} €`,
         margin + col1Width + col2Width + col3Width + 5,
         y + 8,
         { width: col4Width - 10 },
       )
       .text(
-        `${service.totalHT.toFixed(2)} €`,
+        `${num(service.totalHT).toFixed(2)} €`,
         margin + col1Width + col2Width + col3Width + col4Width + 5,
         y + 8,
         { width: col5Width - 10 },
@@ -255,14 +263,14 @@ function renderTotals(doc, totals) {
     .fontSize(10)
     .font("Helvetica")
     .text("Total HT:", rightX, startY, { width: 120, align: "left" })
-    .text(`${totals.totalHT.toFixed(2)} €`, rightX + 120, startY, {
+    .text(`${num(totals.totalHT).toFixed(2)} €`, rightX + 120, startY, {
       width: 80,
       align: "right",
     });
 
   doc
     .text("TVA (0%):", rightX, startY + 20, { width: 120, align: "left" })
-    .text(`${totals.VAT.toFixed(2)} €`, rightX + 120, startY + 20, {
+    .text(`${num(totals.VAT).toFixed(2)} €`, rightX + 120, startY + 20, {
       width: 80,
       align: "right",
     });
@@ -272,7 +280,7 @@ function renderTotals(doc, totals) {
     .fontSize(12)
     .font("Helvetica-Bold")
     .text("Total TTC:", rightX, startY + 45, { width: 120, align: "left" })
-    .text(`${totals.totalTTC.toFixed(2)} €`, rightX + 120, startY + 45, {
+    .text(`${num(totals.totalTTC).toFixed(2)} €`, rightX + 120, startY + 45, {
       width: 80,
       align: "right",
     });

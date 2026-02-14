@@ -9,7 +9,7 @@
       <div v-if="loading" class="loading">Chargement...</div>
       <div v-else-if="error" class="error">{{ error }}</div>
 
-      <form v-else @submit.prevent="handleSubmit" class="form">
+      <form v-else @submit.prevent class="form">
         <div class="form__info grid grid--6-4 gap-16">
           <!-- Formulaire client -->
           <section class="card">
@@ -23,15 +23,13 @@
 
               <div class="form-row">
                 <div class="form-group">
-                  <label for="numero" class="required">Numéro</label>
+                  <label for="numero">Numéro</label>
                   <input
                     id="numero"
                     type="text"
                     v-model="quote.numero"
                     placeholder="D000001"
                     class="form-control"
-                    pattern="D\d{6}"
-                    required
                   />
                   <small class="form-text"
                     >Format conseillé&nbsp;: D suivi de 6 chiffres</small
@@ -39,26 +37,22 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="date" class="required">Date</label>
+                  <label for="date">Date</label>
                   <input
                     id="date"
                     type="date"
                     v-model="quote.date"
                     class="form-control"
-                    required
                   />
                 </div>
 
                 <div class="form-group">
-                  <label for="validityDate" class="required"
-                    >Date de validité</label
-                  >
+                  <label for="validityDate">Date de validité</label>
                   <input
                     id="validityDate"
                     type="date"
                     v-model="quote.validityDate"
                     class="form-control"
-                    required
                   />
                 </div>
               </div>
@@ -85,16 +79,6 @@
           <ServiceLinesTable ref="serviceLinesRef" v-model="quote.services" />
         </section>
 
-        <!-- Erreurs de validation -->
-        <div v-if="validationErrors.length > 0" class="errors-list">
-          <h3>Erreurs de validation :</h3>
-          <ul>
-            <li v-for="(err, index) in validationErrors" :key="index">
-              <strong>{{ err.path }}</strong> : {{ err.message }}
-            </li>
-          </ul>
-        </div>
-
         <!-- Actions -->
         <div class="actions">
           <button type="button" @click="cancel" class="btn btn-secondary">
@@ -109,8 +93,8 @@
             Enregistrer le brouillon
           </button>
           <button
-            type="submit"
-            @click="handleGeneratePDF"
+            type="button"
+            @click="saveAndGeneratePDF"
             class="btn btn-primary"
             :disabled="saving || generatingPDF"
           >
@@ -123,7 +107,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, toRaw } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import CustomerForm from "@/components/forms/CustomerForm.vue";
 import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
@@ -133,7 +117,7 @@ import { useNumbering } from "@/composables/useNumbering";
 const router = useRouter();
 const route = useRoute();
 
-const { loadOne, save, validate } = useDocuments("devis");
+const { loadOne, save } = useDocuments("devis");
 const { nextNumber, loadConfig, incrementNumber } = useNumbering("devis");
 
 const serviceLinesRef = ref(null);
@@ -170,7 +154,6 @@ const loading = ref(false);
 const saving = ref(false);
 const generatingPDF = ref(false);
 const error = ref(null);
-const validationErrors = ref([]);
 
 const isEditMode = computed(() => !!route.params.id);
 
@@ -200,19 +183,20 @@ function getValidityDate() {
   return date.toISOString().split("T")[0];
 }
 
-async function handleSubmit() {
-  await saveQuote(false);
-  await handleGeneratePDF();
-}
-
 async function saveAsDraft() {
   quote.value.status = "brouillon";
-  await saveQuote(true);
+  await saveQuote();
+  router.push("/devis");
 }
 
-async function saveQuote(isDraft = false) {
+async function saveAndGeneratePDF() {
+  await saveQuote();
+  await handleGeneratePDF();
+  router.push("/devis");
+}
+
+async function saveQuote() {
   saving.value = true;
-  validationErrors.value = [];
 
   try {
     // Récupérer les totaux depuis le composant ServiceLinesTable
@@ -220,34 +204,21 @@ async function saveQuote(isDraft = false) {
       quote.value.totals = serviceLinesRef.value.totals;
     }
 
-    // Valider seulement si ce n'est pas un brouillon
-    if (!isDraft) {
-      const validation = await validate(quote.value);
-      if (!validation.valid) {
-        validationErrors.value = validation.errors;
-        return;
-      }
-    }
-
-    // Formater les dates au format français pour le JSON
-    const quoteToSave = {
-      ...quote.value,
-      date: formatDateToFrench(quote.value.date),
-      validityDate: formatDateToFrench(quote.value.validityDate),
-    };
+    // Convertir le proxy réactif en objet brut pour l'IPC
+    const raw = JSON.parse(JSON.stringify(toRaw(quote.value)));
+    raw.date = formatDateToFrench(quote.value.date);
+    raw.validityDate = formatDateToFrench(quote.value.validityDate);
 
     // Sauvegarder
-    await save(quoteToSave);
+    await save(raw);
 
     // Incrémenter le compteur si nouveau devis
     if (!isEditMode.value) {
       await incrementNumber(quote.value.numero);
     }
-
-    // Rediriger vers la liste
-    router.push("/devis");
   } catch (err) {
     error.value = err.message || "Erreur lors de la sauvegarde";
+    throw err;
   } finally {
     saving.value = false;
   }
@@ -261,7 +232,6 @@ function formatDateToFrench(isoDate) {
 
 async function handleGeneratePDF() {
   generatingPDF.value = true;
-  validationErrors.value = [];
 
   try {
     // Récupérer les totaux depuis le composant ServiceLinesTable
@@ -269,25 +239,13 @@ async function handleGeneratePDF() {
       quote.value.totals = serviceLinesRef.value.totals;
     }
 
-    // Valider le document avant génération
-    const validation = await validate(quote.value);
-    if (!validation.valid) {
-      validationErrors.value = validation.errors;
-      alert(
-        "Le document contient des erreurs. Veuillez les corriger avant de générer le PDF.",
-      );
-      return;
-    }
-
-    // Formater les dates pour le PDF
-    const quoteForPDF = {
-      ...quote.value,
-      date: formatDateToFrench(quote.value.date),
-      validityDate: formatDateToFrench(quote.value.validityDate),
-    };
+    // Convertir le proxy réactif en objet brut pour l'IPC
+    const raw = JSON.parse(JSON.stringify(toRaw(quote.value)));
+    raw.date = formatDateToFrench(quote.value.date);
+    raw.validityDate = formatDateToFrench(quote.value.validityDate);
 
     // Générer le PDF
-    const filePath = await window.electronAPI.generatePDF("devis", quoteForPDF);
+    const filePath = await window.electronAPI.generatePDF("devis", raw);
 
     if (filePath) {
       alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);
