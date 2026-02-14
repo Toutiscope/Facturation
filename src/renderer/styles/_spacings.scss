@@ -1,0 +1,26 @@
+$sizes: 2, 4, 8, 16, 24, 32, 48, 64;
+$sides: top, right, bottom, left;
+
+@each $size in $sizes {
+  .gap-#{$size} {
+    gap: $size * 1px;
+  }
+
+  .mg-#{$size} {
+    margin: $size * 1px;
+  }
+
+  .pd-#{$size} {
+    padding: $size * 1px;
+  }
+
+  @each $side in $sides {
+    .mg-#{$side}-#{$size} {
+      margin-#{$side}: $size * 1px;
+    }
+
+    .pd-#{$side}-#{$size} {
+      padding-#{$side}: $size * 1px;
+    }
+  }
+}

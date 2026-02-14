@@ -33,7 +33,7 @@
 @mixin focus-ring($color: $primary-color) {
   outline: none;
   border-color: $color;
-  box-shadow: 0 0 0 3px rgba($color, 0.1);
+  box-shadow: 0 0 0 1px rgba($color, 0.5);
 }
 
 // Page header (titre + bouton)

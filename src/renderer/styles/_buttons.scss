@@ -3,7 +3,7 @@
 @use "variables" as *;
 
 .btn {
-  padding: $spacing-sm $spacing-lg;
+  padding: 10px 32px;
   border: none;
   border-radius: $border-radius-pill;
   font-size: $font-size-base;
@@ -52,7 +52,6 @@
 .btn-secondary {
   background: $grey-20;
   color: $grey-100;
-  border: 1px solid $grey-30;
 
   &:hover:not(:disabled) {
     background: color.scale($grey-20, $lightness: -5%);

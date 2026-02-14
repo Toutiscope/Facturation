@@ -227,13 +227,13 @@ if (localServices.value.length === 0) {
     border-radius: $border-radius-md;
 
     thead {
-      background-color: $grey-50;
+      background-color: $primary-color;
 
       th {
         padding: $spacing-sm;
         text-align: left;
+        color: $white;
         font-weight: 600;
-        color: $grey-100;
         border-bottom: 2px solid $grey-30;
         font-size: $font-size-sm;
       }
@@ -248,17 +248,12 @@ if (localServices.value.length === 0) {
         }
 
         &:hover {
-          background-color: $grey-50;
+          background-color: $grey-30;
         }
       }
 
       td {
         padding: $spacing-xs;
-
-        .form-control {
-          padding: $spacing-xs $spacing-sm;
-          font-size: $font-size-sm;
-        }
 
         &.total-cell {
           font-weight: 600;
@@ -272,14 +267,11 @@ if (localServices.value.length === 0) {
   .totals-section {
     margin-top: $spacing-lg;
     padding: $spacing-md;
-    background-color: $grey-50;
+    margin-left: auto;
     border-radius: $border-radius-md;
-    border: 1px solid $grey-30;
-
-    .totals-grid {
-      max-width: 400px;
-      margin-left: auto;
-    }
+    border: 1px solid $grey-60;
+    max-width: 400px;
+    margin-left: auto;
 
     .total-row {
       display: flex;

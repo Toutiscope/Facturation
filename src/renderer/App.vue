@@ -1,6 +1,7 @@
 <script setup>
 import { RouterView } from "vue-router";
 import { provide, ref, onMounted } from "vue";
+import MainLayout from "./components/layout/MainLayout.vue";
 import UpdateNotification from "./components/UpdateNotification.vue";
 
 const config = ref(null);
@@ -35,7 +36,9 @@ provide("config", config);
     </div>
     <template v-else>
       <UpdateNotification />
-      <RouterView />
+      <MainLayout>
+        <RouterView />
+      </MainLayout>
     </template>
   </div>
 </template>

@@ -17,6 +17,7 @@ input[type="text"],
 input[type="email"],
 input[type="tel"],
 input[type="number"],
+input[type="password"],
 input[type="date"],
 select,
 textarea,
@@ -89,9 +90,10 @@ label {
   display: flex;
   gap: $spacing-md;
   justify-content: flex-end;
-  padding-top: $spacing-lg;
-  margin-top: $spacing-lg;
-  border-top: 1px solid $grey-30;
+  padding-bottom: $spacing-lg;
+  position: sticky;
+  bottom: $spacing-md;
+  right: 0;
 }
 
 // Section de formulaire

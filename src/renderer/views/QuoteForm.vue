@@ -1,5 +1,5 @@
 <template>
-  <MainLayout class="quote-form-view">
+  <div class="quote-form-view">
     <div class="container">
       <div class="header">
         <h1>{{ isEditMode ? "Modifier le devis" : "Nouveau devis" }}</h1>
@@ -119,12 +119,11 @@
         </div>
       </form>
     </div>
-  </MainLayout>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import MainLayout from "@/components/layout/MainLayout.vue";
 import { useRouter, useRoute } from "vue-router";
 import CustomerForm from "@/components/forms/CustomerForm.vue";
 import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
@@ -306,29 +305,4 @@ function cancel() {
 }
 </script>
 
-<style scoped lang="scss">
-@use "@/styles/colors" as *;
-@use "@/styles/variables" as *;
-
-.quote-form-view {
-  .header {
-    margin-bottom: $spacing-lg;
-
-    h1 {
-      font-size: $font-size-3xl;
-      font-weight: 700;
-      color: $grey-100;
-    }
-  }
-
-  .form .card {
-    h2,
-    h3 {
-      font-size: $font-size-lg;
-      font-weight: 600;
-      margin-bottom: $spacing-md;
-      color: $grey-100;
-    }
-  }
-}
-</style>
+<style scoped lang="scss"></style>

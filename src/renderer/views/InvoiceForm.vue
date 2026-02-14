@@ -1,5 +1,5 @@
 <template>
-  <MainLayout class="invoice-form-view">
+  <div class="invoice-form-view">
     <div class="container">
       <div class="header">
         <h1>{{ isEditMode ? "Modifier la facture" : "Nouvelle facture" }}</h1>
@@ -172,12 +172,11 @@
         </div>
       </form>
     </div>
-  </MainLayout>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import MainLayout from "@/components/layout/MainLayout.vue";
 import { useRouter, useRoute } from "vue-router";
 import CustomerForm from "@/components/forms/CustomerForm.vue";
 import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
@@ -392,66 +391,42 @@ function cancel() {
 </script>
 
 <style scoped lang="scss">
-@use "@/styles/colors" as *;
 @use "@/styles/variables" as *;
+@use "@/styles/colors" as *;
 
-.invoice-form-view {
-  .header {
-    margin-bottom: $spacing-lg;
+.chorus-status {
+  margin-top: $spacing-lg;
+  padding: $spacing-md;
+  background-color: $grey-50;
+  border-radius: $border-radius-md;
+  border: 1px solid $grey-30;
 
-    h1 {
-      font-size: $font-size-3xl;
-      font-weight: 700;
+  h3 {
+    margin-bottom: $spacing-sm;
+  }
+
+  p {
+    margin-bottom: $spacing-xs;
+    font-size: $font-size-sm;
+    color: $grey-80;
+
+    strong {
       color: $grey-100;
     }
   }
 
-  .form {
-    .card {
-      h2,
-      h3 {
-        font-size: $font-size-lg;
-        font-weight: 600;
-        margin-bottom: $spacing-md;
-        color: $grey-100;
-      }
+  .errors {
+    margin-top: $spacing-sm;
+    color: $error-color;
 
-      .chorus-status {
-        margin-top: $spacing-lg;
-        padding: $spacing-md;
-        background-color: $grey-50;
-        border-radius: $border-radius-md;
-        border: 1px solid $grey-30;
+    ul {
+      list-style: disc;
+      margin-left: $spacing-md;
+      margin-top: $spacing-xs;
 
-        h3 {
-          margin-bottom: $spacing-sm;
-        }
-
-        p {
-          margin-bottom: $spacing-xs;
-          font-size: $font-size-sm;
-          color: $grey-80;
-
-          strong {
-            color: $grey-100;
-          }
-        }
-
-        .errors {
-          margin-top: $spacing-sm;
-          color: $error-color;
-
-          ul {
-            list-style: disc;
-            margin-left: $spacing-md;
-            margin-top: $spacing-xs;
-
-            li {
-              margin-bottom: $spacing-xs;
-              font-size: $font-size-sm;
-            }
-          }
-        }
+      li {
+        margin-bottom: $spacing-xs;
+        font-size: $font-size-sm;
       }
     }
   }

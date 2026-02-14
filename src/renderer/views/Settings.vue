@@ -1,7 +1,7 @@
 <template>
-  <MainLayout class="settings">
+  <div class="settings">
     <header>
-      <h1>Configuration</h1>
+      <h1>Mes paramètres</h1>
     </header>
 
     <div v-if="loading" class="loading">
@@ -9,7 +9,7 @@
       <p>Chargement de la configuration...</p>
     </div>
 
-    <form v-else @submit.prevent="saveConfig" class="settings-form card">
+    <form v-else @submit.prevent="saveConfig" class="settings-form">
       <!-- Erreur générale -->
       <div v-if="errors.general" class="errors-list">
         <h3>Erreur</h3>
@@ -18,55 +18,55 @@
 
       <!-- Message de succès -->
       <div v-if="successMessage" class="success-message">
-        ✓ {{ successMessage }}
+        {{ successMessage }}
       </div>
 
-      <!-- Section Entreprise -->
-      <section class="form-section">
-        <h2>Informations de mon entreprise</h2>
+      <div class="settings-grid grid grid--cols-3 gap-16 grid-start">
+        <!-- Section Entreprise -->
+        <section class="card settings-card">
+          <h2>Entreprise</h2>
 
-        <div class="form-group">
-          <label>Nom de l'entreprise *</label>
-          <input
-            v-model="config.company.companyName"
-            type="text"
-            :class="{ error: errors.companyName }"
-            placeholder="Ex: SARL Dupont Services"
-          />
-          <span v-if="errors.companyName" class="error-message">
-            {{ errors.companyName }}
-          </span>
-        </div>
+          <div class="form-group">
+            <label>Nom de l'entreprise *</label>
+            <input
+              v-model="config.company.companyName"
+              type="text"
+              :class="{ error: errors.companyName }"
+              placeholder="Ex: SARL Dupont Services"
+            />
+            <span v-if="errors.companyName" class="error-message">
+              {{ errors.companyName }}
+            </span>
+          </div>
 
-        <div class="form-group">
-          <label>SIRET *</label>
-          <input
-            v-model="config.company.companyId"
-            type="text"
-            :class="{ error: errors.companyId }"
-            placeholder="123 456 789 00012"
-            maxlength="14"
-          />
-          <small>14 chiffres obligatoires</small>
-          <span v-if="errors.companyId" class="error-message">
-            {{ errors.companyId }}
-          </span>
-        </div>
+          <div class="form-group">
+            <label>SIRET *</label>
+            <input
+              v-model="config.company.companyId"
+              type="text"
+              :class="{ error: errors.companyId }"
+              placeholder="123 456 789 00012"
+              maxlength="14"
+            />
+            <small>14 chiffres obligatoires</small>
+            <span v-if="errors.companyId" class="error-message">
+              {{ errors.companyId }}
+            </span>
+          </div>
 
-        <div class="form-group">
-          <label>Adresse *</label>
-          <input
-            v-model="config.company.address"
-            type="text"
-            :class="{ error: errors.address }"
-            placeholder="123 Rue Example"
-          />
-          <span v-if="errors.address" class="error-message">
-            {{ errors.address }}
-          </span>
-        </div>
+          <div class="form-group">
+            <label>Adresse *</label>
+            <input
+              v-model="config.company.address"
+              type="text"
+              :class="{ error: errors.address }"
+              placeholder="123 Rue Example"
+            />
+            <span v-if="errors.address" class="error-message">
+              {{ errors.address }}
+            </span>
+          </div>
 
-        <div class="form-row">
           <div class="form-group">
             <label>Code postal *</label>
             <input
@@ -93,9 +93,7 @@
               {{ errors.city }}
             </span>
           </div>
-        </div>
 
-        <div class="form-row">
           <div class="form-group">
             <label>Email *</label>
             <input
@@ -118,138 +116,140 @@
               placeholder="02 XX XX XX XX"
             />
           </div>
-        </div>
 
-        <div class="form-group">
-          <label>Site web (optionnel)</label>
-          <input
-            v-model="config.company.webSite"
-            type="text"
-            placeholder="https://www.exemple.fr"
-          />
-        </div>
-      </section>
-
-      <!-- Section RIB -->
-      <section class="form-section">
-        <h2>Coordonnées bancaires (optionnel)</h2>
-
-        <div class="form-group">
-          <label>IBAN</label>
-          <input
-            v-model="config.rib.iban"
-            type="text"
-            placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX"
-          />
-          <small>Sera affiché sur les factures si rempli</small>
-        </div>
-
-        <div class="form-group">
-          <label>BIC</label>
-          <input v-model="config.rib.bic" type="text" placeholder="XXXXXXXX" />
-        </div>
-
-        <div class="form-row">
           <div class="form-group">
-            <label>Titulaire du compte</label>
+            <label>Site web</label>
             <input
-              v-model="config.rib.holder"
+              v-model="config.company.webSite"
               type="text"
-              placeholder="Nom du titulaire"
+              placeholder="https://www.exemple.fr"
+            />
+          </div>
+        </section>
+
+        <!-- Section RIB -->
+        <div>
+          <section class="card settings-card">
+            <h2>Coordonnées bancaires</h2>
+
+            <div class="form-group">
+              <label>IBAN</label>
+              <input
+                v-model="config.rib.iban"
+                type="text"
+                placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX"
+              />
+              <small>Sera affiché sur les factures si rempli</small>
+            </div>
+
+            <div class="form-group">
+              <label>BIC</label>
+              <input
+                v-model="config.rib.bic"
+                type="text"
+                placeholder="XXXXXXXX"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Titulaire du compte</label>
+              <input
+                v-model="config.rib.holder"
+                type="text"
+                placeholder="Nom du titulaire"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Banque</label>
+              <input
+                v-model="config.rib.bank"
+                type="text"
+                placeholder="Nom de la banque"
+              />
+            </div>
+          </section>
+
+          <!-- Section Chorus Pro -->
+          <section class="card mg-top-16 settings-card">
+            <h2>Chorus Pro</h2>
+            <p class="section-hint">
+              Configuration pour l'envoi de factures électroniques à
+              l'administration.
+            </p>
+
+            <div class="form-group">
+              <label>Identifiant Chorus Pro</label>
+              <input
+                v-model="config.chorusPro.identifier"
+                type="text"
+                placeholder="Identifiant"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Mot de passe</label>
+              <input
+                v-model="config.chorusPro.password"
+                type="password"
+                placeholder="Mot de passe"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>API Key</label>
+              <input
+                v-model="config.chorusPro.apiKey"
+                type="text"
+                placeholder="Clé API"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>URL API</label>
+              <input
+                v-model="config.chorusPro.urlApi"
+                type="text"
+                placeholder="https://chorus-pro.gouv.fr/api/"
+              />
+            </div>
+          </section>
+        </div>
+
+        <!-- Section Facturation -->
+        <section class="card settings-card">
+          <h2>Facturation</h2>
+
+          <div class="form-group">
+            <label>Mention légale</label>
+            <textarea
+              v-model="config.billing.legalNotice"
+              rows="2"
+              placeholder="Dispensé d'immatriculation..."
+            ></textarea>
+            <small>Mention obligatoire sur tous les documents</small>
+          </div>
+
+          <div class="form-group">
+            <label>Conditions de paiement</label>
+            <input
+              v-model="config.billing.paymentTerms"
+              type="text"
+              placeholder="Paiement à 30 jours"
             />
           </div>
 
           <div class="form-group">
-            <label>Banque</label>
-            <input
-              v-model="config.rib.bank"
-              type="text"
-              placeholder="Nom de la banque"
-            />
+            <label>Pénalités de retard</label>
+            <textarea
+              v-model="config.billing.latePenalties"
+              rows="2"
+              placeholder="En cas de retard de paiement..."
+            ></textarea>
           </div>
-        </div>
-      </section>
 
-      <!-- Section Chorus Pro -->
-      <section class="form-section">
-        <h2>Chorus Pro (optionnel - Phase 4)</h2>
-        <p class="form-text">
-          Configuration pour l'envoi de factures électroniques à
-          l'administration.
-        </p>
-
-        <div class="form-group">
-          <label>Identifiant Chorus Pro</label>
-          <input
-            v-model="config.chorusPro.identifier"
-            type="text"
-            placeholder="Identifiant"
-          />
-        </div>
-
-        <div class="form-group">
-          <label>Mot de passe</label>
-          <input
-            v-model="config.chorusPro.password"
-            type="password"
-            placeholder="Mot de passe"
-          />
-        </div>
-
-        <div class="form-group">
-          <label>API Key</label>
-          <input
-            v-model="config.chorusPro.apiKey"
-            type="text"
-            placeholder="Clé API"
-          />
-        </div>
-
-        <div class="form-group">
-          <label>URL API</label>
-          <input
-            v-model="config.chorusPro.urlApi"
-            type="text"
-            placeholder="https://chorus-pro.gouv.fr/api/"
-          />
-        </div>
-      </section>
-
-      <!-- Section Facturation -->
-      <section class="form-section">
-        <h2>Paramètres de facturation</h2>
-
-        <div class="form-group">
-          <label>Mention légale</label>
-          <textarea
-            v-model="config.billing.legalNotice"
-            rows="2"
-            placeholder="Dispensé d'immatriculation..."
-          ></textarea>
-          <small>Mention obligatoire sur tous les documents</small>
-        </div>
-
-        <div class="form-group">
-          <label>Conditions de paiement</label>
-          <input
-            v-model="config.billing.paymentTerms"
-            type="text"
-            placeholder="Paiement à 30 jours"
-          />
-        </div>
-
-        <div class="form-group">
-          <label>Pénalités de retard</label>
-          <textarea
-            v-model="config.billing.latePenalties"
-            rows="2"
-            placeholder="En cas de retard de paiement..."
-          ></textarea>
-        </div>
-
-        <div class="form-row">
           <div class="form-group">
-            <label>Dernier numéro de devis</label>
+            <label>Dernier n° de devis</label>
             <input
               v-model.number="config.billing.latestQuoteNumber"
               type="number"
@@ -259,7 +259,7 @@
           </div>
 
           <div class="form-group">
-            <label>Dernier numéro de facture</label>
+            <label>Dernier n° de facture</label>
             <input
               v-model.number="config.billing.latestInvoiceNumber"
               type="number"
@@ -267,8 +267,8 @@
             />
             <small>Numérotation automatique à partir de ce numéro</small>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       <!-- Actions -->
       <div class="form-actions">
@@ -286,12 +286,11 @@
         </button>
       </div>
     </form>
-  </MainLayout>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, toRaw } from "vue";
-import MainLayout from "@/components/layout/MainLayout.vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -383,12 +382,36 @@ async function saveConfig() {
 
 .settings {
   padding: $spacing-xl;
-  max-width: 1000px;
-  margin: 0 auto;
+}
+
+.settings-card {
+  margin-bottom: 0;
+
+  h2 {
+    font-size: $font-size-lg;
+    margin-bottom: $spacing-md;
+  }
+
+  .section-hint {
+    font-size: $font-size-sm;
+    color: $grey-60;
+    margin-top: -$spacing-sm;
+    margin-bottom: $spacing-lg;
+  }
 }
 
 .settings-form {
-  margin-top: $spacing-xl;
+  margin-top: $spacing-sm;
+
+  > .errors-list,
+  > .success-message {
+    margin-bottom: $spacing-lg;
+  }
+
+  > .form-actions {
+    margin-top: $spacing-lg;
+    border-top: none;
+  }
 }
 
 .loading {
