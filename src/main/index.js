@@ -21,12 +21,12 @@ function createWindow() {
     minWidth: 1200,
     minHeight: 700,
     webPreferences: {
-      preload: path.join(__dirname, "../preload/index.js"),
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false, // Nécessaire pour electron-store
     },
-    icon: path.join(__dirname, "../../build/icon.ico"),
+    icon: path.join(__dirname, "../build/icon.ico"),
   });
 
   // Développement vs Production
@@ -34,7 +34,7 @@ function createWindow() {
     mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../../dist/index.html"));
+    mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }
 
   mainWindow.on("closed", () => {

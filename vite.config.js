@@ -18,13 +18,24 @@ export default defineConfig({
       {
         entry: path.resolve(__dirname, "src/preload/index.js"),
         onstart: (options) => {
-          options.renderer = false; // ⚡ important : preload ne doit pas être bundlé côté renderer
+          options.reload();
+        },
+        vite: {
+          build: {
+            rollupOptions: {
+              output: {
+                entryFileNames: "preload.js",
+              },
+            },
+          },
         },
       },
     ]),
 
     renderer(), // rend le preload API disponible côté renderer
   ],
+
+  root: path.resolve(__dirname, "src/renderer"),
 
   resolve: {
     alias: {
@@ -35,11 +46,8 @@ export default defineConfig({
   base: "./",
 
   build: {
-    outDir: "dist",
+    outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
-    rollupOptions: {
-      input: path.resolve(__dirname, "src/renderer/index.html"),
-    },
   },
 
   server: {
