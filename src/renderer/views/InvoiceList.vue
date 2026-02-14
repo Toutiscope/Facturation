@@ -268,30 +268,30 @@ function formatCurrency(value) {
       border-collapse: collapse;
 
       thead {
-        background-color: $bg-secondary;
-        border-bottom: 2px solid $border-color;
+        background-color: $grey-20;
+        border-bottom: 2px solid $grey-30;
 
         th {
           padding: $spacing-sm $spacing-md;
           text-align: left;
           font-weight: 600;
-          color: $text-primary;
+          color: $grey-100;
           font-size: $font-size-sm;
         }
       }
 
       tbody {
         tr {
-          border-bottom: 1px solid $border-color;
+          border-bottom: 1px solid $grey-30;
           transition: $transition-base;
 
           &:hover {
-            background-color: $gray-50;
+            background-color: $grey-50;
           }
 
           td {
             padding: $spacing-sm $spacing-md;
-            color: $text-primary;
+            color: $grey-100;
 
             &.numero {
               font-weight: 600;

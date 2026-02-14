@@ -402,7 +402,7 @@ function cancel() {
     h1 {
       font-size: $font-size-3xl;
       font-weight: 700;
-      color: $text-primary;
+      color: $grey-100;
     }
   }
 
@@ -413,15 +413,15 @@ function cancel() {
         font-size: $font-size-lg;
         font-weight: 600;
         margin-bottom: $spacing-md;
-        color: $text-primary;
+        color: $grey-100;
       }
 
       .chorus-status {
         margin-top: $spacing-lg;
         padding: $spacing-md;
-        background-color: $gray-50;
+        background-color: $grey-50;
         border-radius: $border-radius-md;
-        border: 1px solid $border-color;
+        border: 1px solid $grey-30;
 
         h3 {
           margin-bottom: $spacing-sm;
@@ -430,10 +430,10 @@ function cancel() {
         p {
           margin-bottom: $spacing-xs;
           font-size: $font-size-sm;
-          color: $text-secondary;
+          color: $grey-80;
 
           strong {
-            color: $text-primary;
+            color: $grey-100;
           }
         }
 

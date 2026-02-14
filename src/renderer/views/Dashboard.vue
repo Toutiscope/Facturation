@@ -1,7 +1,7 @@
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRouter } from "vue-router";
 
-const router = useRouter()
+const router = useRouter();
 </script>
 
 <template>
@@ -23,7 +23,10 @@ const router = useRouter()
           <button @click="router.push('/devis/nouveau')" class="btn-primary">
             📄 Nouveau devis
           </button>
-          <button @click="router.push('/factures/nouvelle')" class="btn-primary">
+          <button
+            @click="router.push('/factures/nouvelle')"
+            class="btn-primary"
+          >
             💰 Nouvelle facture
           </button>
         </div>
@@ -44,8 +47,8 @@ const router = useRouter()
 </template>
 
 <style lang="scss" scoped>
-@use '@/styles/colors' as *;
-@use '@/styles/variables' as *;
+@use "@/styles/colors" as *;
+@use "@/styles/variables" as *;
 
 .dashboard {
   padding: $spacing-xl;
@@ -61,7 +64,7 @@ const router = useRouter()
   }
 
   > p {
-    color: $text-secondary;
+    color: $grey-80;
     margin-bottom: $spacing-2xl;
   }
 }
@@ -86,7 +89,7 @@ const router = useRouter()
 }
 
 .info-box {
-  background: $bg-secondary;
+  background: $grey-20;
   padding: $spacing-lg;
   border-radius: $radius-md;
   border-left: 4px solid $primary-color;
@@ -101,7 +104,7 @@ const router = useRouter()
 
     li {
       padding: $spacing-xs 0;
-      color: $text-primary;
+      color: $grey-100;
 
       &:first-child {
         color: $success-color;

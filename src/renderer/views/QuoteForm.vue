@@ -317,7 +317,7 @@ function cancel() {
     h1 {
       font-size: $font-size-3xl;
       font-weight: 700;
-      color: $text-primary;
+      color: $grey-100;
     }
   }
 
@@ -327,7 +327,7 @@ function cancel() {
       font-size: $font-size-lg;
       font-weight: 600;
       margin-bottom: $spacing-md;
-      color: $text-primary;
+      color: $grey-100;
     }
   }
 }

@@ -1,5 +1,5 @@
-@use 'colors' as *;
-@use 'variables' as *;
+@use "colors" as *;
+@use "variables" as *;
 
 // Flexbox helpers
 @mixin flex-center {
@@ -16,8 +16,7 @@
 
 // Card
 @mixin card {
-  background: $bg-primary;
-  border: 1px solid $border-color;
+  background: $white;
   border-radius: $border-radius-md;
   padding: $spacing-lg;
   box-shadow: $shadow-sm;
@@ -47,7 +46,7 @@
   h1 {
     font-size: $font-size-3xl;
     font-weight: 700;
-    color: $text-primary;
+    color: $grey-100;
   }
 }
 
@@ -62,7 +61,7 @@
 @mixin spinner($size: 50px, $border-width: 4px) {
   width: $size;
   height: $size;
-  border: $border-width solid $border-color;
+  border: $border-width solid $grey-30;
   border-top-color: $primary-color;
   border-radius: 50%;
   animation: spin 1s linear infinite;

@@ -1,25 +1,25 @@
 <script setup>
-import { RouterView } from 'vue-router'
-import { provide, ref, onMounted } from 'vue'
-import UpdateNotification from './components/UpdateNotification.vue'
+import { RouterView } from "vue-router";
+import { provide, ref, onMounted } from "vue";
+import UpdateNotification from "./components/UpdateNotification.vue";
 
-const config = ref(null)
-const loading = ref(true)
-const error = ref(null)
+const config = ref(null);
+const loading = ref(true);
+const error = ref(null);
 
 onMounted(async () => {
   try {
-    config.value = await window.electronAPI.loadConfig()
+    config.value = await window.electronAPI.loadConfig();
   } catch (err) {
-    console.error('Failed to load config:', err)
-    error.value = err.message
+    console.error("Failed to load config:", err);
+    error.value = err.message;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-})
+});
 
 // Fournir la config globalement via provide/inject
-provide('config', config)
+provide("config", config);
 </script>
 
 <template>
@@ -41,9 +41,9 @@ provide('config', config)
 </template>
 
 <style lang="scss">
-@use '@/styles/colors' as *;
-@use '@/styles/variables' as *;
-@use '@/styles/mixins' as *;
+@use "@/styles/colors" as *;
+@use "@/styles/variables" as *;
+@use "@/styles/mixins" as *;
 
 #app {
   width: 100%;
@@ -54,7 +54,7 @@ provide('config', config)
     flex-direction: column;
     height: 100vh;
     font-size: $font-size-2xl;
-    color: $text-secondary;
+    color: $grey-80;
   }
 
   > .loading .loading-spinner {
@@ -66,7 +66,6 @@ provide('config', config)
     flex-direction: column;
     height: 100vh;
     padding: $spacing-xl;
-    text-align: center;
     color: $error-color;
   }
 }

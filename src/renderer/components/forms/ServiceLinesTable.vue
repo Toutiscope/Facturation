@@ -104,109 +104,114 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch } from "vue";
 
 const props = defineProps({
   modelValue: {
     type: Array,
     required: true,
-    default: () => []
-  }
-})
+    default: () => [],
+  },
+});
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 
-const localServices = ref([...props.modelValue])
+const localServices = ref([...props.modelValue]);
 
 // Synchroniser les changements du parent
-watch(() => props.modelValue, (newValue) => {
-  localServices.value = [...newValue]
-}, { deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    localServices.value = [...newValue];
+  },
+  { deep: true },
+);
 
 // Calculer les totaux
 const totals = computed(() => {
   const totalHT = localServices.value.reduce((sum, service) => {
-    return sum + (service.totalHT || 0)
-  }, 0)
+    return sum + (service.totalHT || 0);
+  }, 0);
 
   // Pour les micro-entrepreneurs, TVA = 0
-  const VATRate = 0
-  const VAT = 0
-  const totalTTC = totalHT + VAT
+  const VATRate = 0;
+  const VAT = 0;
+  const totalTTC = totalHT + VAT;
 
   return {
     totalHT: Math.round(totalHT * 100) / 100,
     VAT: Math.round(VAT * 100) / 100,
     VATRate,
-    totalTTC: Math.round(totalTTC * 100) / 100
-  }
-})
+    totalTTC: Math.round(totalTTC * 100) / 100,
+  };
+});
 
 // Exposer les totaux pour le parent
-defineExpose({ totals })
+defineExpose({ totals });
 
 function updateService(index) {
-  const service = localServices.value[index]
+  const service = localServices.value[index];
 
   // Calculer automatiquement le total HT
-  const quantity = parseFloat(service.quantity) || 0
-  const unitPrice = parseFloat(service.unitPriceHT) || 0
-  service.totalHT = Math.round(quantity * unitPrice * 100) / 100
+  const quantity = parseFloat(service.quantity) || 0;
+  const unitPrice = parseFloat(service.unitPriceHT) || 0;
+  service.totalHT = Math.round(quantity * unitPrice * 100) / 100;
 
-  emitUpdate()
+  emitUpdate();
 }
 
 function addLine() {
-  const newId = localServices.value.length > 0
-    ? Math.max(...localServices.value.map(s => s.id)) + 1
-    : 1
+  const newId =
+    localServices.value.length > 0
+      ? Math.max(...localServices.value.map((s) => s.id)) + 1
+      : 1;
 
   localServices.value.push({
     id: newId,
-    description: '',
+    description: "",
     quantity: 1,
-    unit: 'heure',
+    unit: "heure",
     unitPriceHT: 0,
-    totalHT: 0
-  })
+    totalHT: 0,
+  });
 
-  emitUpdate()
+  emitUpdate();
 }
 
 function removeLine(index) {
   if (localServices.value.length > 1) {
-    localServices.value.splice(index, 1)
-    emitUpdate()
+    localServices.value.splice(index, 1);
+    emitUpdate();
   }
 }
 
 function emitUpdate() {
-  emit('update:modelValue', [...localServices.value])
+  emit("update:modelValue", [...localServices.value]);
 }
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(value || 0)
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  }).format(value || 0);
 }
 
 // Initialiser avec une ligne vide si nécessaire
 if (localServices.value.length === 0) {
-  addLine()
+  addLine();
 }
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/colors' as *;
-@use '@/styles/variables' as *;
+@use "@/styles/colors" as *;
+@use "@/styles/variables" as *;
 
 .services-table {
   h3 {
     font-size: $font-size-lg;
     font-weight: 600;
     margin-bottom: $spacing-md;
-    color: $text-primary;
+    color: $grey-100;
   }
 
   .table-wrapper {
@@ -218,32 +223,32 @@ if (localServices.value.length === 0) {
     width: 100%;
     border-collapse: collapse;
     background: $white;
-    border: 1px solid $border-color;
+    border: 1px solid $grey-30;
     border-radius: $border-radius-md;
 
     thead {
-      background-color: $gray-50;
+      background-color: $grey-50;
 
       th {
         padding: $spacing-sm;
         text-align: left;
         font-weight: 600;
-        color: $text-primary;
-        border-bottom: 2px solid $border-color;
+        color: $grey-100;
+        border-bottom: 2px solid $grey-30;
         font-size: $font-size-sm;
       }
     }
 
     tbody {
       tr {
-        border-bottom: 1px solid $border-color;
+        border-bottom: 1px solid $grey-30;
 
         &:last-child {
           border-bottom: none;
         }
 
         &:hover {
-          background-color: $gray-50;
+          background-color: $grey-50;
         }
       }
 
@@ -267,9 +272,9 @@ if (localServices.value.length === 0) {
   .totals-section {
     margin-top: $spacing-lg;
     padding: $spacing-md;
-    background-color: $gray-50;
+    background-color: $grey-50;
     border-radius: $border-radius-md;
-    border: 1px solid $border-color;
+    border: 1px solid $grey-30;
 
     .totals-grid {
       max-width: 400px;
@@ -284,18 +289,18 @@ if (localServices.value.length === 0) {
 
       .total-label {
         font-weight: 500;
-        color: $text-secondary;
+        color: $grey-80;
       }
 
       .total-value {
         font-weight: 600;
-        color: $text-primary;
+        color: $grey-100;
       }
 
       &.total-ttc {
         margin-top: $spacing-sm;
         padding-top: $spacing-sm;
-        border-top: 2px solid $border-color;
+        border-top: 2px solid $grey-30;
         font-size: $font-size-lg;
 
         .total-label,
@@ -310,7 +315,7 @@ if (localServices.value.length === 0) {
       margin-top: $spacing-sm;
       font-size: $font-size-sm;
       font-style: italic;
-      color: $text-secondary;
+      color: $grey-80;
       text-align: right;
     }
   }

@@ -170,7 +170,7 @@ function handleClientTypeChange() {
     font-size: $font-size-lg;
     font-weight: 600;
     margin-bottom: $spacing-md;
-    color: $text-primary;
+    color: $grey-100;
   }
 
   .form-row {

@@ -50,7 +50,7 @@ const handleClick = (value) => {
   align-items: center;
   border-radius: $spacing-sm;
   border: none;
-  background: $gray-10;
+  background: $grey-10;
   display: flex;
   gap: $spacing-xs;
   padding: $spacing-xs;
@@ -66,7 +66,7 @@ const handleClick = (value) => {
   width: -webkit-fill-available;
 
   &:hover {
-    background: $gray-20;
+    background: $grey-20;
   }
 
   &:active,

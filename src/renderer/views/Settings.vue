@@ -45,7 +45,7 @@
             type="text"
             :class="{ error: errors.companyId }"
             placeholder="123 456 789 00012"
-            maxlength="17"
+            maxlength="14"
           />
           <small>14 chiffres obligatoires</small>
           <span v-if="errors.companyId" class="error-message">
@@ -114,6 +114,7 @@
             <input
               v-model="config.company.phoneNumber"
               type="tel"
+              maxlength="10"
               placeholder="02 XX XX XX XX"
             />
           </div>
@@ -145,11 +146,7 @@
 
         <div class="form-group">
           <label>BIC</label>
-          <input
-            v-model="config.rib.bic"
-            type="text"
-            placeholder="XXXXXXXX"
-          />
+          <input v-model="config.rib.bic" type="text" placeholder="XXXXXXXX" />
         </div>
 
         <div class="form-row">
@@ -177,7 +174,8 @@
       <section class="form-section">
         <h2>Chorus Pro (optionnel - Phase 4)</h2>
         <p class="form-text">
-          Configuration pour l'envoi de factures électroniques à l'administration.
+          Configuration pour l'envoi de factures électroniques à
+          l'administration.
         </p>
 
         <div class="form-group">
@@ -274,11 +272,17 @@
 
       <!-- Actions -->
       <div class="form-actions">
-        <button type="button" @click="router.push('/')" class="btn btn-secondary">
+        <button
+          type="button"
+          @click="router.push('/')"
+          class="btn btn-secondary"
+        >
           Annuler
         </button>
         <button type="submit" :disabled="saving" class="btn btn-primary">
-          {{ saving ? 'Sauvegarde en cours...' : 'Sauvegarder la configuration' }}
+          {{
+            saving ? "Sauvegarde en cours..." : "Sauvegarder la configuration"
+          }}
         </button>
       </div>
     </form>
@@ -286,94 +290,96 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import MainLayout from '@/components/layout/MainLayout.vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, toRaw } from "vue";
+import MainLayout from "@/components/layout/MainLayout.vue";
+import { useRouter } from "vue-router";
 
-const router = useRouter()
-const loading = ref(true)
-const saving = ref(false)
-const config = ref(null)
-const errors = ref({})
-const successMessage = ref('')
+const router = useRouter();
+const loading = ref(true);
+const saving = ref(false);
+const config = ref(null);
+const errors = ref({});
+const successMessage = ref("");
 
 onMounted(async () => {
   try {
-    config.value = await window.electronAPI.loadConfig()
+    config.value = await window.electronAPI.loadConfig();
   } catch (error) {
-    console.error('Failed to load config:', error)
-    errors.value.general = 'Impossible de charger la configuration'
+    console.error("Failed to load config:", error);
+    errors.value.general = "Impossible de charger la configuration";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-})
+});
 
 function validateForm() {
-  errors.value = {}
+  errors.value = {};
 
   // Validation entreprise
   if (!config.value.company.companyName) {
-    errors.value.companyName = 'Nom de l\'entreprise requis'
+    errors.value.companyName = "Nom de l'entreprise requis";
   }
 
   if (!config.value.company.companyId) {
-    errors.value.companyId = 'SIRET requis'
-  } else if (!/^\d{14}$/.test(config.value.company.companyId.replace(/\s/g, ''))) {
-    errors.value.companyId = 'SIRET invalide (14 chiffres requis)'
+    errors.value.companyId = "SIRET requis";
+  } else if (
+    !/^\d{14}$/.test(config.value.company.companyId.replace(/\s/g, ""))
+  ) {
+    errors.value.companyId = "SIRET invalide (14 chiffres requis)";
   }
 
   if (!config.value.company.address) {
-    errors.value.address = 'Adresse requise'
+    errors.value.address = "Adresse requise";
   }
 
   if (!config.value.company.postalCode) {
-    errors.value.postalCode = 'Code postal requis'
+    errors.value.postalCode = "Code postal requis";
   } else if (!/^\d{5}$/.test(config.value.company.postalCode)) {
-    errors.value.postalCode = 'Code postal invalide (5 chiffres)'
+    errors.value.postalCode = "Code postal invalide (5 chiffres)";
   }
 
   if (!config.value.company.city) {
-    errors.value.city = 'Ville requise'
+    errors.value.city = "Ville requise";
   }
 
   if (!config.value.company.email) {
-    errors.value.email = 'Email requis'
+    errors.value.email = "Email requis";
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.value.company.email)) {
-    errors.value.email = 'Email invalide'
+    errors.value.email = "Email invalide";
   }
 
-  return Object.keys(errors.value).length === 0
+  return Object.keys(errors.value).length === 0;
 }
 
 async function saveConfig() {
-  // if (!validateForm()) {
-  //   window.scrollTo({ top: 0, behavior: 'smooth' })
-  //   return
-  // }
+  if (!validateForm()) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
 
-  saving.value = true
-  successMessage.value = ''
+  saving.value = true;
+  successMessage.value = "";
 
   try {
-    await window.electronAPI.saveConfig(config.value)
-    successMessage.value = 'Configuration sauvegardée avec succès !'
+    await window.electronAPI.saveConfig(toRaw(config.value));
+    successMessage.value = "Configuration sauvegardée avec succès !";
 
     setTimeout(() => {
-      router.push('/')
-    }, 1500)
+      router.push("/");
+    }, 1500);
   } catch (error) {
-    console.error('Failed to save config:', error)
-    errors.value.general = 'Erreur lors de la sauvegarde: ' + error.message
+    console.error("Failed to save config:", error);
+    errors.value.general = "Erreur lors de la sauvegarde: " + error.message;
   } finally {
-    saving.value = false
+    saving.value = false;
   }
 }
 </script>
 
 <style lang="scss" scoped>
-@use '@/styles/colors' as *;
-@use '@/styles/variables' as *;
-@use '@/styles/mixins' as *;
+@use "@/styles/colors" as *;
+@use "@/styles/variables" as *;
+@use "@/styles/mixins" as *;
 
 .settings {
   padding: $spacing-xl;

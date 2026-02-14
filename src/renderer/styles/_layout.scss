@@ -1,7 +1,7 @@
 @use "sass:color";
-@use 'colors' as *;
-@use 'variables' as *;
-@use 'mixins' as *;
+@use "colors" as *;
+@use "variables" as *;
+@use "mixins" as *;
 
 .container {
   padding: $spacing-xl;
@@ -91,8 +91,8 @@ $sizes: 2, 4, 8, 16, 24, 32, 48, 64;
 // États de chargement et erreur
 .loading {
   @include state-box;
-  background-color: $bg-secondary;
-  color: $text-secondary;
+  background-color: $grey-20;
+  color: $grey-80;
 }
 
 .error {
@@ -110,7 +110,7 @@ $sizes: 2, 4, 8, 16, 24, 32, 48, 64;
 .empty-state {
   text-align: center;
   padding: $spacing-2xl;
-  color: $text-secondary;
+  color: $grey-80;
 
   p {
     margin-bottom: $spacing-md;
@@ -144,12 +144,12 @@ $sizes: 2, 4, 8, 16, 24, 32, 48, 64;
     font-size: $font-size-xl;
     font-weight: 600;
     margin-bottom: $spacing-md;
-    color: $text-primary;
+    color: $grey-100;
   }
 
   p {
     margin-bottom: $spacing-sm;
-    color: $text-secondary;
+    color: $grey-80;
 
     &.warning {
       color: $error-color;
@@ -157,7 +157,7 @@ $sizes: 2, 4, 8, 16, 24, 32, 48, 64;
     }
 
     strong {
-      color: $text-primary;
+      color: $grey-100;
       font-weight: 600;
     }
   }

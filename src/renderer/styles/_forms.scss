@@ -1,6 +1,6 @@
-@use 'colors' as *;
-@use 'variables' as *;
-@use 'mixins' as *;
+@use "colors" as *;
+@use "variables" as *;
+@use "mixins" as *;
 
 .form-group {
   margin-bottom: $spacing-md;
@@ -22,12 +22,12 @@ select,
 textarea,
 .form-control {
   width: 100%;
-  padding: $spacing-sm;
-  border: 1px solid $border-color;
-  border-radius: $border-radius-sm;
+  padding: 12px 8px;
+  border: none;
+  border-radius: 8px;
   font-size: $font-size-base;
-  background: $bg-primary;
-  color: $text-primary;
+  background: $grey-10;
+  color: $grey-100;
   transition: $transition-base;
 
   &:focus {
@@ -35,7 +35,7 @@ textarea,
   }
 
   &:disabled {
-    background: $bg-secondary;
+    background: $grey-20;
     cursor: not-allowed;
     opacity: 0.6;
   }
@@ -64,7 +64,7 @@ label {
   display: block;
   margin-top: $spacing-xs;
   font-size: $font-size-sm;
-  color: $text-secondary;
+  color: $grey-80;
 }
 
 // Messages d'erreur et de succès
@@ -91,14 +91,14 @@ label {
   justify-content: flex-end;
   padding-top: $spacing-lg;
   margin-top: $spacing-lg;
-  border-top: 1px solid $border-color;
+  border-top: 1px solid $grey-30;
 }
 
 // Section de formulaire
 .form-section {
   margin-bottom: $spacing-xl;
   padding-bottom: $spacing-xl;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 1px solid $grey-30;
 
   &:last-of-type {
     border-bottom: none;
@@ -106,15 +106,15 @@ label {
 
   h2 {
     font-size: $font-size-xl;
-    color: $text-primary;
+    color: $grey-100;
     margin-bottom: $spacing-lg;
     padding-bottom: $spacing-sm;
-    border-bottom: 2px solid $border-color;
+    border-bottom: 2px solid $grey-30;
   }
 
   h3 {
     font-size: $font-size-lg;
-    color: $text-primary;
+    color: $grey-100;
     margin-bottom: $spacing-md;
   }
 }
