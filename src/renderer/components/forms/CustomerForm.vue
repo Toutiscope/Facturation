@@ -10,11 +10,7 @@
 
     <div class="form-row">
       <div class="form-group">
-        <label
-          for="customerName"
-          :class="{ required: localCustomer.clientType !== 'professionnel' }"
-          >Nom du client</label
-        >
+        <label for="customerName">Nom du client</label>
         <input
           id="customerName"
           type="text"
@@ -22,7 +18,6 @@
           @input="emitUpdate"
           placeholder="Nom et prénom"
           class="form-control"
-          :required="localCustomer.clientType !== 'professionnel'"
         />
       </div>
 
@@ -30,7 +25,7 @@
         v-if="localCustomer.clientType === 'professionnel'"
         class="form-group"
       >
-        <label for="companyName" :class="required">Nom de l'entreprise</label>
+        <label for="companyName">Nom de l'entreprise</label>
         <input
           id="companyName"
           type="text"
@@ -38,13 +33,12 @@
           @input="emitUpdate"
           placeholder="Raison sociale"
           class="form-control"
-          :required="localCustomer.clientType === 'professionnel'"
         />
       </div>
     </div>
 
     <div class="form-group" v-if="localCustomer.clientType === 'professionnel'">
-      <label for="companyId" class="required">SIRET</label>
+      <label for="companyId">SIRET</label>
       <input
         id="companyId"
         type="text"
@@ -52,14 +46,13 @@
         @input="emitUpdate"
         placeholder="123 456 789 00012"
         class="form-control"
-        :required="localCustomer.clientType === 'professionnel'"
         maxlength="17"
       />
       <small class="form-text">Format: 14 chiffres (espaces optionnels)</small>
     </div>
 
     <div class="form-group">
-      <label for="address" class="required">Adresse</label>
+      <label for="address">Adresse</label>
       <input
         id="address"
         type="text"
@@ -67,13 +60,12 @@
         @input="emitUpdate"
         placeholder="123 Rue Example"
         class="form-control"
-        required
       />
     </div>
 
     <div class="form-row">
       <div class="form-group">
-        <label for="postalCode" class="required">Code postal</label>
+        <label for="postalCode">Code postal</label>
         <input
           id="postalCode"
           type="text"
@@ -83,12 +75,11 @@
           class="form-control"
           pattern="\d{5}"
           maxlength="5"
-          required
         />
       </div>
 
       <div class="form-group">
-        <label for="city" class="required">Ville</label>
+        <label for="city">Ville</label>
         <input
           id="city"
           type="text"
@@ -96,7 +87,6 @@
           @input="emitUpdate"
           placeholder="Nantes"
           class="form-control"
-          required
         />
       </div>
     </div>

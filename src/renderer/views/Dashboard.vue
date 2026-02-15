@@ -1,20 +1,25 @@
 <template>
   <div class="dashboard">
     <div class="container">
-      <div class="header">
+      <div
+        class="header flex flex-space-between flex-vertical-center mg-bottom-16"
+      >
         <h1>Tableau de bord</h1>
+        <router-link
+          to="/devis/nouveau"
+          class="btn btn-primary mg-left-auto mg-right-16"
+        >
+          + Nouveau devis
+        </router-link>
+        <router-link to="/factures/nouvelle" class="btn btn-primary">
+          + Nouvelle facture
+        </router-link>
       </div>
 
       <!-- Tableau des devis -->
       <section class="dashboard-section">
         <div class="section-header">
           <h2>Derniers devis</h2>
-          <router-link
-            to="/devis/nouveau"
-            class="btn btn-primary btn-sm mg-left-auto mg-right-16"
-          >
-            Nouveau devis
-          </router-link>
           <router-link to="/devis" class="btn btn-outline btn-sm">
             Voir tout
           </router-link>
@@ -37,12 +42,6 @@
       <section class="dashboard-section">
         <div class="section-header">
           <h2>Dernières factures</h2>
-          <router-link
-            to="/factures/nouvelle"
-            class="btn btn-primary btn-sm mg-left-auto mg-right-16"
-          >
-            Nouvelle facture
-          </router-link>
           <router-link to="/factures" class="btn btn-outline btn-sm">
             Voir tout
           </router-link>
@@ -50,7 +49,7 @@
 
         <div v-if="invoicesLoading" class="loading">Chargement...</div>
         <div v-else-if="invoicesError" class="error">{{ invoicesError }}</div>
-        <div v-else class="table-wrapper card">
+        <div v-else class="table-wrapper">
           <div v-if="invoices.length === 0" class="empty-state">
             <p>Aucune facture</p>
           </div>
