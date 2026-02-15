@@ -60,94 +60,33 @@
       <div v-else-if="error" class="error">{{ error }}</div>
 
       <!-- Tableau des devis -->
-      <div v-else class="table-wrapper card">
-        <div v-if="documents.length === 0" class="empty-state">
-          <p>Aucun devis trouvé</p>
+      <QuoteTable
+        v-else
+        :quotes="documents"
+        @edit="edit"
+        @convert="convertToInvoice"
+        @status-change="updateStatus"
+        @delete="deleteQuote"
+      >
+        <template #empty>
           <button @click="createNew" class="btn btn-secondary">
             Créer votre premier devis
           </button>
-        </div>
-
-        <table v-else class="table">
-          <thead>
-            <tr>
-              <th>Numéro</th>
-              <th>Date</th>
-              <th>Client</th>
-              <th>Montant TTC</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="quote in documents"
-              :key="quote.id"
-              class="pointer"
-              @click="edit(quote.id)"
-            >
-              <td class="numero">{{ quote.numero }}</td>
-              <td>{{ quote.date }}</td>
-              <td class="client-name">{{ quote.customer.customerName }}</td>
-              <td class="amount">
-                {{ formatCurrency(quote.totals.totalTTC) }}
-              </td>
-              <td>
-                <span :class="['status-badge', `status-${quote.status}`]">
-                  {{ quote.status }}
-                </span>
-              </td>
-              <td class="actions-cell">
-                <div class="flex flex-vertical-center flex-space-between gap-4">
-                  <button
-                    @click="convertToInvoice(quote)"
-                    class="btn btn-primary btn-sm"
-                  >
-                    Convertir en facture
-                  </button>
-                  <button
-                    @click="confirmDelete(quote)"
-                    class="btn-icon btn-danger"
-                    title="Supprimer"
-                  >
-                    <svg
-                      height="24"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 640 640"
-                    >
-                      <path
-                        fill="#244b63"
-                        d="M262.2 48c-13.3 0-25.3 8.3-30 20.8L216 112h-96c-13.3 0-24 10.7-24 24s10.7 24 24 24h400c13.3 0 24-10.7 24-24s-10.7-24-24-24h-96l-16.2-43.2c-4.7-12.5-16.6-20.8-30-20.8H262.2zM128 208v304c0 35.3 28.7 64 64 64h256c35.3 0 64-28.7 64-64V208h-48v304c0 8.8-7.2 16-16 16H192c-8.8 0-16-7.2-16-16V208h-48zm160 72c0-13.3-10.7-24-24-24s-24 10.7-24 24v176c0 13.3 10.7 24 24 24s24-10.7 24-24V280zm112 0c0-13.3-10.7-24-24-24s-24 10.7-24 24v176c0 13.3 10.7 24 24 24s24-10.7 24-24V280z"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        </template>
+      </QuoteTable>
     </div>
-
-    <ConfirmModal
-      :visible="showDeleteModal"
-      @cancel="cancelDelete"
-      @confirm="deleteQuote"
-    >
-      Êtes-vous sûr de vouloir supprimer le devis
-      <strong>{{ quoteToDelete?.numero }}</strong> ?
-    </ConfirmModal>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, toRaw } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDocuments } from "@/composables/useDocuments";
-import ConfirmModal from "@/components/common/ConfirmModal.vue";
+import QuoteTable from "@/components/tables/QuoteTable.vue";
 
 const router = useRouter();
-const { documents, loading, error, loadAll, remove } = useDocuments("devis");
+const { documents, loading, error, loadAll, save, remove } =
+  useDocuments("devis");
 
 const currentYear = new Date().getFullYear();
 const filters = ref({
@@ -155,9 +94,6 @@ const filters = ref({
   status: "",
   year: currentYear,
 });
-
-const showDeleteModal = ref(false);
-const quoteToDelete = ref(null);
 
 onMounted(async () => {
   await applyFilters();
@@ -185,46 +121,22 @@ function convertToInvoice(quote) {
   router.push("/factures/nouvelle");
 }
 
-function confirmDelete(quote) {
-  quoteToDelete.value = quote;
-  showDeleteModal.value = true;
-}
-
-function cancelDelete() {
-  quoteToDelete.value = null;
-  showDeleteModal.value = false;
-}
-
-async function deleteQuote() {
-  if (!quoteToDelete.value) return;
-
+async function updateStatus(quote, status) {
   try {
-    await remove(quoteToDelete.value.id);
-    showDeleteModal.value = false;
-    quoteToDelete.value = null;
+    const raw = JSON.parse(JSON.stringify(quote));
+    raw.status = status;
+    await save(raw);
+  } catch (err) {
+    console.error("Failed to update quote status:", err);
+  }
+}
+
+async function deleteQuote(id) {
+  try {
+    await remove(id);
   } catch (err) {
     console.error("Failed to delete quote:", err);
   }
-}
-
-async function generatePDF(quote) {
-  try {
-    const raw = JSON.parse(JSON.stringify(toRaw(quote)));
-    const filePath = await window.electronAPI.generatePDF("devis", raw);
-    if (filePath) {
-      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);
-    }
-  } catch (err) {
-    console.error("Failed to generate PDF:", err);
-    alert(`Erreur lors de la génération du PDF : ${err.message}`);
-  }
-}
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value || 0);
 }
 </script>
 

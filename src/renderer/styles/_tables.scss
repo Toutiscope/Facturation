@@ -8,7 +8,6 @@ table {
   background: $white;
   box-shadow: $shadow-md;
   border-radius: $radius-md;
-  overflow: hidden;
 
   thead {
     background: $grey-20;
@@ -46,8 +45,6 @@ table {
 }
 
 .table-wrapper {
-  overflow-x: auto;
-
   .table {
     width: 100%;
     border-collapse: collapse;

@@ -170,7 +170,7 @@
             class="btn btn-outline"
             :disabled="saving"
           >
-            Enregistrer le brouillon
+            Sauvegarder
           </button>
           <button
             type="button"
