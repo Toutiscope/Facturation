@@ -266,7 +266,11 @@ onMounted(async () => {
       // Mode édition : charger la facture existante
       loading.value = true;
       const existingInvoice = await loadOne(route.params.id);
-      invoice.value = { ...existingInvoice };
+      invoice.value = {
+        ...existingInvoice,
+        date: formatDateToISO(existingInvoice.date),
+        dueDate: formatDateToISO(existingInvoice.dueDate),
+      };
     } else {
       // Mode création : vérifier si conversion depuis devis
       const quoteToConvert = sessionStorage.getItem("quoteToConvert");
@@ -353,6 +357,13 @@ function formatDateToFrench(isoDate) {
   if (isoDate.includes("/")) return isoDate;
   const [year, month, day] = isoDate.split("-");
   return `${day}/${month}/${year}`;
+}
+
+function formatDateToISO(frenchDate) {
+  if (!frenchDate) return "";
+  if (frenchDate.includes("-")) return frenchDate;
+  const [day, month, year] = frenchDate.split("/");
+  return `${year}-${month}-${day}`;
 }
 
 async function handleGeneratePDF() {

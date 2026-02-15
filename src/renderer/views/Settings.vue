@@ -106,6 +106,15 @@
           </div>
 
           <div class="form-group">
+            <label>Nom et prénom du dirigeant</label>
+            <input
+              v-model="config.company.ownerName"
+              type="text"
+              placeholder="Jean Dupont"
+            />
+          </div>
+
+          <div class="form-group">
             <label>SIRET *</label>
             <input
               v-model="config.company.companyId"
@@ -118,6 +127,16 @@
             <span v-if="errors.companyId" class="error-message">
               {{ errors.companyId }}
             </span>
+          </div>
+
+          <div class="form-group">
+            <label>Adresse du siège social</label>
+            <input
+              v-model="config.company.registeredAddress"
+              type="text"
+              placeholder="123 Rue Example, 44000 Nantes"
+            />
+            <small>Apparaît en pied de page des documents</small>
           </div>
 
           <div class="form-group">
@@ -225,15 +244,6 @@
                 placeholder="Nom du titulaire"
               />
             </div>
-
-            <div class="form-group">
-              <label>Banque</label>
-              <input
-                v-model="config.rib.bank"
-                type="text"
-                placeholder="Nom de la banque"
-              />
-            </div>
           </section>
 
           <!-- Section Chorus Pro -->
@@ -304,6 +314,16 @@
                 type="text"
                 placeholder="Paiement à 30 jours"
               />
+            </div>
+
+            <div class="form-group">
+              <label>Moyens de règlement</label>
+              <input
+                v-model="config.billing.meansOfPayment"
+                type="text"
+                placeholder="Virement bancaire, chèque"
+              />
+              <small>Affiché sur les devis</small>
             </div>
 
             <div class="form-group">

@@ -5,6 +5,7 @@
 Application desktop Electron pour la création, gestion et conformité de devis et factures selon la réglementation française 2027 pour Entrepreneur Individuel en prestation de services.
 
 **Stack technique :**
+
 - Electron (desktop app Windows)
 - Vue.js 3 (Composition API)
 - SCSS (pas de framework CSS)
@@ -18,6 +19,7 @@ Application desktop Electron pour la création, gestion et conformité de devis 
 ## Objectifs de l'application
 
 ### Fonctionnalités principales
+
 1. **Création de devis** avec numérotation automatique modifiable
 2. **Création de factures** avec numérotation automatique modifiable
 3. **Export PDF** des devis et factures
@@ -29,6 +31,7 @@ Application desktop Electron pour la création, gestion et conformité de devis 
 9. **Configuration utilisateur** via interface (pas de manipulation JSON manuelle)
 
 ### Non-fonctionnalités (pour l'instant)
+
 - Envoi d'emails
 - Gestion de clients (base de données clients)
 - Multi-devises (EUR uniquement)
@@ -76,6 +79,7 @@ facturation/
 ### Stockage des données
 
 **Structure du fichier `data/config.json` (données sensibles de l'utilisateur) :**
+
 ```json
 {
   "company": {
@@ -91,8 +95,7 @@ facturation/
   "rib": {
     "iban": "FR76 XXXX XXXX XXXX XXXX XXXX XXX",
     "bic": "XXXXXXXX",
-    "holder": "Nom du titulaire",
-    "bank": "Nom de la banque"
+    "holder": "Nom du titulaire"
   },
   "chorusPro": {
     "identifier": "",
@@ -111,6 +114,7 @@ facturation/
 ```
 
 **Structure d'un devis/facture (ex: D2027-001.json) :**
+
 ```json
 {
   "id": "000875",
@@ -135,15 +139,15 @@ facturation/
       "description": "Développement site web",
       "quantity": 40,
       "unit": "heure|pièce",
-      "unitPriceHT": 65.00,
-      "totalHT": 2600.00
+      "unitPriceHT": 65.0,
+      "totalHT": 2600.0
     }
   ],
   "totals": {
-    "totalHT": 2600.00,
-    "VAT": 0.00,
+    "totalHT": 2600.0,
+    "VAT": 0.0,
     "VATRate": 0,
-    "totalTTC": 2600.00
+    "totalTTC": 2600.0
   },
   "notes": "Notes internes",
   "createdAt": "2027-01-15T10:30:00Z",
@@ -152,6 +156,7 @@ facturation/
 ```
 
 **Structure d'une facture (similaire au devis + champs spécifiques) :**
+
 ```json
 {
   // ... mêmes champs que devis
@@ -176,15 +181,17 @@ facturation/
 ### 1. Numérotation automatique
 
 **Règles :**
+
 - Format devis à 6 chiffres : `D{NUMERO}` (ex: D000001, D9856523...)
 - Format factures : `F{NUMERO}` (ex: F000025, F025684...)
 - Le champ doit être **pré-rempli mais éditable** par l'utilisateur
 - À la sauvegarde, mettre à jour `dernierNumeroDevis` ou `dernierNumeroFacture` dans config.json
 
 **Comportement :**
+
 ```javascript
 // Proposition automatique
-const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStart(6, '0')}`;
+const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStart(6, "0")}`;
 
 // L'utilisateur peut modifier avant sauvegarde
 // Si validation OK → sauvegarder et incrémenter le compteur
@@ -195,14 +202,15 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 **Pour Entrepreneur Individuel en prestation de services :**
 
 **Mentions obligatoires sur TOUS les documents :**
+
 - Nom et prénom de l'entrepreneur
 - Adresse du siège social
 - SIRET
 - Email
 - Téléphone
-- Mention "Dispensé d'immatriculation au registre du commerce..."
 
 **Mentions spécifiques aux factures :**
+
 - Numéro de facture unique et séquentiel
 - Date de la facture
 - Date d'échéance
@@ -220,6 +228,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 - Indemnité forfaitaire pour frais de recouvrement (40€)
 
 **L'application doit :**
+
 - Vérifier la présence de tous ces champs avant export PDF ou envoi Chorus Pro
 - Afficher des alertes claires si des champs sont manquants
 - Bloquer l'envoi/export si validation échoue
@@ -228,6 +237,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 ### 3. Intégration Chorus Pro
 
 **API Chorus Pro :**
+
 - Documentation officielle : https://developer.chorus-pro.gouv.fr/
 - Authentification : OAuth2 ou API Key (selon API disponible)
 - Format de facture : **Factur-X** (PDF + XML embarqué) recommandé pour compatibilité
@@ -235,6 +245,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 **Fonctionnalités à implémenter :**
 
 #### A. Envoi de factures
+
 ```javascript
 // Processus :
 // 1. Générer le Factur-X (PDF/A-3 + XML CII)
@@ -246,10 +257,12 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 ```
 
 **Boutons dans l'interface :**
+
 - **"Envoyer à Chorus Pro"** : envoi direct via API
 - **"Exporter Factur-X"** : téléchargement du fichier pour envoi manuel
 
 #### B. Réception de factures
+
 ```javascript
 // Processus :
 // 1. Récupérer la liste des factures reçues via API
@@ -260,12 +273,14 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 ```
 
 **Interface de réception :**
+
 - Onglet "Factures reçues"
 - Tableau avec colonnes : Date, Émetteur, Numéro, Montant, Statut
 - Boutons : "Enregistrer", "Télécharger PDF", "Envoyer à Chorus Pro"
 - Filtres : date, statut, émetteur
 
 #### C. Validation pré-envoi
+
 - Vérifier conformité du XML CII
 - Vérifier mentions obligatoires
 - Vérifier format des données (SIRET valide, IBAN valide si présent, etc.)
@@ -276,6 +291,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 **Bibliothèque recommandée : PDFKit ou jsPDF**
 
 **Design du PDF :**
+
 - En-tête avec logo et infos entreprise
 - Titre "DEVIS" ou "FACTURE" bien visible
 - Numéro et date
@@ -286,6 +302,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 - RIB (optionnel, configurable)
 
 **Export Factur-X :**
+
 - PDF/A-3 (conforme archivage électronique)
 - XML CII embarqué (norme Cross Industry Invoice)
 - Bibliothèque : `facturx-js` ou équivalent
@@ -293,6 +310,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 ### 5. Auto-update
 
 **Utiliser electron-updater :**
+
 - Vérifier les nouvelles versions au démarrage
 - Télécharger en arrière-plan
 - Afficher notification "Mise à jour disponible"
@@ -300,15 +318,18 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 - Redémarrage après installation
 
 **Configuration :**
+
 ```json
 // package.json
 {
   "build": {
-    "publish": [{
-      "provider": "github",
-      "owner": "votre-username",
-      "repo": "Facturation"
-    }]
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "votre-username",
+        "repo": "Facturation"
+      }
+    ]
   }
 }
 ```
@@ -343,6 +364,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
    - Validation des champs (SIRET, IBAN, email, etc.)
 
 **Formulaire de création/édition devis/facture :**
+
 - Champs auto-remplis depuis config.json (infos entreprise)
 - Numéro pré-rempli (éditable)
 - Date (pré-remplie à aujourd'hui)
@@ -356,6 +378,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 - Boutons : Enregistrer brouillon, Valider et générer PDF, Envoyer Chorus Pro (factures uniquement)
 
 **Design SCSS :**
+
 - Variables pour couleurs, espacements
 - Layout responsive (même si Windows uniquement, bonne pratique)
 - Thème professionnel sobre (bleu/gris par exemple)
@@ -421,6 +444,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 ## Configuration de développement
 
 **package.json scripts :**
+
 ```json
 {
   "scripts": {
@@ -432,6 +456,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 ```
 
 **Dependencies principales :**
+
 - electron
 - vue (v3)
 - electron-updater
@@ -442,6 +467,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 - Validation : validator.js ou zod
 
 **DevDependencies :**
+
 - @vitejs/plugin-vue
 - vite
 - electron-builder
@@ -452,6 +478,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 ## Livrables attendus
 
 ### Phase 1 : Structure de base
+
 - [ ] Setup Electron + Vue 3 + SCSS
 - [ ] Structure de dossiers
 - [ ] IPC de base
@@ -459,6 +486,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 - [ ] Page Configuration fonctionnelle
 
 ### Phase 2 : Gestion documents
+
 - [ ] Création/édition devis
 - [ ] Création/édition factures
 - [ ] Stockage JSON
@@ -467,16 +495,19 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 - [ ] Validation mentions obligatoires
 
 ### Phase 3 : Export PDF
+
 - [ ] Génération PDF design professionnel
 - [ ] Export Factur-X
 
 ### Phase 4 : Chorus Pro
+
 - [ ] Intégration API
 - [ ] Envoi factures
 - [ ] Réception factures
 - [ ] Validation pré-envoi
 
 ### Phase 5 : Finitions
+
 - [ ] Auto-update
 - [ ] Tests utilisateur
 - [ ] Documentation utilisateur

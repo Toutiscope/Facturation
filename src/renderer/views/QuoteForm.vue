@@ -189,7 +189,11 @@ onMounted(async () => {
       // Mode édition : charger le devis existant
       loading.value = true;
       const existingQuote = await loadOne(route.params.id);
-      quote.value = { ...existingQuote };
+      quote.value = {
+        ...existingQuote,
+        date: formatDateToISO(existingQuote.date),
+        validityDate: formatDateToISO(existingQuote.validityDate),
+      };
     } else {
       // Mode création : numéro auto
       quote.value.numero = nextNumber.value;
@@ -253,6 +257,13 @@ function formatDateToFrench(isoDate) {
   if (isoDate.includes("/")) return isoDate;
   const [year, month, day] = isoDate.split("-");
   return `${day}/${month}/${year}`;
+}
+
+function formatDateToISO(frenchDate) {
+  if (!frenchDate) return "";
+  if (frenchDate.includes("-")) return frenchDate;
+  const [day, month, year] = frenchDate.split("/");
+  return `${year}-${month}-${day}`;
 }
 
 async function handleGeneratePDF() {

@@ -1,8 +1,10 @@
 {
   "company": {
     "companyName": "",
+    "ownerName": "",
     "companyId": "",
     "logo": "",
+    "registeredAddress": "",
     "address": "",
     "postalCode": "",
     "city": "",
@@ -11,10 +13,9 @@
     "webSite": ""
   },
   "rib": {
-    "iban": "",
-    "bic": "",
-    "holder": "",
-    "bank": ""
+    "iban": "FR7665449878987898789878987",
+    "bic": "AGFDGTFF854",
+    "holder": "Quentin Bouquin"
   },
   "chorusPro": {
     "identifier": "",
@@ -23,8 +24,9 @@
     "urlApi": "https://chorus-pro.gouv.fr/api/"
   },
   "billing": {
-    "legalNotice": "Dispensé d'immatriculation au registre du commerce et des sociétés (RCS) et au répertoire des métiers (RM).",
+    "legalNotice": "",
     "paymentTerms": "Paiement à 30 jours",
+    "meansOfPayment": "Virement bancaire, chèque",
     "latePenalties": "En cas de retard de paiement, application de pénalités de retard au taux de 10% par an et d'une indemnité forfaitaire pour frais de recouvrement de 40€.",
     "latestQuoteNumber": 0,
     "latestInvoiceNumber": 0,

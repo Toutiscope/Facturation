@@ -14,6 +14,39 @@ function num(value) {
 }
 
 /**
+ * Formate un numéro de téléphone français : 06 12 34 56 78
+ */
+function formatPhone(phone) {
+  if (!phone) return "";
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) {
+    return digits.replace(/(\d{2})(?=\d)/g, "$1 ").trim();
+  }
+  return phone;
+}
+
+/**
+ * Formate un SIRET : 123 456 789 00012
+ */
+function formatSiret(siret) {
+  if (!siret) return "";
+  const digits = siret.replace(/\D/g, "");
+  if (digits.length === 14) {
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 9)} ${digits.slice(9)}`;
+  }
+  return siret;
+}
+
+/**
+ * Formate un IBAN : FR76 1234 5678 9012 3456 7890 123
+ */
+function formatIban(iban) {
+  if (!iban) return "";
+  const clean = iban.replace(/\s/g, "");
+  return clean.replace(/(.{4})(?=.)/g, "$1 ");
+}
+
+/**
  * Génère un PDF pour un devis ou une facture
  * @param {string} type - 'devis' ou 'factures'
  * @param {Object} document - Document à exporter
@@ -58,12 +91,11 @@ export async function generatePDF(type, document) {
     doc.pipe(stream);
 
     // Rendre le contenu
-    renderHeader(doc, company, type, document);
-    renderCustomer(doc, document.customer || {});
+    renderHeader(doc, company, type, document, document.customer || {});
     renderObjet(doc, document.object);
     renderServices(doc, document.services || []);
     renderTotals(doc, document.totals || {});
-    renderFooter(doc, billing, rib, type);
+    renderFooter(doc, company, billing, rib, type);
 
     // Finaliser le PDF
     doc.end();
@@ -83,123 +115,162 @@ export async function generatePDF(type, document) {
 }
 
 /**
- * Rendre l'en-tête du document
+ * Rendre l'en-tête du document (2 colonnes)
+ * Gauche : logo + infos entreprise
+ * Droite : type de document, numéro, dates, infos client
  */
-function renderHeader(doc, company, type, document) {
+function renderHeader(doc, company, type, document, customer) {
   const pageWidth = doc.page.width;
   const margin = doc.page.margins.left;
+  const colWidth = (pageWidth - 2 * margin) / 2;
+  const rightX = margin + colWidth + 20;
+  const topY = 50;
 
-  // Titre du document (DEVIS ou FACTURE)
-  doc
-    .fontSize(24)
-    .font("Helvetica-Bold")
-    .text(type === "devis" ? "DEVIS" : "FACTURE", margin, 50, {
-      align: "left",
-    });
+  // ========== COLONNE GAUCHE : Logo + Entreprise ==========
+  let leftY = topY;
 
-  // Logo + informations entreprise (à droite)
-  const rightX = pageWidth - 250;
-  let companyInfoY = 50;
-  let hasLogo = false;
-
+  // Logo
   try {
     if (fs.existsSync(paths.LOGO_PATH)) {
       const logoBuffer = fs.readFileSync(paths.LOGO_PATH);
-      doc.image(logoBuffer, rightX, 50, { fit: [60, 60] });
-      companyInfoY = 118;
-      hasLogo = true;
+      doc.image(logoBuffer, margin, leftY, { fit: [70, 70] });
+      leftY += 80;
     }
   } catch (err) {
     log.warn("Could not load logo for PDF:", err.message);
   }
 
+  // Nom entreprise
   doc
-    .fontSize(10)
+    .fontSize(11)
     .font("Helvetica-Bold")
-    .text(company.companyName || "", rightX, companyInfoY)
-    .font("Helvetica")
-    .text(company.address || "", rightX, companyInfoY + 15)
-    .text(
-      `${company.postalCode || ""} ${company.city || ""}`,
-      rightX,
-      companyInfoY + 28,
-    )
-    .text(`SIRET: ${company.companyId || ""}`, rightX, companyInfoY + 41)
-    .text(company.email || "", rightX, companyInfoY + 54);
+    .fillColor("#1e293b")
+    .text(company.companyName || "", margin, leftY, { width: colWidth });
+  leftY += 16;
 
-  if (company.phoneNumber) {
-    doc.text(company.phoneNumber, rightX, companyInfoY + 67);
+  // Adresse
+  doc.fontSize(9).font("Helvetica");
+  if (company.address) {
+    doc.text(company.address, margin, leftY, { width: colWidth });
+    leftY += 13;
+  }
+  if (company.postalCode || company.city) {
+    doc.text(
+      `${company.postalCode || ""} ${company.city || ""}`,
+      margin,
+      leftY,
+      { width: colWidth },
+    );
+    leftY += 13;
   }
 
-  // Numéro et dates
-  const numberY = hasLogo ? 195 : 140;
+  // SIRET
+  if (company.companyId) {
+    doc.text(`SIRET : ${formatSiret(company.companyId)}`, margin, leftY, {
+      width: colWidth,
+    });
+    leftY += 13;
+  }
+
+  // Contact
+  if (company.email) {
+    doc.text(company.email, margin, leftY, { width: colWidth });
+    leftY += 13;
+  }
+  if (company.phoneNumber) {
+    doc.text(formatPhone(company.phoneNumber), margin, leftY, {
+      width: colWidth,
+    });
+    leftY += 13;
+  }
+
+  // ========== COLONNE DROITE : Document + Client ==========
+  let rightY = topY;
+  const rightColWidth = colWidth - 20;
+
+  // Titre DEVIS / FACTURE
+  doc
+    .fontSize(22)
+    .font("Helvetica-Bold")
+    .fillColor("#1e293b")
+    .text(type === "devis" ? "DEVIS" : "FACTURE", rightX, rightY, {
+      width: rightColWidth,
+    });
+  rightY += 30;
+
+  // Numéro
   doc
     .fontSize(12)
     .font("Helvetica-Bold")
-    .text(`N° ${document.numero || ""}`, margin, numberY)
-    .font("Helvetica")
-    .fontSize(10)
-    .text(`Date: ${document.date || ""}`, margin, numberY + 18);
+    .text(`N° ${document.numero || ""}`, rightX, rightY, {
+      width: rightColWidth,
+    });
+  rightY += 20;
 
+  // Date
+  doc.fontSize(10).font("Helvetica");
+  doc.text(`Date : ${document.date || ""}`, rightX, rightY, {
+    width: rightColWidth,
+  });
+  rightY += 14;
+
+  // Date de validité / échéance
   if (type === "devis") {
     doc.text(
-      `Valable jusqu'au: ${document.validityDate || ""}`,
-      margin,
-      numberY + 33,
+      `Valable jusqu'au : ${document.validityDate || ""}`,
+      rightX,
+      rightY,
+      { width: rightColWidth },
     );
   } else {
-    doc.text(`Échéance: ${document.dueDate || ""}`, margin, numberY + 33);
+    doc.text(`Échéance : ${document.dueDate || ""}`, rightX, rightY, {
+      width: rightColWidth,
+    });
+  }
+  rightY += 25;
+
+  doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b");
+  if (customer.customerName) {
+    doc.text(customer.customerName, rightX, rightY, { width: rightColWidth });
+    rightY += 14;
+  }
+  if (customer.companyName && customer.companyName !== customer.customerName) {
+    doc.text(customer.companyName, rightX, rightY, { width: rightColWidth });
+    rightY += 14;
   }
 
-  // Ligne de séparation
-  const separatorY = hasLogo ? 245 : 200;
-  doc
-    .moveTo(margin, separatorY)
-    .lineTo(pageWidth - margin, separatorY)
-    .strokeColor("#e2e8f0")
-    .stroke();
-
-  doc.y = separatorY + 10;
-  doc.moveDown(1);
-}
-
-/**
- * Rendre les informations client
- */
-function renderCustomer(doc, customer) {
-  const margin = doc.page.margins.left;
-  const startY = doc.y + 10;
-
-  doc.fontSize(12).font("Helvetica-Bold").text("CLIENT", margin, startY);
-
-  doc
-    .fontSize(10)
-    .font("Helvetica")
-    .text(customer.customerName || "", margin, startY + 20)
-    .text(customer.companyName || "", margin, startY + 35);
-
+  doc.font("Helvetica");
   if (customer.companyId) {
-    doc.text(`SIRET: ${customer.companyId}`, margin, startY + 50);
+    doc.text(`SIRET : ${formatSiret(customer.companyId)}`, rightX, rightY, {
+      width: rightColWidth,
+    });
+    rightY += 13;
   }
-
-  let y = startY + (customer.companyId ? 65 : 50);
-
-  doc.text(customer.address || "", margin, y);
-  y += 15;
-  doc.text(`${customer.postalCode || ""} ${customer.city || ""}`, margin, y);
-  y += 15;
-
+  if (customer.address) {
+    doc.text(customer.address, rightX, rightY, { width: rightColWidth });
+    rightY += 13;
+  }
+  if (customer.postalCode || customer.city) {
+    doc.text(
+      `${customer.postalCode || ""} ${customer.city || ""}`,
+      rightX,
+      rightY,
+      { width: rightColWidth },
+    );
+    rightY += 13;
+  }
   if (customer.email) {
-    doc.text(customer.email, margin, y);
-    y += 15;
+    doc.text(customer.email, rightX, rightY, { width: rightColWidth });
+    rightY += 13;
   }
-
   if (customer.phoneNumber) {
-    doc.text(`Tél: ${customer.phoneNumber}`, margin, y);
-    y += 15;
+    doc.text(`Tél : ${formatPhone(customer.phoneNumber)}`, rightX, rightY, {
+      width: rightColWidth,
+    });
+    rightY += 13;
   }
 
-  doc.moveDown(3);
+  doc.y = Math.max(leftY, rightY) + 10;
 }
 
 /**
@@ -213,7 +284,7 @@ function renderObjet(doc, object) {
   doc
     .fontSize(11)
     .font("Helvetica-Bold")
-    .text("Objet :", margin, doc.y + 10);
+    .text("Prestation de service :", margin, doc.y + 10);
 
   doc
     .fontSize(10)
@@ -237,8 +308,8 @@ function renderServices(doc, services) {
   // Colonnes du tableau
   const col1Width = tableWidth * 0.4; // Description
   const col2Width = tableWidth * 0.12; // Quantité
-  const col3Width = tableWidth * 0.18; // Unité
-  const col4Width = tableWidth * 0.15; // P.U. HT
+  const col3Width = tableWidth * 0.15; // Unité
+  const col4Width = tableWidth * 0.18; // P.U. HT
   const col5Width = tableWidth * 0.15; // Total HT
 
   // En-têtes du tableau
@@ -246,32 +317,56 @@ function renderServices(doc, services) {
 
   let y = tableTop;
 
+  // Positions X des séparateurs verticaux (entre chaque colonne)
+  const colSeparators = [
+    margin + col1Width,
+    margin + col1Width + col2Width,
+    margin + col1Width + col2Width + col3Width,
+    margin + col1Width + col2Width + col3Width + col4Width,
+  ];
+
+  function drawVerticalSeparators(rowY, rowHeight) {
+    doc.strokeColor("#e2e8f0");
+    for (const x of colSeparators) {
+      doc
+        .moveTo(x, rowY)
+        .lineTo(x, rowY + rowHeight)
+        .stroke();
+    }
+  }
+
   // Dessiner les en-têtes
-  doc.rect(margin, y, tableWidth, 25).fillAndStroke("#f8fafc", "#e2e8f0");
+  const headerHeight = 25;
+  doc
+    .rect(margin, y, tableWidth, headerHeight)
+    .fillAndStroke("#f8fafc", "#e2e8f0");
+  drawVerticalSeparators(y, headerHeight);
 
   doc
     .fillColor("#1e293b")
     .text("Description", margin + 5, y + 8, { width: col1Width - 10 })
-    .text("Quantité", margin + col1Width + 5, y + 8, { width: col2Width - 10 })
+    .text("Quantité", margin + col1Width + 5, y + 8, {
+      width: col2Width - 10,
+      align: "right",
+    })
     .text("Unité", margin + col1Width + col2Width + 5, y + 8, {
       width: col3Width - 10,
+      align: "right",
     })
     .text(
       "Prix Unitaire HT",
       margin + col1Width + col2Width + col3Width + 5,
       y + 8,
-      {
-        width: col4Width - 10,
-      },
+      { width: col4Width - 10, align: "right" },
     )
     .text(
       "Total HT",
       margin + col1Width + col2Width + col3Width + col4Width + 5,
       y + 8,
-      { width: col5Width - 10 },
+      { width: col5Width - 10, align: "right" },
     );
 
-  y += 25;
+  y += headerHeight;
 
   // Lignes du tableau
   doc.font("Helvetica");
@@ -288,6 +383,7 @@ function renderServices(doc, services) {
         .rect(margin, y, tableWidth, rowHeight)
         .fillAndStroke("#f8fafc", "#e2e8f0");
     }
+    drawVerticalSeparators(y, rowHeight);
 
     doc
       .fillColor("#1e293b")
@@ -297,21 +393,23 @@ function renderServices(doc, services) {
       })
       .text(String(num(service.quantity)), margin + col1Width + 5, y + 8, {
         width: col2Width - 10,
+        align: "right",
       })
       .text(service.unit || "", margin + col1Width + col2Width + 5, y + 8, {
         width: col3Width - 10,
+        align: "right",
       })
       .text(
         `${num(service.unitPriceHT).toFixed(2)} €`,
         margin + col1Width + col2Width + col3Width + 5,
         y + 8,
-        { width: col4Width - 10 },
+        { width: col4Width - 10, align: "right" },
       )
       .text(
         `${num(service.totalHT).toFixed(2)} €`,
         margin + col1Width + col2Width + col3Width + col4Width + 5,
         y + 8,
-        { width: col5Width - 10 },
+        { width: col5Width - 10, align: "right" },
       );
 
     y += rowHeight;
@@ -367,101 +465,139 @@ function renderTotals(doc, totals) {
     });
 
   doc.fillColor("#1e293b");
-  doc.y = startY + 100;
+  doc.y = startY + 30;
 }
 
 /**
- * Rendre le pied de page avec mentions légales
+ * Rendre le pied de page avec mentions légales et identité entreprise
  */
-function renderFooter(doc, billing, rib, type) {
+function renderFooter(doc, company, billing, rib, type) {
   const margin = doc.page.margins.left;
   const pageWidth = doc.page.width;
   const pageHeight = doc.page.height;
-  const footerTop = pageHeight - 180;
+  const contentWidth = pageWidth - 2 * margin;
 
-  // S'assurer qu'on est assez bas dans la page
-  if (doc.y > footerTop - 20) {
-    doc.addPage();
-  } else {
-    doc.y = footerTop;
+  // Hauteur réservée pour le bandeau identité en bas de page
+  const identityHeight = 40;
+  const identityY = pageHeight - margin - identityHeight;
+
+  // Calculer la hauteur du contenu footer (mentions, RIB, etc.)
+  let footerContentHeight = 5;
+  if (type === "devis") footerContentHeight += 15;
+  if (type === "devis" && billing.meansOfPayment) footerContentHeight += 15;
+  if (type === "factures" && billing.paymentTerms) footerContentHeight += 30;
+  if (type === "factures" && billing.latePenalties) footerContentHeight += 30;
+  if (billing.legalNotice) footerContentHeight += 25;
+  if (rib.iban) footerContentHeight += 50;
+
+  // Mention bon pour accord (pour devis)
+  if (type === "devis") {
+    doc
+      .fontSize(11)
+      .font("Helvetica")
+      .fillColor("#1e293b")
+      .text(
+        "Devis à retourner signé avec la mention « BON POUR ACCORD » pour valider le devis et lancer la commande en production.",
+        margin,
+        doc.y,
+        { width: contentWidth },
+      );
+    doc.y += 15;
   }
 
-  // Ligne de séparation
-  doc
-    .moveTo(margin, doc.y)
-    .lineTo(pageWidth - margin, doc.y)
-    .strokeColor("#e2e8f0")
-    .stroke();
+  // Si le contenu + footer ne tiennent pas, ajouter une page
+  const footerStartY = identityY - footerContentHeight;
+  if (doc.y > footerStartY - 10) {
+    doc.addPage();
+  }
 
-  doc.moveDown(1);
+  // Positionner le footer juste au-dessus du bandeau identité
+  doc.y = footerStartY;
+
+  // Moyens de règlement (pour devis)
+  if (type === "devis" && billing.meansOfPayment) {
+    doc
+      .fontSize(9)
+      .font("Helvetica-Bold")
+      .fillColor("#1e293b")
+      .text("Moyens de règlement :", margin, doc.y, { width: contentWidth });
+    doc.font("Helvetica").text(billing.meansOfPayment, margin, doc.y + 12, {
+      width: contentWidth,
+    });
+    doc.y += 30;
+  }
 
   // Conditions de paiement (pour factures)
   if (type === "factures" && billing.paymentTerms) {
     doc
       .fontSize(9)
       .font("Helvetica-Bold")
-      .text("Conditions de paiement:", margin, doc.y)
+      .fillColor("#1e293b")
+      .text("Conditions de paiement :", margin, doc.y, { width: contentWidth });
+    doc
       .font("Helvetica")
-      .text(billing.paymentTerms, margin, doc.y + 12, {
-        width: pageWidth - 2 * margin,
-      });
-
-    doc.moveDown(0.5);
+      .text(billing.paymentTerms, margin, doc.y + 12, { width: contentWidth });
+    doc.y += 30;
   }
 
   // Pénalités de retard (pour factures)
   if (type === "factures" && billing.latePenalties) {
     doc
-      .fontSize(9)
+      .fontSize(8)
       .font("Helvetica")
       .fillColor("#64748b")
-      .text(billing.latePenalties, margin, doc.y, {
-        width: pageWidth - 2 * margin,
-      });
-
-    doc.moveDown(0.5);
+      .text(billing.latePenalties, margin, doc.y, { width: contentWidth });
+    doc.y += 30;
   }
 
   // Mention légale
   if (billing.legalNotice) {
     doc
       .fontSize(8)
+      .font("Helvetica")
       .fillColor("#64748b")
-      .text(billing.legalNotice, margin, doc.y, {
-        width: pageWidth - 2 * margin,
-      });
-
-    doc.moveDown(1);
+      .text(billing.legalNotice, margin, doc.y, { width: contentWidth });
+    doc.y += 25;
   }
 
   // RIB si configuré
-  if (rib.iban) {
+  if (type === "factures" && rib.iban) {
     doc
       .fontSize(9)
       .font("Helvetica-Bold")
       .fillColor("#1e293b")
-      .text("Coordonnées bancaires:", margin, doc.y);
-
-    doc
-      .font("Helvetica")
-      .fontSize(8)
-      .text(`IBAN: ${rib.iban}`, margin, doc.y + 12);
-
+      .text("Coordonnées bancaires :", margin, doc.y, { width: contentWidth });
+    doc.font("Helvetica").fontSize(8);
+    let ribY = doc.y + 13;
+    doc.text(`IBAN : ${formatIban(rib.iban)}`, margin, ribY, {
+      width: contentWidth,
+    });
+    ribY += 12;
     if (rib.bic) {
-      doc.text(`BIC: ${rib.bic}`, margin, doc.y + 24);
-    }
-
-    if (rib.bank) {
-      doc.text(`Banque: ${rib.bank}`, margin, doc.y + (rib.bic ? 36 : 24));
+      doc.text(`BIC : ${rib.bic}`, margin, ribY, { width: contentWidth });
+      ribY += 12;
     }
   }
 
-  // Numéro de page
+  // ========== Bandeau identité entreprise (bas de page) ==========
+  const parts = [
+    company.companyName,
+    company.ownerName,
+    company.registeredAddress,
+    company.companyId ? `SIRET ${formatSiret(company.companyId)}` : null,
+    "Entrepreneur individuel",
+    company.phoneNumber ? formatPhone(company.phoneNumber) : null,
+    company.email,
+    company.webSite,
+  ].filter(Boolean);
+
   doc
-    .fontSize(8)
+    .fontSize(7)
+    .font("Helvetica")
     .fillColor("#64748b")
-    .text("Page 1", margin, pageHeight - 30, {
+    .text(parts.join("  -  "), margin, identityY + 8, {
+      width: contentWidth,
       align: "center",
-      width: pageWidth - 2 * margin,
+      lineGap: 2,
     });
 }
