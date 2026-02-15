@@ -3,6 +3,75 @@ import path from "path";
 import paths, { getYearFolder } from "./utils/paths";
 import log from "electron-log";
 
+// ==================== Logo ====================
+
+/**
+ * Sauvegarde un logo depuis un chemin source vers le dossier data
+ * @param {string} sourceFilePath - Chemin du fichier image source
+ * @returns {Promise<string>} Chemin du logo sauvegardé
+ */
+export async function saveLogo(sourceFilePath) {
+  try {
+    const buffer = await fs.readFile(sourceFilePath);
+    await fs.writeFile(paths.LOGO_PATH, buffer);
+
+    const config = await loadConfig();
+    config.company.logo = paths.LOGO_PATH;
+    await saveConfig(config);
+
+    log.info("Logo saved successfully");
+    return paths.LOGO_PATH;
+  } catch (error) {
+    log.error("Failed to save logo:", error);
+    throw new Error("Impossible de sauvegarder le logo");
+  }
+}
+
+/**
+ * Supprime le logo et nettoie la config
+ * @returns {Promise<boolean>}
+ */
+export async function deleteLogo() {
+  try {
+    try {
+      await fs.unlink(paths.LOGO_PATH);
+    } catch (e) {
+      if (e.code !== "ENOENT") throw e;
+    }
+
+    const config = await loadConfig();
+    config.company.logo = "";
+    await saveConfig(config);
+
+    log.info("Logo deleted successfully");
+    return true;
+  } catch (error) {
+    log.error("Failed to delete logo:", error);
+    throw new Error("Impossible de supprimer le logo");
+  }
+}
+
+/**
+ * Retourne le logo en base64 data URL pour le renderer
+ * @returns {Promise<string|null>} Data URL ou null si pas de logo
+ */
+export async function getLogoAsBase64() {
+  try {
+    await fs.access(paths.LOGO_PATH);
+    const buffer = await fs.readFile(paths.LOGO_PATH);
+
+    let mime = "image/png";
+    if (buffer[0] === 0xff && buffer[1] === 0xd8) {
+      mime = "image/jpeg";
+    }
+
+    return `data:${mime};base64,${buffer.toString("base64")}`;
+  } catch (e) {
+    if (e.code === "ENOENT") return null;
+    throw e;
+  }
+}
+
 // Cache de la configuration en mémoire pour performance
 let configCache = null;
 

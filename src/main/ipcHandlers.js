@@ -1,4 +1,4 @@
-import { ipcMain, shell, app } from "electron";
+import { ipcMain, shell, app, dialog } from "electron";
 import {
   loadConfig,
   saveConfig,
@@ -6,6 +6,9 @@ import {
   loadDocument,
   saveDocument,
   deleteDocument,
+  saveLogo,
+  deleteLogo,
+  getLogoAsBase64,
 } from "./fileManager";
 import { validateDocument } from "./validator";
 import { generatePDF } from "./pdfGenerator";
@@ -32,6 +35,46 @@ export function initializeIPC() {
       return await saveConfig(config);
     } catch (error) {
       log.error("Failed to save config:", error);
+      throw error;
+    }
+  });
+
+  // ==================== Logo ====================
+
+  ipcMain.handle("upload-logo", async () => {
+    try {
+      const { filePaths, canceled } = await dialog.showOpenDialog({
+        title: "Choisir un logo",
+        filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg"] }],
+        properties: ["openFile"],
+      });
+
+      if (canceled || filePaths.length === 0) {
+        return null;
+      }
+
+      await saveLogo(filePaths[0]);
+      return await getLogoAsBase64();
+    } catch (error) {
+      log.error("Failed to upload logo:", error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle("delete-logo", async () => {
+    try {
+      return await deleteLogo();
+    } catch (error) {
+      log.error("Failed to delete logo:", error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle("get-logo", async () => {
+    try {
+      return await getLogoAsBase64();
+    } catch (error) {
+      log.error("Failed to get logo:", error);
       throw error;
     }
   });

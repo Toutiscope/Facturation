@@ -24,3 +24,13 @@ $sides: top, right, bottom, left;
     }
   }
 }
+
+@each $side in $sides {
+  .mg-#{$side}-auto {
+    margin-#{$side}: auto;
+  }
+
+  .pd-#{$side}-auto {
+    padding-#{$side}: auto;
+  }
+}

@@ -5,12 +5,14 @@ import MainLayout from "./components/layout/MainLayout.vue";
 import UpdateNotification from "./components/UpdateNotification.vue";
 
 const config = ref(null);
+const logo = ref(null);
 const loading = ref(true);
 const error = ref(null);
 
 onMounted(async () => {
   try {
     config.value = await window.electronAPI.loadConfig();
+    logo.value = await window.electronAPI.getLogo();
   } catch (err) {
     console.error("Failed to load config:", err);
     error.value = err.message;
@@ -19,8 +21,9 @@ onMounted(async () => {
   }
 });
 
-// Fournir la config globalement via provide/inject
+// Fournir la config et le logo globalement via provide/inject
 provide("config", config);
+provide("logo", logo);
 </script>
 
 <template>

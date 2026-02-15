@@ -1,6 +1,6 @@
 <template>
   <div class="services-table">
-    <h3>Prestations</h3>
+    <h2>Prestations</h2>
 
     <div class="table-wrapper">
       <table class="table">
@@ -9,7 +9,7 @@
             <th style="width: 40%">Description</th>
             <th style="width: 10%">Quantité</th>
             <th style="width: 15%">Unité</th>
-            <th style="width: 15%">P.U. HT</th>
+            <th style="width: 15%">Prix Unitaire HT</th>
             <th style="width: 15%">Total HT</th>
             <th style="width: 5%">Actions</th>
           </tr>

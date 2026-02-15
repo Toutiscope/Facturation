@@ -79,6 +79,9 @@ const paths = {
   get FACTURES_DIR() {
     return getPaths().FACTURES_DIR;
   },
+  get LOGO_PATH() {
+    return path.join(getPaths().DATA_DIR, "logo.png");
+  },
 };
 
 export default paths;

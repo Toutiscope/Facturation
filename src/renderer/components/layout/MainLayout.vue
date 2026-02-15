@@ -2,7 +2,14 @@
   <div class="app-layout">
     <aside class="sidebar">
       <div class="sidebar__header">
+        <img
+          v-if="hasLogo"
+          :src="logo"
+          alt="Logo"
+          class="sidebar__logo sidebar__logo--img"
+        />
         <svg
+          v-else
           class="sidebar__logo"
           viewBox="0 0 40 40"
           fill="none"
@@ -132,10 +139,13 @@
 import { inject, computed } from "vue";
 
 const config = inject("config");
+const logo = inject("logo");
 
 const companyName = computed(() => {
   return config?.value?.company?.companyName || "Mon entreprise";
 });
+
+const hasLogo = computed(() => !!logo?.value);
 </script>
 
 <style lang="scss" scoped>
@@ -171,6 +181,11 @@ $sidebar-width: 330px;
   height: 40px;
   flex-shrink: 0;
   color: $white;
+
+  &--img {
+    object-fit: contain;
+    border-radius: $border-radius-sm;
+  }
 }
 
 .sidebar__company-name {

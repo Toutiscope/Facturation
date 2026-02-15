@@ -234,11 +234,6 @@ function formatCurrency(value) {
 .invoice-list-view {
   padding: $spacing-lg;
 
-  .container {
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
   .header {
     @include page-header;
   }
@@ -257,63 +252,6 @@ function formatCurrency(value) {
     .filter-group {
       label {
         font-size: $font-size-sm;
-      }
-    }
-  }
-
-  .table-wrapper {
-    overflow-x: auto;
-
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-
-      thead {
-        background-color: $grey-20;
-        border-bottom: 2px solid $grey-30;
-
-        th {
-          padding: $spacing-sm $spacing-md;
-          text-align: left;
-          font-weight: 600;
-          color: $grey-100;
-          font-size: $font-size-sm;
-        }
-      }
-
-      tbody {
-        tr {
-          border-bottom: 1px solid $grey-30;
-          transition: $transition-base;
-
-          &:hover {
-            background-color: $grey-50;
-          }
-
-          td {
-            padding: $spacing-sm $spacing-md;
-            color: $grey-100;
-
-            &.numero {
-              font-weight: 600;
-              font-family: monospace;
-            }
-
-            &.client-name {
-              @include truncate;
-              max-width: 300px;
-            }
-
-            &.amount {
-              font-weight: 600;
-              text-align: right;
-            }
-
-            &.actions-cell {
-              white-space: nowrap;
-            }
-          }
-        }
       }
     }
   }

@@ -120,11 +120,13 @@
         <!-- Notes internes -->
         <section class="card">
           <div class="form-group">
-            <label for="invoiceNotes">Notes internes</label>
+            <label for="invoiceNotes"
+              >Notes internes (elles n'apparaitront pas sur le PDF)</label
+            >
             <textarea
               id="invoiceNotes"
               v-model="invoice.notes"
-              placeholder="Notes internes (optionnel)"
+              placeholder="Notes internes"
               class="form-control"
               rows="4"
             ></textarea>
@@ -315,6 +317,7 @@ async function saveInvoice() {
 
 function formatDateToFrench(isoDate) {
   if (!isoDate) return "";
+  if (isoDate.includes("/")) return isoDate;
   const [year, month, day] = isoDate.split("-");
   return `${day}/${month}/${year}`;
 }

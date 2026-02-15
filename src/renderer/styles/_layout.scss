@@ -5,7 +5,7 @@
 
 .container {
   padding: $spacing-xl;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -72,6 +72,10 @@
 
   &-vertical-center {
     align-items: center;
+  }
+
+  &-space-between {
+    justify-content: space-between;
   }
 }
 

@@ -3,6 +3,7 @@ import fs from "fs";
 import { dialog } from "electron";
 import log from "electron-log";
 import { loadConfig } from "./fileManager";
+import paths from "./utils/paths";
 
 /**
  * Convertit une valeur en nombre (0 si invalide)
@@ -90,45 +91,70 @@ function renderHeader(doc, company, type, document) {
       align: "left",
     });
 
-  // Informations entreprise (à droite)
+  // Logo + informations entreprise (à droite)
   const rightX = pageWidth - 250;
+  let companyInfoY = 50;
+  let hasLogo = false;
+
+  try {
+    if (fs.existsSync(paths.LOGO_PATH)) {
+      const logoBuffer = fs.readFileSync(paths.LOGO_PATH);
+      doc.image(logoBuffer, rightX, 50, { fit: [60, 60] });
+      companyInfoY = 118;
+      hasLogo = true;
+    }
+  } catch (err) {
+    log.warn("Could not load logo for PDF:", err.message);
+  }
+
   doc
     .fontSize(10)
     .font("Helvetica-Bold")
-    .text(company.companyName || "", rightX, 50)
+    .text(company.companyName || "", rightX, companyInfoY)
     .font("Helvetica")
-    .text(company.address || "", rightX, 65)
-    .text(`${company.postalCode || ""} ${company.city || ""}`, rightX, 78)
-    .text(`SIRET: ${company.companyId || ""}`, rightX, 91)
-    .text(company.email || "", rightX, 104);
+    .text(company.address || "", rightX, companyInfoY + 15)
+    .text(
+      `${company.postalCode || ""} ${company.city || ""}`,
+      rightX,
+      companyInfoY + 28,
+    )
+    .text(`SIRET: ${company.companyId || ""}`, rightX, companyInfoY + 41)
+    .text(company.email || "", rightX, companyInfoY + 54);
 
   if (company.phoneNumber) {
-    doc.text(company.phoneNumber, rightX, 117);
+    doc.text(company.phoneNumber, rightX, companyInfoY + 67);
   }
 
   // Numéro et dates
+  const numberY = hasLogo ? 195 : 140;
   doc
     .fontSize(12)
     .font("Helvetica-Bold")
-    .text(`N° ${document.numero || ""}`, margin, 140)
+    .text(`N° ${document.numero || ""}`, margin, numberY)
     .font("Helvetica")
     .fontSize(10)
-    .text(`Date: ${document.date || ""}`, margin, 158);
+    .text(`Date: ${document.date || ""}`, margin, numberY + 18);
 
   if (type === "devis") {
-    doc.text(`Valable jusqu'au: ${document.validityDate || ""}`, margin, 173);
+    doc.text(
+      `Valable jusqu'au: ${document.validityDate || ""}`,
+      margin,
+      numberY + 33,
+    );
   } else {
-    doc.text(`Échéance: ${document.dueDate || ""}`, margin, 173);
+    doc.text(`Échéance: ${document.dueDate || ""}`, margin, numberY + 33);
   }
 
   // Ligne de séparation
+  const separatorY = hasLogo ? 245 : 200;
   doc
-    .moveTo(margin, 200)
-    .lineTo(pageWidth - margin, 200)
+    .moveTo(margin, separatorY)
+    .lineTo(pageWidth - margin, separatorY)
     .strokeColor("#e2e8f0")
     .stroke();
 
-  doc.moveDown(2);
+  doc.y = separatorY + 10;
+  doc.moveDown(1);
 }
 
 /**
@@ -136,7 +162,7 @@ function renderHeader(doc, company, type, document) {
  */
 function renderCustomer(doc, customer) {
   const margin = doc.page.margins.left;
-  const startY = 220;
+  const startY = doc.y + 10;
 
   doc.fontSize(12).font("Helvetica-Bold").text("CLIENT", margin, startY);
 
@@ -151,13 +177,21 @@ function renderCustomer(doc, customer) {
   }
 
   doc
-    .text(customer.address || "", margin, startY + (customer.companyId ? 65 : 50))
+    .text(
+      customer.address || "",
+      margin,
+      startY + (customer.companyId ? 65 : 50),
+    )
     .text(
       `${customer.postalCode || ""} ${customer.city || ""}`,
       margin,
       startY + (customer.companyId ? 80 : 65),
     )
-    .text(customer.email || "", margin, startY + (customer.companyId ? 95 : 80));
+    .text(
+      customer.email || "",
+      margin,
+      startY + (customer.companyId ? 95 : 80),
+    );
 
   doc.moveDown(3);
 }
@@ -193,9 +227,14 @@ function renderServices(doc, services) {
     .text("Unité", margin + col1Width + col2Width + 5, y + 8, {
       width: col3Width - 10,
     })
-    .text("P.U. HT", margin + col1Width + col2Width + col3Width + 5, y + 8, {
-      width: col4Width - 10,
-    })
+    .text(
+      "Prix Unitaire HT",
+      margin + col1Width + col2Width + col3Width + 5,
+      y + 8,
+      {
+        width: col4Width - 10,
+      },
+    )
     .text(
       "Total HT",
       margin + col1Width + col2Width + col3Width + col4Width + 5,
@@ -384,11 +423,7 @@ function renderFooter(doc, billing, rib, type) {
     }
 
     if (rib.bank) {
-      doc.text(
-        `Banque: ${rib.bank}`,
-        margin,
-        doc.y + (rib.bic ? 36 : 24),
-      );
+      doc.text(`Banque: ${rib.bank}`, margin, doc.y + (rib.bic ? 36 : 24));
     }
   }
 

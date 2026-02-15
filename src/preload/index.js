@@ -3,6 +3,9 @@ import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("electronAPI", {
   loadConfig: () => ipcRenderer.invoke("load-config"),
   saveConfig: (config) => ipcRenderer.invoke("save-config", config),
+  uploadLogo: () => ipcRenderer.invoke("upload-logo"),
+  deleteLogo: () => ipcRenderer.invoke("delete-logo"),
+  getLogo: () => ipcRenderer.invoke("get-logo"),
   loadDocuments: (type, filters) =>
     ipcRenderer.invoke("load-documents", type, filters),
   loadDocument: (type, id) => ipcRenderer.invoke("load-document", type, id),

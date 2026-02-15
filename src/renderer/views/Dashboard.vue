@@ -9,6 +9,12 @@
       <section class="dashboard-section">
         <div class="section-header">
           <h2>Devis</h2>
+          <router-link
+            to="/devis/nouveau"
+            class="btn btn-primary btn-sm mg-left-auto mg-right-16"
+          >
+            Nouveau devis
+          </router-link>
           <router-link to="/devis" class="btn btn-outline btn-sm">
             Voir tout
           </router-link>
@@ -23,7 +29,7 @@
           <table v-else class="table">
             <thead>
               <tr>
-                <th>Numero</th>
+                <th>Numéro</th>
                 <th>Date</th>
                 <th>Client</th>
                 <th>Montant TTC</th>
@@ -63,6 +69,12 @@
       <section class="dashboard-section">
         <div class="section-header">
           <h2>Factures</h2>
+          <router-link
+            to="/factures/nouvelle"
+            class="btn btn-primary btn-sm mg-left-auto mg-right-16"
+          >
+            Nouvelle facture
+          </router-link>
           <router-link to="/factures" class="btn btn-outline btn-sm">
             Voir tout
           </router-link>
@@ -77,7 +89,7 @@
           <table v-else class="table">
             <thead>
               <tr>
-                <th>Numero</th>
+                <th>Numéro</th>
                 <th>Date</th>
                 <th>Client</th>
                 <th>Montant TTC</th>
@@ -98,9 +110,7 @@
                 </td>
                 <td>{{ invoice.dueDate }}</td>
                 <td>
-                  <span
-                    :class="['status-badge', `status-${invoice.status}`]"
-                  >
+                  <span :class="['status-badge', `status-${invoice.status}`]">
                     {{ invoice.status }}
                   </span>
                 </td>
@@ -168,11 +178,6 @@ function formatCurrency(value) {
 .dashboard {
   padding: $spacing-lg;
 
-  .container {
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
   .header {
     @include page-header;
   }
@@ -190,68 +195,6 @@ function formatCurrency(value) {
 
   h2 {
     margin: 0;
-  }
-}
-
-.btn-sm {
-  padding: $spacing-xs $spacing-md;
-  font-size: $font-size-sm;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-
-    thead {
-      background-color: $grey-20;
-      border-bottom: 2px solid $grey-30;
-
-      th {
-        padding: $spacing-sm $spacing-md;
-        text-align: left;
-        font-weight: 600;
-        color: $grey-100;
-        font-size: $font-size-sm;
-      }
-    }
-
-    tbody {
-      tr {
-        border-bottom: 1px solid $grey-30;
-        transition: $transition-base;
-
-        &:hover {
-          background-color: $grey-50;
-        }
-
-        td {
-          padding: $spacing-sm $spacing-md;
-          color: $grey-100;
-
-          &.numero {
-            font-weight: 600;
-            font-family: monospace;
-          }
-
-          &.client-name {
-            @include truncate;
-            max-width: 300px;
-          }
-
-          &.amount {
-            font-weight: 600;
-            text-align: right;
-          }
-
-          &.actions-cell {
-            white-space: nowrap;
-          }
-        }
-      }
-    }
   }
 }
 </style>

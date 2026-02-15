@@ -29,6 +29,8 @@ function createWindow() {
     icon: path.join(__dirname, "../build/icon.ico"),
   });
 
+  mainWindow.maximize();
+
   // Développement vs Production
   if (process.env.NODE_ENV === "development" || !app.isPackaged) {
     mainWindow.loadURL("http://localhost:5173");

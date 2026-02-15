@@ -1,10 +1,11 @@
 <template>
   <div class="customer-form">
-    <h3>Informations du client</h3>
+    <h2>Informations du client</h2>
 
     <SegmentedControl
       v-model="localCustomer.clientType"
       @change="handleClientTypeChange"
+      class="mg-bottom-16"
     />
 
     <div class="form-row">

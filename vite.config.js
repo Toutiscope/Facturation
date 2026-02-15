@@ -7,6 +7,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const distElectron = path.resolve(__dirname, "dist-electron");
 
 /**
  * Plugin Vite qui copie les fichiers de polices AFM de PDFKit
@@ -16,7 +17,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  */
 function copyPdfkitDataPlugin() {
   const src = path.resolve(__dirname, "node_modules/pdfkit/js/data");
-  const dest = path.resolve(__dirname, "dist-electron/data");
+  const dest = path.join(distElectron, "data");
 
   return {
     name: "copy-pdfkit-data",
@@ -40,6 +41,9 @@ export default defineConfig({
         entry: path.resolve(__dirname, "src/main/index.js"),
         vite: {
           plugins: [copyPdfkitDataPlugin()],
+          build: {
+            outDir: distElectron,
+          },
         },
       },
       {
@@ -49,6 +53,7 @@ export default defineConfig({
         },
         vite: {
           build: {
+            outDir: distElectron,
             rollupOptions: {
               output: {
                 entryFileNames: "preload.js",

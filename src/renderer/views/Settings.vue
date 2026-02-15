@@ -26,6 +26,65 @@
         <section class="card settings-card">
           <h2>Entreprise</h2>
 
+          <!-- Logo upload -->
+          <div class="form-group logo-upload">
+            <label>Logo de l'entreprise</label>
+            <div class="logo-upload__container">
+              <div v-if="logoPreview" class="logo-upload__preview">
+                <img :src="logoPreview" alt="Logo" />
+              </div>
+              <div v-else class="logo-upload__placeholder">
+                <svg
+                  viewBox="0 0 48 48"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect
+                    x="6"
+                    y="6"
+                    width="36"
+                    height="36"
+                    rx="4"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-dasharray="4 4"
+                  />
+                  <path
+                    d="M18 30l4-5 3 3 5-7 6 9H12z"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linejoin="round"
+                  />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="3"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  />
+                </svg>
+              </div>
+              <div class="logo-upload__actions">
+                <button
+                  type="button"
+                  class="btn btn-outline btn-sm"
+                  @click="uploadLogo"
+                >
+                  {{ logoPreview ? "Changer" : "Choisir un logo" }}
+                </button>
+                <button
+                  v-if="logoPreview"
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  @click="removeLogo"
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
+            <small>PNG ou JPG</small>
+          </div>
+
           <div class="form-group">
             <label>Nom de l'entreprise *</label>
             <input
@@ -290,19 +349,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted, toRaw } from "vue";
+import { ref, onMounted, toRaw, inject } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+const globalLogo = inject("logo");
+
 const loading = ref(true);
 const saving = ref(false);
 const config = ref(null);
 const errors = ref({});
 const successMessage = ref("");
+const logoPreview = ref(null);
 
 onMounted(async () => {
   try {
     config.value = await window.electronAPI.loadConfig();
+    logoPreview.value = await window.electronAPI.getLogo();
   } catch (error) {
     console.error("Failed to load config:", error);
     errors.value.general = "Impossible de charger la configuration";
@@ -310,6 +373,30 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+async function uploadLogo() {
+  try {
+    const base64 = await window.electronAPI.uploadLogo();
+    if (base64) {
+      logoPreview.value = base64;
+      globalLogo.value = base64;
+    }
+  } catch (error) {
+    console.error("Failed to upload logo:", error);
+    errors.value.general = "Erreur lors de l'upload du logo";
+  }
+}
+
+async function removeLogo() {
+  try {
+    await window.electronAPI.deleteLogo();
+    logoPreview.value = null;
+    globalLogo.value = null;
+  } catch (error) {
+    console.error("Failed to delete logo:", error);
+    errors.value.general = "Erreur lors de la suppression du logo";
+  }
+}
 
 function validateForm() {
   errors.value = {};
@@ -384,20 +471,62 @@ async function saveConfig() {
   padding: $spacing-xl;
 }
 
-.settings-card {
-  margin-bottom: 0;
+.logo-upload {
+  margin-bottom: $spacing-lg;
+  padding-bottom: $spacing-lg;
+  border-bottom: 1px solid $grey-20;
+}
 
-  h2 {
-    font-size: $font-size-lg;
-    margin-bottom: $spacing-md;
-  }
+.logo-upload__container {
+  display: flex;
+  align-items: center;
+  gap: $spacing-lg;
+  margin-top: $spacing-sm;
+}
 
-  .section-hint {
-    font-size: $font-size-sm;
-    color: $grey-60;
-    margin-top: -$spacing-sm;
-    margin-bottom: $spacing-lg;
+.logo-upload__preview {
+  width: 80px;
+  height: 80px;
+  border-radius: $border-radius-md;
+  border: 2px solid $grey-20;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $white;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
   }
+}
+
+.logo-upload__placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: $border-radius-md;
+  border: 2px dashed $grey-30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $grey-50;
+
+  svg {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.logo-upload__actions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.btn-sm {
+  padding: 6px 16px;
+  font-size: $font-size-sm;
 }
 
 .settings-form {

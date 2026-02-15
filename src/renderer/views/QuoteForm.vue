@@ -1,9 +1,13 @@
 <template>
   <div class="quote-form-view">
     <div class="container">
-      <div class="header">
+      <div
+        class="header flex flex-space-between flex-vertical-center mg-bottom-16"
+      >
         <h1>{{ isEditMode ? "Modifier le devis" : "Nouveau devis" }}</h1>
-        <p>{{ quote.status }}</p>
+        <p :class="['status-badge', `status-${quote.status}`]">
+          {{ quote.status }}
+        </p>
       </div>
 
       <div v-if="loading" class="loading">Chargement...</div>
@@ -61,11 +65,13 @@
             <!-- Notes internes -->
             <section class="card">
               <div class="form-group">
-                <label for="quoteNotes">Notes internes</label>
+                <label for="quoteNotes"
+                  >Notes internes (elles n'apparaitront pas sur le PDF)</label
+                >
                 <textarea
                   id="quoteNotes"
                   v-model="quote.notes"
-                  placeholder="Notes internes (optionnel)"
+                  placeholder="Notes internes"
                   class="form-control"
                   rows="4"
                 ></textarea>
@@ -226,6 +232,7 @@ async function saveQuote() {
 
 function formatDateToFrench(isoDate) {
   if (!isoDate) return "";
+  if (isoDate.includes("/")) return isoDate;
   const [year, month, day] = isoDate.split("-");
   return `${day}/${month}/${year}`;
 }
