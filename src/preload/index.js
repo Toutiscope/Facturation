@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   uploadLogo: () => ipcRenderer.invoke("upload-logo"),
   deleteLogo: () => ipcRenderer.invoke("delete-logo"),
   getLogo: () => ipcRenderer.invoke("get-logo"),
+  selectFolder: () => ipcRenderer.invoke("select-folder"),
   loadDocuments: (type, filters) =>
     ipcRenderer.invoke("load-documents", type, filters),
   loadDocument: (type, id) => ipcRenderer.invoke("load-document", type, id),

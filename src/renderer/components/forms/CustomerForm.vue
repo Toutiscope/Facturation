@@ -101,16 +101,30 @@
       </div>
     </div>
 
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input
-        id="email"
-        type="email"
-        v-model="localCustomer.email"
-        @input="emitUpdate"
-        placeholder="client@exemple.fr"
-        class="form-control"
-      />
+    <div class="form-row">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          v-model="localCustomer.email"
+          @input="emitUpdate"
+          placeholder="client@exemple.fr"
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="phoneNumber">Téléphone</label>
+        <input
+          id="phoneNumber"
+          type="tel"
+          v-model="localCustomer.phoneNumber"
+          @input="emitUpdate"
+          placeholder="06 12 34 56 78"
+          class="form-control"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -131,6 +145,7 @@ const props = defineProps({
       postalCode: "",
       city: "",
       email: "",
+      phoneNumber: "",
       clientType: "professionnel",
     }),
   },

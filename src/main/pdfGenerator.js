@@ -28,9 +28,14 @@ export async function generatePDF(type, document) {
     const rib = config?.rib || {};
 
     // Dialogue pour choisir l'emplacement de sauvegarde
+    const filename = `QBMaker ${type === "devis" ? "Devis" : "Facture"} ${document.numero || "document"}.pdf`;
+    const defaultPath = billing.pdfOutputPath
+      ? `${billing.pdfOutputPath}/${filename}`
+      : filename;
+
     const { filePath, canceled } = await dialog.showSaveDialog({
       title: `Enregistrer le ${type === "devis" ? "devis" : "la facture"}`,
-      defaultPath: `${document.numero || "document"}.pdf`,
+      defaultPath,
       filters: [{ name: "PDF", extensions: ["pdf"] }],
     });
 
@@ -55,6 +60,7 @@ export async function generatePDF(type, document) {
     // Rendre le contenu
     renderHeader(doc, company, type, document);
     renderCustomer(doc, document.customer || {});
+    renderObjet(doc, document.object);
     renderServices(doc, document.services || []);
     renderTotals(doc, document.totals || {});
     renderFooter(doc, billing, rib, type);
@@ -176,24 +182,47 @@ function renderCustomer(doc, customer) {
     doc.text(`SIRET: ${customer.companyId}`, margin, startY + 50);
   }
 
-  doc
-    .text(
-      customer.address || "",
-      margin,
-      startY + (customer.companyId ? 65 : 50),
-    )
-    .text(
-      `${customer.postalCode || ""} ${customer.city || ""}`,
-      margin,
-      startY + (customer.companyId ? 80 : 65),
-    )
-    .text(
-      customer.email || "",
-      margin,
-      startY + (customer.companyId ? 95 : 80),
-    );
+  let y = startY + (customer.companyId ? 65 : 50);
+
+  doc.text(customer.address || "", margin, y);
+  y += 15;
+  doc.text(`${customer.postalCode || ""} ${customer.city || ""}`, margin, y);
+  y += 15;
+
+  if (customer.email) {
+    doc.text(customer.email, margin, y);
+    y += 15;
+  }
+
+  if (customer.phoneNumber) {
+    doc.text(`Tél: ${customer.phoneNumber}`, margin, y);
+    y += 15;
+  }
 
   doc.moveDown(3);
+}
+
+/**
+ * Rendre l'objet du document
+ */
+function renderObjet(doc, object) {
+  if (!object) return;
+
+  const margin = doc.page.margins.left;
+
+  doc
+    .fontSize(11)
+    .font("Helvetica-Bold")
+    .text("Objet :", margin, doc.y + 10);
+
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .text(object, margin, doc.y + 5, {
+      width: doc.page.width - 2 * margin,
+    });
+
+  doc.moveDown(1);
 }
 
 /**

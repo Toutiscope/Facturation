@@ -40,12 +40,9 @@
   background: $primary-color;
   color: $white;
 
-  &:hover:not(:disabled) {
-    background: color.scale($primary-color, $lightness: -10%);
-  }
-
-  &:active:not(:disabled) {
-    background: color.scale($primary-color, $lightness: -15%);
+  &:hover:not(:disabled),
+  &:focus:not(:disabled) {
+    background: color.scale($primary-color, $lightness: -30%);
   }
 }
 
@@ -79,14 +76,21 @@
 .btn-icon {
   background: none;
   border: none;
+  border-radius: 100%;
   cursor: pointer;
   font-size: $font-size-lg;
   padding: $spacing-xs;
   transition: $transition-base;
   margin-right: $spacing-xs;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  width: 42px;
 
   &:hover:not(:disabled) {
-    transform: scale(1.1);
+    // transform: scale(1.1);
+    box-shadow: inset 0 0 1px 1px rgba(0, 0, 0, 0.8);
   }
 
   &:disabled {
@@ -144,4 +148,8 @@
   &:hover {
     background: $grey-40;
   }
+}
+
+.pointer {
+  cursor: pointer;
 }

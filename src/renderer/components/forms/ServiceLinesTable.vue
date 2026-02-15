@@ -1,7 +1,5 @@
 <template>
   <div class="services-table">
-    <h2>Prestations</h2>
-
     <div class="table-wrapper">
       <table class="table">
         <thead>
@@ -10,8 +8,8 @@
             <th style="width: 10%">Quantité</th>
             <th style="width: 15%">Unité</th>
             <th style="width: 15%">Prix Unitaire HT</th>
-            <th style="width: 15%">Total HT</th>
-            <th style="width: 5%">Actions</th>
+            <th style="width: 12%; text-align: right">Total HT</th>
+            <th style="width: 8%; text-align: center">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -32,7 +30,7 @@
                 v-model.number="service.quantity"
                 @input="updateService(index)"
                 min="0"
-                step="0.01"
+                step="0.5"
                 class="form-control"
                 required
               />
@@ -63,7 +61,7 @@
             <td class="total-cell">
               {{ formatCurrency(service.totalHT) }}
             </td>
-            <td>
+            <td style="text-align: center">
               <button
                 type="button"
                 @click="removeLine(index)"
@@ -207,13 +205,6 @@ if (localServices.value.length === 0) {
 @use "@/styles/variables" as *;
 
 .services-table {
-  h3 {
-    font-size: $font-size-lg;
-    font-weight: 600;
-    margin-bottom: $spacing-md;
-    color: $grey-100;
-  }
-
   .table-wrapper {
     overflow-x: auto;
     margin-bottom: $spacing-md;
@@ -234,18 +225,14 @@ if (localServices.value.length === 0) {
         text-align: left;
         color: $white;
         font-weight: 600;
-        border-bottom: 2px solid $grey-30;
+        border-bottom: 2px solid $primary-color;
         font-size: $font-size-sm;
       }
     }
 
     tbody {
       tr {
-        border-bottom: 1px solid $grey-30;
-
-        &:last-child {
-          border-bottom: none;
-        }
+        border-bottom: 1px solid $grey-50;
 
         &:hover {
           background-color: $grey-30;
@@ -253,7 +240,12 @@ if (localServices.value.length === 0) {
       }
 
       td {
-        padding: $spacing-xs;
+        padding: $spacing-sm $spacing-xs;
+
+        input,
+        select {
+          border-radius: 4px;
+        }
 
         &.total-cell {
           font-weight: 600;

@@ -69,8 +69,15 @@
                   type="button"
                   class="btn btn-outline btn-sm"
                   @click="uploadLogo"
+                  :disabled="uploadingLogo"
                 >
-                  {{ logoPreview ? "Changer" : "Choisir un logo" }}
+                  {{
+                    uploadingLogo
+                      ? "Chargement..."
+                      : logoPreview
+                        ? "Changer"
+                        : "Choisir un logo"
+                  }}
                 </button>
                 <button
                   v-if="logoPreview"
@@ -187,7 +194,7 @@
         </section>
 
         <!-- Section RIB -->
-        <div>
+        <div class="flex flex-column gap-16">
           <section class="card settings-card">
             <h2>Coordonnées bancaires</h2>
 
@@ -275,58 +282,85 @@
           </section>
         </div>
 
-        <!-- Section Facturation -->
-        <section class="card settings-card">
-          <h2>Facturation</h2>
+        <div class="flex flex-column gap-16">
+          <!-- Section Facturation -->
+          <section class="card settings-card">
+            <h2>Facturation</h2>
 
-          <div class="form-group">
-            <label>Mention légale</label>
-            <textarea
-              v-model="config.billing.legalNotice"
-              rows="2"
-              placeholder="Dispensé d'immatriculation..."
-            ></textarea>
-            <small>Mention obligatoire sur tous les documents</small>
-          </div>
+            <div class="form-group">
+              <label>Mention légale</label>
+              <textarea
+                v-model="config.billing.legalNotice"
+                rows="2"
+                placeholder="Dispensé d'immatriculation..."
+              ></textarea>
+              <small>Mention obligatoire sur tous les documents</small>
+            </div>
 
-          <div class="form-group">
-            <label>Conditions de paiement</label>
-            <input
-              v-model="config.billing.paymentTerms"
-              type="text"
-              placeholder="Paiement à 30 jours"
-            />
-          </div>
+            <div class="form-group">
+              <label>Conditions de paiement</label>
+              <input
+                v-model="config.billing.paymentTerms"
+                type="text"
+                placeholder="Paiement à 30 jours"
+              />
+            </div>
 
-          <div class="form-group">
-            <label>Pénalités de retard</label>
-            <textarea
-              v-model="config.billing.latePenalties"
-              rows="2"
-              placeholder="En cas de retard de paiement..."
-            ></textarea>
-          </div>
+            <div class="form-group">
+              <label>Pénalités de retard</label>
+              <textarea
+                v-model="config.billing.latePenalties"
+                rows="2"
+                placeholder="En cas de retard de paiement..."
+              ></textarea>
+            </div>
+          </section>
 
-          <div class="form-group">
-            <label>Dernier n° de devis</label>
-            <input
-              v-model.number="config.billing.latestQuoteNumber"
-              type="number"
-              min="0"
-            />
-            <small>Numérotation automatique à partir de ce numéro</small>
-          </div>
+          <section class="card settings-card">
+            <div class="form-group">
+              <label>Dernier n° de devis</label>
+              <input
+                v-model.number="config.billing.latestQuoteNumber"
+                type="number"
+                min="0"
+              />
+              <small>Numérotation automatique à partir de ce numéro</small>
+            </div>
 
-          <div class="form-group">
-            <label>Dernier n° de facture</label>
-            <input
-              v-model.number="config.billing.latestInvoiceNumber"
-              type="number"
-              min="0"
-            />
-            <small>Numérotation automatique à partir de ce numéro</small>
-          </div>
-        </section>
+            <div class="form-group">
+              <label>Dernier n° de facture</label>
+              <input
+                v-model.number="config.billing.latestInvoiceNumber"
+                type="number"
+                min="0"
+              />
+              <small>Numérotation automatique à partir de ce numéro</small>
+            </div>
+
+            <div class="form-group">
+              <label>Dossier d'enregistrement des PDF</label>
+              <div class="path-input">
+                <input
+                  v-model="config.billing.pdfOutputPath"
+                  type="text"
+                  placeholder="Aucun dossier sélectionné"
+                  readonly
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline btn-sm"
+                  @click="selectPdfFolder"
+                  :disabled="selectingFolder"
+                >
+                  {{ selectingFolder ? "Chargement..." : "Parcourir" }}
+                </button>
+              </div>
+              <small
+                >Les PDF seront enregistrés dans ce dossier par défaut</small
+              >
+            </div>
+          </section>
+        </div>
       </div>
 
       <!-- Actions -->
@@ -361,6 +395,8 @@ const config = ref(null);
 const errors = ref({});
 const successMessage = ref("");
 const logoPreview = ref(null);
+const uploadingLogo = ref(false);
+const selectingFolder = ref(false);
 
 onMounted(async () => {
   try {
@@ -375,6 +411,7 @@ onMounted(async () => {
 });
 
 async function uploadLogo() {
+  uploadingLogo.value = true;
   try {
     const base64 = await window.electronAPI.uploadLogo();
     if (base64) {
@@ -384,6 +421,8 @@ async function uploadLogo() {
   } catch (error) {
     console.error("Failed to upload logo:", error);
     errors.value.general = "Erreur lors de l'upload du logo";
+  } finally {
+    uploadingLogo.value = false;
   }
 }
 
@@ -395,6 +434,20 @@ async function removeLogo() {
   } catch (error) {
     console.error("Failed to delete logo:", error);
     errors.value.general = "Erreur lors de la suppression du logo";
+  }
+}
+
+async function selectPdfFolder() {
+  selectingFolder.value = true;
+  try {
+    const folderPath = await window.electronAPI.selectFolder();
+    if (folderPath) {
+      config.value.billing.pdfOutputPath = folderPath;
+    }
+  } catch (error) {
+    console.error("Failed to select folder:", error);
+  } finally {
+    selectingFolder.value = false;
   }
 }
 
@@ -527,6 +580,16 @@ async function saveConfig() {
 .btn-sm {
   padding: 6px 16px;
   font-size: $font-size-sm;
+}
+
+.path-input {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: center;
+
+  input {
+    flex: 1;
+  }
 }
 
 .settings-form {

@@ -79,6 +79,26 @@ export function initializeIPC() {
     }
   });
 
+  // ==================== Dossier ====================
+
+  ipcMain.handle("select-folder", async () => {
+    try {
+      const { filePaths, canceled } = await dialog.showOpenDialog({
+        title: "Choisir un dossier",
+        properties: ["openDirectory"],
+      });
+
+      if (canceled || filePaths.length === 0) {
+        return null;
+      }
+
+      return filePaths[0];
+    } catch (error) {
+      log.error("Failed to select folder:", error);
+      throw error;
+    }
+  });
+
   // ==================== Documents ====================
 
   ipcMain.handle("load-documents", async (event, type, filters) => {

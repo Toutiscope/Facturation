@@ -25,9 +25,10 @@ textarea,
   width: 100%;
   padding: 12px 8px;
   border: none;
-  border-radius: 8px;
+  border-radius: 5px;
+  border: 1px solid $grey-40;
   font-size: $font-size-base;
-  background: $grey-10;
+  background: #f9f9f9;
   color: $grey-100;
   transition: $transition-base;
 
@@ -48,7 +49,6 @@ textarea,
 
 textarea {
   resize: vertical;
-  min-height: 100px;
   font-family: inherit;
 }
 

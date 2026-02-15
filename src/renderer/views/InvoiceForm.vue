@@ -1,119 +1,145 @@
 <template>
   <div class="invoice-form-view">
     <div class="container">
-      <div class="header">
+      <div
+        class="header flex flex-space-between flex-vertical-center mg-bottom-16"
+      >
         <h1>{{ isEditMode ? "Modifier la facture" : "Nouvelle facture" }}</h1>
+        <p :class="['status-badge', `status-${invoice.status}`]">
+          {{ invoice.status }}
+        </p>
       </div>
 
       <div v-if="loading" class="loading">Chargement...</div>
       <div v-else-if="error" class="error">{{ error }}</div>
 
-      <form v-else @submit.prevent class="form">
-        <!-- Informations de la facture -->
-        <section class="card">
-          <h2>Informations de la facture</h2>
+      <form v-else @submit.prevent class="form flex flex-column gap-16">
+        <div class="grid grid--6-4 gap-16">
+          <!-- Formulaire client -->
+          <section class="card">
+            <CustomerForm v-model="invoice.customer" />
+          </section>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="numero" class="required">Numéro</label>
-              <input
-                id="numero"
-                type="text"
-                v-model="invoice.numero"
-                placeholder="F000001"
-                class="form-control"
-                pattern="F\d{6}"
-                required
-              />
-              <small class="form-text">Format: F suivi de 6 chiffres</small>
+          <!-- Informations de la facture -->
+          <section class="card">
+            <h2>Informations de la facture</h2>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="numero" class="required">Numéro</label>
+                <input
+                  id="numero"
+                  type="text"
+                  v-model="invoice.numero"
+                  placeholder="F000001"
+                  class="form-control"
+                  pattern="F\d{6}"
+                  required
+                />
+                <small class="form-text">Format: F suivi de 6 chiffres</small>
+              </div>
+
+              <div class="form-group">
+                <label for="date" class="required">Date</label>
+                <input
+                  id="date"
+                  type="date"
+                  v-model="invoice.date"
+                  class="form-control"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="dueDate" class="required">Date d'échéance</label>
+                <input
+                  id="dueDate"
+                  type="date"
+                  v-model="invoice.dueDate"
+                  class="form-control"
+                  required
+                />
+              </div>
             </div>
 
-            <div class="form-group">
-              <label for="date" class="required">Date</label>
-              <input
-                id="date"
-                type="date"
-                v-model="invoice.date"
-                class="form-control"
-                required
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="dueDate" class="required">Date d'échéance</label>
-              <input
-                id="dueDate"
-                type="date"
-                v-model="invoice.dueDate"
-                class="form-control"
-                required
-              />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="status">Statut</label>
-              <select id="status" v-model="invoice.status" class="form-control">
-                <option value="brouillon">Brouillon</option>
-                <option value="envoyé">Envoyé</option>
-                <option value="payé">Payé</option>
-                <option value="en retard">En retard</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="associatedQuote">Devis associé (optionnel)</label>
-              <input
-                id="associatedQuote"
-                type="text"
-                v-model="invoice.associatedQuote"
-                placeholder="D000001"
-                class="form-control"
-              />
-            </div>
-          </div>
-
-          <!-- Affichage statut Chorus Pro si envoyé -->
-          <div v-if="invoice.chorusPro?.isSent" class="chorus-status">
-            <h3>Statut Chorus Pro</h3>
-            <p>
-              <strong>Envoyé le :</strong>
-              {{ invoice.chorusPro.dateSending }}
-            </p>
-            <p v-if="invoice.chorusPro.depositNumber">
-              <strong>Numéro de dépôt :</strong>
-              {{ invoice.chorusPro.depositNumber }}
-            </p>
-            <p>
-              <strong>Statut :</strong>
-              <span
-                :class="['status-badge', `status-${invoice.chorusPro.status}`]"
-              >
-                {{ invoice.chorusPro.status }}
-              </span>
-            </p>
-            <div v-if="invoice.chorusPro.errors?.length > 0" class="errors">
-              <strong>Erreurs :</strong>
-              <ul>
-                <li
-                  v-for="(err, index) in invoice.chorusPro.errors"
-                  :key="index"
+            <div class="form-row">
+              <div class="form-group">
+                <label for="status">Statut</label>
+                <select
+                  id="status"
+                  v-model="invoice.status"
+                  class="form-control"
                 >
-                  {{ err }}
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
+                  <option value="brouillon">Brouillon</option>
+                  <option value="envoyé">Envoyé</option>
+                  <option value="payé">Payé</option>
+                  <option value="en retard">En retard</option>
+                </select>
+              </div>
 
-        <!-- Formulaire client -->
-        <section class="card">
-          <CustomerForm v-model="invoice.customer" />
-        </section>
+              <div class="form-group">
+                <label for="associatedQuote">Devis associé (optionnel)</label>
+                <input
+                  id="associatedQuote"
+                  type="text"
+                  v-model="invoice.associatedQuote"
+                  placeholder="D000001"
+                  class="form-control"
+                />
+              </div>
+            </div>
+
+            <!-- Affichage statut Chorus Pro si envoyé -->
+            <div v-if="invoice.chorusPro?.isSent" class="chorus-status">
+              <h3>Statut Chorus Pro</h3>
+              <p>
+                <strong>Envoyé le :</strong>
+                {{ invoice.chorusPro.dateSending }}
+              </p>
+              <p v-if="invoice.chorusPro.depositNumber">
+                <strong>Numéro de dépôt :</strong>
+                {{ invoice.chorusPro.depositNumber }}
+              </p>
+              <p>
+                <strong>Statut :</strong>
+                <span
+                  :class="[
+                    'status-badge',
+                    `status-${invoice.chorusPro.status}`,
+                  ]"
+                >
+                  {{ invoice.chorusPro.status }}
+                </span>
+              </p>
+              <div v-if="invoice.chorusPro.errors?.length > 0" class="errors">
+                <strong>Erreurs :</strong>
+                <ul>
+                  <li
+                    v-for="(err, index) in invoice.chorusPro.errors"
+                    :key="index"
+                  >
+                    {{ err }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </div>
 
         <!-- Tableau des prestations -->
         <section class="card">
+          <h2>Prestations</h2>
+
+          <div class="form-group">
+            <label for="invoiceObjet">Objet</label>
+            <textarea
+              id="invoiceObjet"
+              v-model="invoice.objectt"
+              placeholder="Objet de la facture"
+              class="form-control"
+              rows="2"
+            ></textarea>
+          </div>
           <ServiceLinesTable ref="serviceLinesRef" v-model="invoice.services" />
         </section>
 
@@ -152,7 +178,11 @@
             class="btn btn-primary"
             :disabled="saving || generatingPDF"
           >
-            {{ generatingPDF ? "Génération PDF..." : "Générer le PDF" }}
+            {{
+              generatingPDF
+                ? "Génération du PDF..."
+                : "Enregistrer et générer le PDF"
+            }}
           </button>
           <!-- <button
             type="submit"
@@ -197,8 +227,10 @@ const invoice = ref({
     postalCode: "",
     city: "",
     email: "",
+    phoneNumber: "",
     clientType: "professionnel",
   },
+  object: "",
   services: [],
   totals: {
     totalHT: 0,
@@ -266,6 +298,7 @@ function convertQuoteToInvoice(quote) {
     ...invoice.value,
     customer: { ...quote.customer },
     services: [...quote.services],
+    object: quote.object || "",
     notes: quote.notes || "",
     associatedQuote: quote.numero,
     numero: nextNumber.value,

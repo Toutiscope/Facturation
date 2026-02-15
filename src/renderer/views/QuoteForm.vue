@@ -13,7 +13,7 @@
       <div v-if="loading" class="loading">Chargement...</div>
       <div v-else-if="error" class="error">{{ error }}</div>
 
-      <form v-else @submit.prevent class="form">
+      <form v-else @submit.prevent class="form flex flex-column gap-16">
         <div class="form__info grid grid--6-4 gap-16">
           <!-- Formulaire client -->
           <section class="card">
@@ -63,7 +63,7 @@
             </section>
 
             <!-- Notes internes -->
-            <section class="card">
+            <section class="card mg-top-16">
               <div class="form-group">
                 <label for="quoteNotes"
                   >Notes internes (elles n'apparaitront pas sur le PDF)</label
@@ -82,6 +82,18 @@
 
         <!-- Tableau des prestations -->
         <section class="card">
+          <h2>Prestations</h2>
+
+          <div class="form-group">
+            <label for="quoteObjet">Objet</label>
+            <textarea
+              id="quoteObjet"
+              v-model="quote.object"
+              placeholder="Objet du devis"
+              class="form-control"
+              rows="2"
+            ></textarea>
+          </div>
           <ServiceLinesTable ref="serviceLinesRef" v-model="quote.services" />
         </section>
 
@@ -104,7 +116,11 @@
             class="btn btn-primary"
             :disabled="saving || generatingPDF"
           >
-            {{ generatingPDF ? "Génération PDF..." : "Générer le PDF" }}
+            {{
+              generatingPDF
+                ? "Génération du PDF..."
+                : "Enregister et générer le PDF"
+            }}
           </button>
         </div>
       </form>
@@ -142,8 +158,10 @@ const quote = ref({
     postalCode: "",
     city: "",
     email: "",
+    phoneNumber: "",
     clientType: "professionnel",
   },
+  object: "",
   services: [],
   totals: {
     totalHT: 0,

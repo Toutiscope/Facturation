@@ -123,25 +123,14 @@
       </div>
     </div>
 
-    <!-- Modal de confirmation de suppression -->
-    <div v-if="showDeleteModal" class="modal-overlay" @click="cancelDelete">
-      <div class="modal" @click.stop>
-        <h3>Confirmer la suppression</h3>
-        <p>
-          Êtes-vous sûr de vouloir supprimer la facture
-          <strong>{{ invoiceToDelete?.numero }}</strong> ?
-        </p>
-        <p class="warning">Cette action est irréversible.</p>
-        <div class="modal-actions">
-          <button @click="cancelDelete" class="btn btn-secondary">
-            Annuler
-          </button>
-          <button @click="deleteInvoice" class="btn btn-danger">
-            Supprimer
-          </button>
-        </div>
-      </div>
-    </div>
+    <ConfirmModal
+      :visible="showDeleteModal"
+      @cancel="cancelDelete"
+      @confirm="deleteInvoice"
+    >
+      Êtes-vous sûr de vouloir supprimer la facture
+      <strong>{{ invoiceToDelete?.numero }}</strong> ?
+    </ConfirmModal>
   </div>
 </template>
 
@@ -149,6 +138,7 @@
 import { ref, onMounted, toRaw } from "vue";
 import { useRouter } from "vue-router";
 import { useDocuments } from "@/composables/useDocuments";
+import ConfirmModal from "@/components/common/ConfirmModal.vue";
 
 const router = useRouter();
 const { documents, loading, error, loadAll, remove } = useDocuments("factures");

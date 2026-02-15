@@ -80,7 +80,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="quote in documents" :key="quote.id">
+            <tr
+              v-for="quote in documents"
+              :key="quote.id"
+              class="pointer"
+              @click="edit(quote.id)"
+            >
               <td class="numero">{{ quote.numero }}</td>
               <td>{{ quote.date }}</td>
               <td class="client-name">{{ quote.customer.customerName }}</td>
@@ -93,34 +98,30 @@
                 </span>
               </td>
               <td class="actions-cell">
-                <button
-                  @click="edit(quote.id)"
-                  class="btn-icon"
-                  title="Modifier"
-                >
-                  ✏️
-                </button>
-                <button
-                  @click="generatePDF(quote)"
-                  class="btn-icon"
-                  title="Générer PDF"
-                >
-                  📄
-                </button>
-                <button
-                  @click="convertToInvoice(quote)"
-                  class="btn-icon"
-                  title="Convertir en facture"
-                >
-                  💰
-                </button>
-                <button
-                  @click="confirmDelete(quote)"
-                  class="btn-icon btn-danger"
-                  title="Supprimer"
-                >
-                  🗑️
-                </button>
+                <div class="flex flex-vertical-center flex-space-between gap-4">
+                  <button
+                    @click="convertToInvoice(quote)"
+                    class="btn btn-primary btn-sm"
+                  >
+                    Convertir en facture
+                  </button>
+                  <button
+                    @click="confirmDelete(quote)"
+                    class="btn-icon btn-danger"
+                    title="Supprimer"
+                  >
+                    <svg
+                      height="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 640 640"
+                    >
+                      <path
+                        fill="#244b63"
+                        d="M262.2 48c-13.3 0-25.3 8.3-30 20.8L216 112h-96c-13.3 0-24 10.7-24 24s10.7 24 24 24h400c13.3 0 24-10.7 24-24s-10.7-24-24-24h-96l-16.2-43.2c-4.7-12.5-16.6-20.8-30-20.8H262.2zM128 208v304c0 35.3 28.7 64 64 64h256c35.3 0 64-28.7 64-64V208h-48v304c0 8.8-7.2 16-16 16H192c-8.8 0-16-7.2-16-16V208h-48zm160 72c0-13.3-10.7-24-24-24s-24 10.7-24 24v176c0 13.3 10.7 24 24 24s24-10.7 24-24V280zm112 0c0-13.3-10.7-24-24-24s-24 10.7-24 24v176c0 13.3 10.7 24 24 24s24-10.7 24-24V280z"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -128,23 +129,14 @@
       </div>
     </div>
 
-    <!-- Modal de confirmation de suppression -->
-    <div v-if="showDeleteModal" class="modal-overlay" @click="cancelDelete">
-      <div class="modal" @click.stop>
-        <h3>Confirmer la suppression</h3>
-        <p>
-          Êtes-vous sûr de vouloir supprimer le devis
-          <strong>{{ quoteToDelete?.numero }}</strong> ?
-        </p>
-        <p class="warning">Cette action est irréversible.</p>
-        <div class="modal-actions">
-          <button @click="cancelDelete" class="btn btn-secondary">
-            Annuler
-          </button>
-          <button @click="deleteQuote" class="btn btn-danger">Supprimer</button>
-        </div>
-      </div>
-    </div>
+    <ConfirmModal
+      :visible="showDeleteModal"
+      @cancel="cancelDelete"
+      @confirm="deleteQuote"
+    >
+      Êtes-vous sûr de vouloir supprimer le devis
+      <strong>{{ quoteToDelete?.numero }}</strong> ?
+    </ConfirmModal>
   </div>
 </template>
 
@@ -152,6 +144,7 @@
 import { ref, onMounted, toRaw } from "vue";
 import { useRouter } from "vue-router";
 import { useDocuments } from "@/composables/useDocuments";
+import ConfirmModal from "@/components/common/ConfirmModal.vue";
 
 const router = useRouter();
 const { documents, loading, error, loadAll, remove } = useDocuments("devis");
