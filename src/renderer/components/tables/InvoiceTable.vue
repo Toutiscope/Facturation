@@ -33,7 +33,7 @@
           <td>{{ invoice.dueDate }}</td>
           <td>
             <span :class="['status-badge', `status-${invoice.status}`]">
-              {{ invoice.status }} {{ statusLabel(invoice.status) }}
+              {{ statusLabel(invoice.status) }}
             </span>
           </td>
           <td class="actions-cell">

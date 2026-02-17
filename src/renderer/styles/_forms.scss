@@ -31,7 +31,6 @@ textarea,
   background: #f9f9f9;
   color: $grey-100;
   transition: $transition-base;
-  height: 47px;
 
   &:focus {
     @include focus-ring;
@@ -46,6 +45,10 @@ textarea,
   &.error {
     border-color: $error-color;
   }
+}
+
+select {
+  height: 47px;
 }
 
 textarea {

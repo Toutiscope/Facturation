@@ -9,7 +9,6 @@ table {
   background: $white;
   box-shadow: $shadow-md;
   border-radius: $radius-md;
-  overflow: hidden;
 
   thead {
     background: $grey-20;
@@ -52,7 +51,6 @@ table {
     border-collapse: separate;
     border-spacing: 0;
     border-radius: $radius-md;
-    overflow: hidden;
 
     thead {
       background-color: $grey-20;
