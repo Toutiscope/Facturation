@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, Menu } from "electron";
 import path from "path";
 import { initializeIPC } from "./ipcHandlers.js";
 import { initializeDataFolder } from "./utils/paths";
@@ -30,6 +30,41 @@ function createWindow() {
   });
 
   mainWindow.maximize();
+
+  // Menu en français
+  const menu = Menu.buildFromTemplate([
+    {
+      label: "Fichier",
+      submenu: [{ label: "Quitter", role: "quit" }],
+    },
+    {
+      label: "Édition",
+      submenu: [
+        { label: "Annuler", role: "undo" },
+        { label: "Rétablir", role: "redo" },
+        { type: "separator" },
+        { label: "Couper", role: "cut" },
+        { label: "Copier", role: "copy" },
+        { label: "Coller", role: "paste" },
+        { label: "Tout sélectionner", role: "selectAll" },
+      ],
+    },
+    {
+      label: "Affichage",
+      submenu: [
+        { label: "Recharger", role: "reload" },
+        { label: "Forcer le rechargement", role: "forceReload" },
+        { label: "Outils de développement", role: "toggleDevTools" },
+        { type: "separator" },
+        { label: "Zoom avant", role: "zoomIn" },
+        { label: "Zoom arrière", role: "zoomOut" },
+        { label: "Réinitialiser le zoom", role: "resetZoom" },
+        { type: "separator" },
+        { label: "Plein écran", role: "togglefullscreen" },
+      ],
+    },
+  ]);
+  Menu.setApplicationMenu(menu);
 
   // Développement vs Production
   if (process.env.NODE_ENV === "development" || !app.isPackaged) {

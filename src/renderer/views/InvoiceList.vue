@@ -60,88 +60,32 @@
       <div v-else-if="error" class="error">{{ error }}</div>
 
       <!-- Tableau des factures -->
-      <div v-else class="table-wrapper card">
-        <div v-if="documents.length === 0" class="empty-state">
-          <p>Aucune facture trouvée</p>
+      <InvoiceTable
+        v-else
+        :invoices="documents"
+        @edit="edit"
+        @status-change="updateStatus"
+        @delete="deleteInvoice"
+      >
+        <template #empty>
           <button @click="createNew" class="btn btn-secondary">
             Créer votre première facture
           </button>
-        </div>
-
-        <table v-else class="table">
-          <thead>
-            <tr>
-              <th>Numéro</th>
-              <th>Date</th>
-              <th>Client</th>
-              <th>Montant TTC</th>
-              <th>Échéance</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="invoice in documents" :key="invoice.id">
-              <td class="numero">{{ invoice.numero }}</td>
-              <td>{{ invoice.date }}</td>
-              <td class="client-name">{{ invoice.customer.customerName }}</td>
-              <td class="amount">
-                {{ formatCurrency(invoice.totals.totalTTC) }}
-              </td>
-              <td>{{ invoice.dueDate }}</td>
-              <td>
-                <span :class="['status-badge', `status-${invoice.status}`]">
-                  {{ invoice.status }}
-                </span>
-              </td>
-              <td class="actions-cell">
-                <button
-                  @click="edit(invoice.id)"
-                  class="btn-icon"
-                  title="Modifier"
-                >
-                  ✏️
-                </button>
-                <button
-                  @click="generatePDF(invoice)"
-                  class="btn-icon"
-                  title="Générer PDF"
-                >
-                  📄
-                </button>
-                <button
-                  @click="confirmDelete(invoice)"
-                  class="btn-icon btn-danger"
-                  title="Supprimer"
-                >
-                  🗑️
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        </template>
+      </InvoiceTable>
     </div>
-
-    <ConfirmModal
-      :visible="showDeleteModal"
-      @cancel="cancelDelete"
-      @confirm="deleteInvoice"
-    >
-      Êtes-vous sûr de vouloir supprimer la facture
-      <strong>{{ invoiceToDelete?.numero }}</strong> ?
-    </ConfirmModal>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, toRaw } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDocuments } from "@/composables/useDocuments";
-import ConfirmModal from "@/components/common/ConfirmModal.vue";
+import InvoiceTable from "@/components/tables/InvoiceTable.vue";
 
 const router = useRouter();
-const { documents, loading, error, loadAll, remove } = useDocuments("factures");
+const { documents, loading, error, loadAll, save, remove } =
+  useDocuments("factures");
 
 const currentYear = new Date().getFullYear();
 const filters = ref({
@@ -149,9 +93,6 @@ const filters = ref({
   status: "",
   year: currentYear,
 });
-
-const showDeleteModal = ref(false);
-const invoiceToDelete = ref(null);
 
 onMounted(async () => {
   await applyFilters();
@@ -173,46 +114,22 @@ function edit(id) {
   router.push(`/factures/${id}`);
 }
 
-function confirmDelete(invoice) {
-  invoiceToDelete.value = invoice;
-  showDeleteModal.value = true;
-}
-
-function cancelDelete() {
-  invoiceToDelete.value = null;
-  showDeleteModal.value = false;
-}
-
-async function deleteInvoice() {
-  if (!invoiceToDelete.value) return;
-
+async function updateStatus(invoice, status) {
   try {
-    await remove(invoiceToDelete.value.id);
-    showDeleteModal.value = false;
-    invoiceToDelete.value = null;
+    const raw = JSON.parse(JSON.stringify(invoice));
+    raw.status = status;
+    await save(raw);
+  } catch (err) {
+    console.error("Failed to update invoice status:", err);
+  }
+}
+
+async function deleteInvoice(id) {
+  try {
+    await remove(id);
   } catch (err) {
     console.error("Failed to delete invoice:", err);
   }
-}
-
-async function generatePDF(invoice) {
-  try {
-    const raw = JSON.parse(JSON.stringify(toRaw(invoice)));
-    const filePath = await window.electronAPI.generatePDF("factures", raw);
-    if (filePath) {
-      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);
-    }
-  } catch (err) {
-    console.error("Failed to generate PDF:", err);
-    alert(`Erreur lors de la génération du PDF : ${err.message}`);
-  }
-}
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value || 0);
 }
 </script>
 

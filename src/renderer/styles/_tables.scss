@@ -116,12 +116,14 @@ table {
     color: $info-color;
   }
 
-  &.status-accepté {
+  &.status-accepté,
+  &.status-payé {
     background: rgba($success-color, 0.1);
     color: $success-color;
   }
 
   &.status-refusé,
+  &.status-en,
   &.status-rejeté {
     background: rgba($error-color, 0.1);
     color: $error-color;
