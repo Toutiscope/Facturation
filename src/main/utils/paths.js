@@ -3,6 +3,42 @@ import path from "path";
 import { promises as fs } from "fs";
 import log from "electron-log";
 
+const DEFAULT_CONFIG = {
+  company: {
+    companyName: "",
+    ownerName: "",
+    companyId: "",
+    registeredAddress: "",
+    address: "",
+    postalCode: "",
+    city: "",
+    email: "",
+    phoneNumber: "",
+    webSite: "",
+  },
+  rib: {
+    iban: "",
+    bic: "",
+    holder: "",
+  },
+  chorusPro: {
+    identifier: "",
+    password: "",
+    apiKey: "",
+    urlApi: "https://chorus-pro.gouv.fr/api/",
+  },
+  billing: {
+    legalNotice: "",
+    paymentTerms: "Paiement à 30 jours",
+    meansOfPayment: "Virement bancaire, chèque",
+    latePenalties:
+      "En cas de retard de paiement, application de pénalités de retard au taux de 10% par an et d'une indemnité forfaitaire pour frais de recouvrement de 40€.",
+    latestQuoteNumber: 0,
+    latestInvoiceNumber: 0,
+    pdfOutputPath: "",
+  },
+};
+
 // Fonctions lazy pour obtenir les chemins (évite l'accès à app avant qu'il soit ready)
 const getPaths = () => {
   const DATA_DIR = path.join(app.getPath("userData"), "data");
@@ -11,37 +47,33 @@ const getPaths = () => {
     CONFIG_PATH: path.join(DATA_DIR, "config.json"),
     DEVIS_DIR: path.join(DATA_DIR, "devis"),
     FACTURES_DIR: path.join(DATA_DIR, "factures"),
-    CONFIG_TEMPLATE_PATH: path.join(process.cwd(), "config.template.json"),
   };
 };
 
 /**
  * Initialise le dossier data au premier lancement
- * Crée les dossiers nécessaires et copie le template de configuration
+ * Crée les dossiers nécessaires et génère la configuration par défaut
  */
 export async function initializeDataFolder() {
   try {
-    const {
-      DATA_DIR,
-      CONFIG_PATH,
-      DEVIS_DIR,
-      FACTURES_DIR,
-      CONFIG_TEMPLATE_PATH,
-    } = getPaths();
+    const { DATA_DIR, CONFIG_PATH, DEVIS_DIR, FACTURES_DIR } = getPaths();
 
     // Créer dossiers data/, devis/, factures/ si n'existent pas
     await fs.mkdir(DATA_DIR, { recursive: true });
     await fs.mkdir(DEVIS_DIR, { recursive: true });
     await fs.mkdir(FACTURES_DIR, { recursive: true });
 
-    // Si config.json n'existe pas, copier le template
+    // Si config.json n'existe pas, créer depuis la config par défaut
     try {
       await fs.access(CONFIG_PATH);
       log.info("config.json already exists");
     } catch {
-      log.info("First launch detected, creating config.json from template");
-      const template = await fs.readFile(CONFIG_TEMPLATE_PATH, "utf-8");
-      await fs.writeFile(CONFIG_PATH, template, "utf-8");
+      log.info("First launch detected, creating config.json");
+      await fs.writeFile(
+        CONFIG_PATH,
+        JSON.stringify(DEFAULT_CONFIG, null, 2),
+        "utf-8",
+      );
       log.info("config.json created successfully");
     }
 
