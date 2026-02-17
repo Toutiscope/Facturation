@@ -9,7 +9,7 @@
       </div>
 
       <!-- Filtres -->
-      <div class="filters card">
+      <div class="filters pd-bottom-32">
         <div class="filter-row">
           <div class="filter-group">
             <label for="search">Rechercher</label>
@@ -32,10 +32,10 @@
               class="form-control"
             >
               <option value="">Tous</option>
-              <option value="brouillon">Brouillon</option>
-              <option value="envoyé">Envoyé</option>
-              <option value="payé">Payé</option>
-              <option value="en retard">En retard</option>
+              <option value="draft">Brouillon</option>
+              <option value="sent">Envoyé</option>
+              <option value="paid">Payé</option>
+              <option value="overdue">En retard</option>
             </select>
           </div>
 

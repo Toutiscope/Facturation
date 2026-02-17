@@ -50,7 +50,7 @@ export const quoteSchema = z.object({
   numero: z.string().regex(/^D\d{6}$/, 'Le numéro de devis doit être au format D000001'),
   date: z.string().min(1, 'La date est requise'),
   validityDate: z.string().min(1, 'La date de validité est requise'),
-  status: z.enum(['brouillon', 'envoyé', 'accepté', 'refusé'], {
+  status: z.enum(['draft', 'sent', 'accepted', 'refused'], {
     errorMap: () => ({ message: 'Statut invalide' })
   }),
   customer: customerSchema,
@@ -68,7 +68,7 @@ export const chorusProSchema = z.object({
   isSent: z.boolean(),
   dateSending: z.string().nullable().optional(),
   depositNumber: z.string().nullable().optional(),
-  status: z.enum(['brouillon', 'envoyé', 'accepté', 'rejeté']).optional(),
+  status: z.enum(['draft', 'sent', 'accepted', 'rejected']).optional(),
   errors: z.array(z.string()).optional()
 })
 

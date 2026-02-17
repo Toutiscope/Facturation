@@ -11,7 +11,7 @@
           <th style="width: 90px">Numéro</th>
           <th style="width: 120px">Date</th>
           <th style="min-width: 200px">Client</th>
-          <th v-if="showObjet" style="width: 50%">Objet</th>
+          <th style="width: 50%">Objet</th>
           <th style="width: 60px">Montant TTC</th>
           <th style="width: 120px">Échéance</th>
           <th style="min-width: 150px; width: 150px">Statut</th>
@@ -28,12 +28,12 @@
           <td class="numero">{{ invoice.numero }}</td>
           <td>{{ invoice.date }}</td>
           <td class="client-name">{{ invoice.customer?.customerName }}</td>
-          <td v-if="showObjet">{{ invoice.object }}</td>
+          <td>{{ invoice.object }}</td>
           <td class="amount">{{ formatCurrency(invoice.totals?.totalTTC) }}</td>
           <td>{{ invoice.dueDate }}</td>
           <td>
             <span :class="['status-badge', `status-${invoice.status}`]">
-              {{ invoice.status }}
+              {{ invoice.status }} {{ statusLabel(invoice.status) }}
             </span>
           </td>
           <td class="actions-cell">
@@ -51,30 +51,30 @@
               </button>
               <div v-if="openMenuId === invoice.id" class="dropdown__menu">
                 <button
-                  v-if="invoice.status !== 'envoyé'"
+                  v-if="invoice.status !== 'sent'"
                   class="dropdown__item"
-                  @click.stop="changeStatus(invoice, 'envoyé')"
+                  @click.stop="changeStatus(invoice, 'sent')"
                 >
                   Marquer comme envoyé
                 </button>
                 <button
-                  v-if="invoice.status !== 'payé'"
+                  v-if="invoice.status !== 'paid'"
                   class="dropdown__item"
-                  @click.stop="changeStatus(invoice, 'payé')"
+                  @click.stop="changeStatus(invoice, 'paid')"
                 >
                   Marquer comme payé
                 </button>
                 <button
-                  v-if="invoice.status !== 'en retard'"
+                  v-if="invoice.status !== 'overdue'"
                   class="dropdown__item"
-                  @click.stop="changeStatus(invoice, 'en retard')"
+                  @click.stop="changeStatus(invoice, 'overdue')"
                 >
                   Marquer en retard
                 </button>
                 <button
-                  v-if="invoice.status !== 'brouillon'"
+                  v-if="invoice.status !== 'draft'"
                   class="dropdown__item"
-                  @click.stop="changeStatus(invoice, 'brouillon')"
+                  @click.stop="changeStatus(invoice, 'draft')"
                 >
                   Remettre en brouillon
                 </button>
@@ -112,6 +112,7 @@
 <script setup>
 import { ref, toRaw } from "vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
+import { statusLabel } from "@/utils/statusLabels";
 
 defineProps({
   invoices: {

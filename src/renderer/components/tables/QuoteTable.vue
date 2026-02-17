@@ -11,7 +11,7 @@
           <th style="width: 90px">Numéro</th>
           <th style="width: 120px">Date</th>
           <th style="min-width: 200px">Client</th>
-          <th v-if="showObjet" style="width: 50%">Objet</th>
+          <th style="width: 50%">Objet</th>
           <th style="width: 60px">Montant TTC</th>
           <th style="width: 150px">Statut</th>
           <th style="width: 50px">Actions</th>
@@ -27,11 +27,11 @@
           <td class="numero">{{ quote.numero }}</td>
           <td>{{ quote.date }}</td>
           <td class="client-name">{{ quote.customer?.customerName }}</td>
-          <td v-if="showObjet">{{ quote.object }}</td>
+          <td>{{ quote.object }}</td>
           <td class="amount">{{ formatCurrency(quote.totals?.totalTTC) }}</td>
           <td>
             <span :class="['status-badge', `status-${quote.status}`]">
-              {{ quote.status }}
+              {{ statusLabel(quote.status) }}
             </span>
           </td>
           <td class="actions-cell">
@@ -49,30 +49,30 @@
               </button>
               <div v-if="openMenuId === quote.id" class="dropdown__menu">
                 <button
-                  v-if="quote.status !== 'envoyé'"
+                  v-if="quote.status !== 'sent'"
                   class="dropdown__item"
-                  @click.stop="changeStatus(quote, 'envoyé')"
+                  @click.stop="changeStatus(quote, 'sent')"
                 >
                   Marquer comme envoyé
                 </button>
                 <button
-                  v-if="quote.status !== 'accepté'"
+                  v-if="quote.status !== 'accepted'"
                   class="dropdown__item"
-                  @click.stop="changeStatus(quote, 'accepté')"
+                  @click.stop="changeStatus(quote, 'accepted')"
                 >
                   Marquer comme accepté
                 </button>
                 <button
-                  v-if="quote.status !== 'refusé'"
+                  v-if="quote.status !== 'refused'"
                   class="dropdown__item"
-                  @click.stop="changeStatus(quote, 'refusé')"
+                  @click.stop="changeStatus(quote, 'refused')"
                 >
                   Marquer comme refusé
                 </button>
                 <button
-                  v-if="quote.status !== 'brouillon'"
+                  v-if="quote.status !== 'draft'"
                   class="dropdown__item"
-                  @click.stop="changeStatus(quote, 'brouillon')"
+                  @click.stop="changeStatus(quote, 'draft')"
                 >
                   Remettre en brouillon
                 </button>
@@ -113,6 +113,7 @@
 <script setup>
 import { ref } from "vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
+import { statusLabel } from "@/utils/statusLabels";
 
 defineProps({
   quotes: {

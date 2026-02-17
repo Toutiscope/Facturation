@@ -6,7 +6,7 @@
       >
         <h1>{{ isEditMode ? "Modifier la facture" : "Nouvelle facture" }}</h1>
         <p :class="['status-badge', `status-${invoice.status}`]">
-          {{ invoice.status }}
+          {{ statusLabel(invoice.status) }}
         </p>
       </div>
 
@@ -70,10 +70,10 @@
                   v-model="invoice.status"
                   class="form-control"
                 >
-                  <option value="brouillon">Brouillon</option>
-                  <option value="envoyé">Envoyé</option>
-                  <option value="payé">Payé</option>
-                  <option value="en retard">En retard</option>
+                  <option value="draft">Brouillon</option>
+                  <option value="sent">Envoyé</option>
+                  <option value="paid">Payé</option>
+                  <option value="overdue">En retard</option>
                 </select>
               </div>
 
@@ -108,7 +108,7 @@
                     `status-${invoice.chorusPro.status}`,
                   ]"
                 >
-                  {{ invoice.chorusPro.status }}
+                  {{ statusLabel(invoice.chorusPro.status) }}
                 </span>
               </p>
               <div v-if="invoice.chorusPro.errors?.length > 0" class="errors">
@@ -204,6 +204,7 @@ import CustomerForm from "@/components/forms/CustomerForm.vue";
 import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
 import { useDocuments } from "@/composables/useDocuments";
 import { useNumbering } from "@/composables/useNumbering";
+import { statusLabel } from "@/utils/statusLabels";
 
 const router = useRouter();
 const route = useRoute();
@@ -218,7 +219,7 @@ const invoice = ref({
   numero: "",
   date: new Date().toISOString().split("T")[0],
   dueDate: getDueDate(),
-  status: "brouillon",
+  status: "draft",
   customer: {
     customerName: "",
     companyName: "",
@@ -244,7 +245,7 @@ const invoice = ref({
     isSent: false,
     dateSending: null,
     depositNumber: null,
-    status: "brouillon",
+    status: "draft",
     errors: [],
   },
   createdAt: "",
@@ -312,7 +313,7 @@ function convertQuoteToInvoice(quote) {
 }
 
 async function saveAsDraft() {
-  invoice.value.status = "brouillon";
+  invoice.value.status = "draft";
   await saveInvoice();
   router.push("/factures");
 }

@@ -214,8 +214,7 @@ if (localServices.value.length === 0) {
     width: 100%;
     border-collapse: collapse;
     background: $white;
-    border: 1px solid $grey-30;
-    border-radius: $border-radius-md;
+    border-radius: $border-radius-md $border-radius-md 0 0;
 
     thead {
       background-color: $primary-color;
@@ -232,7 +231,7 @@ if (localServices.value.length === 0) {
 
     tbody {
       tr {
-        border-bottom: 1px solid $grey-50;
+        border-bottom: 1px solid $grey-30;
 
         &:hover {
           background-color: $grey-30;

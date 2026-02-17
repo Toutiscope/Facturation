@@ -4,10 +4,12 @@
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background: $white;
   box-shadow: $shadow-md;
   border-radius: $radius-md;
+  overflow: hidden;
 
   thead {
     background: $grey-20;
@@ -24,12 +26,7 @@ table {
 
   tbody {
     tr {
-      border-bottom: 1px solid $grey-30;
       transition: $transition-base;
-
-      &:last-child {
-        border-bottom: none;
-      }
 
       &:hover {
         background: $grey-20;
@@ -39,6 +36,11 @@ table {
         padding: $spacing-md;
         font-size: $font-size-sm;
         color: $grey-100;
+        border-bottom: 1px solid $grey-30;
+      }
+
+      &:last-child td {
+        border-bottom: none;
       }
     }
   }
@@ -47,11 +49,13 @@ table {
 .table-wrapper {
   .table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: $radius-md;
+    overflow: hidden;
 
     thead {
       background-color: $grey-20;
-      border-bottom: 2px solid $grey-30;
 
       th {
         padding: $spacing-sm $spacing-md;
@@ -64,7 +68,6 @@ table {
 
     tbody {
       tr {
-        border-bottom: 1px solid $grey-30;
         transition: $transition-base;
 
         &:hover {
@@ -74,6 +77,7 @@ table {
         td {
           padding: $spacing-sm $spacing-md;
           color: $grey-100;
+          border-bottom: 1px solid $grey-30;
 
           &.numero {
             font-weight: 600;
@@ -93,6 +97,10 @@ table {
             white-space: nowrap;
           }
         }
+
+        &:last-child td {
+          border-bottom: none;
+        }
       }
     }
   }
@@ -106,25 +114,25 @@ table {
   font-weight: 500;
   text-transform: uppercase;
 
-  &.status-brouillon {
+  &.status-draft {
     background: rgba($grey-80, 0.1);
     color: $grey-80;
   }
 
-  &.status-envoyé {
+  &.status-sent {
     background: rgba($info-color, 0.1);
     color: $info-color;
   }
 
-  &.status-accepté,
-  &.status-payé {
+  &.status-accepted,
+  &.status-paid {
     background: rgba($success-color, 0.1);
     color: $success-color;
   }
 
-  &.status-refusé,
-  &.status-en,
-  &.status-rejeté {
+  &.status-refused,
+  &.status-overdue,
+  &.status-rejected {
     background: rgba($error-color, 0.1);
     color: $error-color;
   }

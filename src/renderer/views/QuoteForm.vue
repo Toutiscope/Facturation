@@ -6,7 +6,7 @@
       >
         <h1>{{ isEditMode ? "Modifier le devis" : "Nouveau devis" }}</h1>
         <p :class="['status-badge', `status-${quote.status}`]">
-          {{ quote.status }}
+          {{ statusLabel(quote.status) }}
         </p>
       </div>
 
@@ -135,6 +135,7 @@ import CustomerForm from "@/components/forms/CustomerForm.vue";
 import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
 import { useDocuments } from "@/composables/useDocuments";
 import { useNumbering } from "@/composables/useNumbering";
+import { statusLabel } from "@/utils/statusLabels";
 
 const router = useRouter();
 const route = useRoute();
@@ -149,7 +150,7 @@ const quote = ref({
   numero: "",
   date: new Date().toISOString().split("T")[0],
   validityDate: getValidityDate(),
-  status: "brouillon",
+  status: "draft",
   customer: {
     customerName: "",
     companyName: "",
@@ -212,7 +213,7 @@ function getValidityDate() {
 }
 
 async function saveAsDraft() {
-  quote.value.status = "brouillon";
+  quote.value.status = "draft";
   await saveQuote();
   router.push("/devis");
 }
