@@ -42,6 +42,7 @@
   "build": {
     "appId": "com.facturation.qbmaker.app",
     "productName": "Facturation",
+    "artifactName": "${productName}-Setup-${version}.${ext}",
     "directories": {
       "output": "out",
       "buildResources": "build"
