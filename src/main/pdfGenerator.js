@@ -94,7 +94,7 @@ export async function generatePDF(type, document) {
     renderHeader(doc, company, type, document, document.customer || {});
     renderObjet(doc, document.object);
     renderServices(doc, document.services || []);
-    renderTotals(doc, document.totals || {}, billing, type);
+    renderTotals(doc, document.totals || {}, billing, rib, type);
     renderFooter(doc, company, billing, rib, type);
 
     // Finaliser le PDF
@@ -433,7 +433,7 @@ function renderServices(doc, services) {
 /**
  * Rendre les totaux
  */
-function renderTotals(doc, totals, billing, type) {
+function renderTotals(doc, totals, billing, rib, type) {
   const margin = doc.page.margins.left;
   const pageWidth = doc.page.width;
 
@@ -447,17 +447,71 @@ function renderTotals(doc, totals, billing, type) {
   const contentX = boxX + boxPadding;
   const contentY = boxY + boxPadding;
 
-  // Moyens de règlement à gauche (pour devis)
+  // Informations à gauche du bloc totaux
+  const leftWidth = boxX - margin - 20;
+  let leftY = contentY;
+
   if (type === "devis" && billing.meansOfPayment) {
-    const leftWidth = boxX - margin - 20;
     doc
       .fontSize(11)
       .font("Helvetica-Bold")
       .fillColor("#1e293b")
-      .text("Moyens de règlement :", margin, contentY, { width: leftWidth });
-    doc.font("Helvetica").text(billing.meansOfPayment, margin, contentY + 12, {
+      .text("Moyens de règlement :", margin, leftY, { width: leftWidth });
+    leftY += 16;
+    doc.font("Helvetica").text(billing.meansOfPayment, margin, leftY, {
       width: leftWidth,
     });
+    leftY = doc.y + 6;
+  }
+
+  if (type === "factures" && rib.iban) {
+    doc
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .fillColor("#1e293b")
+      .text("Coordonnées bancaires :", margin, leftY, { width: leftWidth });
+    leftY += 16;
+    doc.fontSize(11).font("Helvetica");
+    doc.text(`IBAN : ${formatIban(rib.iban)}`, margin, leftY, {
+      width: leftWidth,
+    });
+    leftY = doc.y + 2;
+    if (rib.bic) {
+      doc.text(`BIC : ${rib.bic}`, margin, leftY, { width: leftWidth });
+      leftY = doc.y + 2;
+    }
+    leftY += 4;
+  }
+
+  if (type === "factures" && billing.paymentTerms) {
+    leftY += 6;
+    doc
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .fillColor("#1e293b")
+      .text("Conditions de paiement :", margin, leftY, { width: leftWidth });
+    leftY += 16;
+    doc
+      .font("Helvetica")
+      .text(billing.paymentTerms, margin, leftY, { width: leftWidth });
+    leftY = doc.y + 6;
+  }
+
+  if (type === "factures" && billing.latePenalties) {
+    doc
+      .fontSize(8)
+      .font("Helvetica")
+      .fillColor("#64748b")
+      .text(billing.latePenalties, margin, leftY, { width: leftWidth });
+    leftY = doc.y + 4;
+  }
+
+  if (billing.legalNotice) {
+    doc
+      .fontSize(8)
+      .font("Helvetica")
+      .fillColor("#64748b")
+      .text(billing.legalNotice, margin, leftY, { width: leftWidth });
   }
 
   // Contour arrondi de l'encart
@@ -533,10 +587,6 @@ function renderFooter(doc, company, billing, rib, type) {
   // Calculer la hauteur du contenu footer (mentions, RIB, etc.)
   let footerContentHeight = 5;
   if (type === "devis") footerContentHeight += 15;
-  if (type === "factures" && billing.paymentTerms) footerContentHeight += 30;
-  if (type === "factures" && billing.latePenalties) footerContentHeight += 30;
-  if (billing.legalNotice) footerContentHeight += 25;
-  if (rib.iban) footerContentHeight += 50;
 
   // Mention bon pour accord (pour devis)
   if (type === "devis") {
@@ -563,58 +613,6 @@ function renderFooter(doc, company, billing, rib, type) {
 
   // Positionner le footer juste au-dessus du bandeau identité
   doc.y = footerStartY;
-
-  // Conditions de paiement (pour factures)
-  if (type === "factures" && billing.paymentTerms) {
-    doc
-      .fontSize(9)
-      .font("Helvetica-Bold")
-      .fillColor("#1e293b")
-      .text("Conditions de paiement :", margin, doc.y, { width: contentWidth });
-    doc
-      .font("Helvetica")
-      .text(billing.paymentTerms, margin, doc.y + 12, { width: contentWidth });
-    doc.y += 30;
-  }
-
-  // Pénalités de retard (pour factures)
-  if (type === "factures" && billing.latePenalties) {
-    doc
-      .fontSize(8)
-      .font("Helvetica")
-      .fillColor("#64748b")
-      .text(billing.latePenalties, margin, doc.y, { width: contentWidth });
-    doc.y += 30;
-  }
-
-  // Mention légale
-  if (billing.legalNotice) {
-    doc
-      .fontSize(8)
-      .font("Helvetica")
-      .fillColor("#64748b")
-      .text(billing.legalNotice, margin, doc.y, { width: contentWidth });
-    doc.y += 25;
-  }
-
-  // RIB si configuré
-  if (type === "factures" && rib.iban) {
-    doc
-      .fontSize(9)
-      .font("Helvetica-Bold")
-      .fillColor("#1e293b")
-      .text("Coordonnées bancaires :", margin, doc.y, { width: contentWidth });
-    doc.font("Helvetica").fontSize(9);
-    let ribY = doc.y + 13;
-    doc.text(`IBAN : ${formatIban(rib.iban)}`, margin, ribY, {
-      width: contentWidth,
-    });
-    ribY += 12;
-    if (rib.bic) {
-      doc.text(`BIC : ${rib.bic}`, margin, ribY, { width: contentWidth });
-      ribY += 12;
-    }
-  }
 
   // ========== Bandeau identité entreprise (bas de page) ==========
   const parts = [
