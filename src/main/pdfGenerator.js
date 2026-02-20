@@ -79,7 +79,7 @@ export async function generatePDF(type, document) {
     // Créer le document PDF
     const doc = new PDFDocument({
       size: "A4",
-      margin: 50,
+      margins: { top: 50, bottom: 30, left: 50, right: 50 },
       info: {
         Title: `${type === "devis" ? "Devis" : "Facture"} ${document.numero || ""}`,
         Author: company.companyName || "",
@@ -94,7 +94,7 @@ export async function generatePDF(type, document) {
     renderHeader(doc, company, type, document, document.customer || {});
     renderObjet(doc, document.object);
     renderServices(doc, document.services || []);
-    renderTotals(doc, document.totals || {});
+    renderTotals(doc, document.totals || {}, billing, type);
     renderFooter(doc, company, billing, rib, type);
 
     // Finaliser le PDF
@@ -149,7 +149,7 @@ function renderHeader(doc, company, type, document, customer) {
   leftY += 16;
 
   // Adresse
-  doc.fontSize(9).font("Helvetica");
+  doc.fontSize(11).font("Helvetica");
   if (company.address) {
     doc.text(company.address, margin, leftY, { width: colWidth });
     leftY += 13;
@@ -161,14 +161,6 @@ function renderHeader(doc, company, type, document, customer) {
       leftY,
       { width: colWidth },
     );
-    leftY += 13;
-  }
-
-  // SIRET
-  if (company.companyId) {
-    doc.text(`SIRET : ${formatSiret(company.companyId)}`, margin, leftY, {
-      width: colWidth,
-    });
     leftY += 13;
   }
 
@@ -190,9 +182,9 @@ function renderHeader(doc, company, type, document, customer) {
 
   // Titre DEVIS / FACTURE
   doc
-    .fontSize(22)
+    .fontSize(24)
     .font("Helvetica-Bold")
-    .fillColor("#1e293b")
+    .fillColor("#244b63")
     .text(type === "devis" ? "DEVIS" : "FACTURE", rightX, rightY, {
       width: rightColWidth,
     });
@@ -229,7 +221,7 @@ function renderHeader(doc, company, type, document, customer) {
   }
   rightY += 25;
 
-  doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b");
+  doc.fontSize(11).font("Helvetica-Bold").fillColor("#1e293b");
   if (customer.customerName) {
     doc.text(customer.customerName, rightX, rightY, { width: rightColWidth });
     rightY += 14;
@@ -271,6 +263,7 @@ function renderHeader(doc, company, type, document, customer) {
   }
 
   doc.y = Math.max(leftY, rightY) + 10;
+  doc.moveDown(1);
 }
 
 /**
@@ -284,12 +277,12 @@ function renderObjet(doc, object) {
   doc
     .fontSize(11)
     .font("Helvetica-Bold")
-    .text("Prestation de service :", margin, doc.y + 10);
+    .text("Prestation de service :", margin, doc.y);
 
   doc
-    .fontSize(10)
+    .fontSize(11)
     .font("Helvetica")
-    .text(object, margin, doc.y + 5, {
+    .text(object, margin, doc.y, {
       width: doc.page.width - 2 * margin,
     });
 
@@ -302,7 +295,7 @@ function renderObjet(doc, object) {
 function renderServices(doc, services) {
   const margin = doc.page.margins.left;
   const pageWidth = doc.page.width;
-  const tableTop = doc.y + 20;
+  const tableTop = doc.y;
   const tableWidth = pageWidth - 2 * margin;
 
   // Colonnes du tableau
@@ -326,7 +319,7 @@ function renderServices(doc, services) {
   ];
 
   function drawVerticalSeparators(rowY, rowHeight) {
-    doc.strokeColor("#e2e8f0");
+    doc.strokeColor("#6f8ca3");
     for (const x of colSeparators) {
       doc
         .moveTo(x, rowY)
@@ -335,15 +328,33 @@ function renderServices(doc, services) {
     }
   }
 
-  // Dessiner les en-têtes
   const headerHeight = 25;
-  doc
-    .rect(margin, y, tableWidth, headerHeight)
-    .fillAndStroke("#f8fafc", "#e2e8f0");
-  drawVerticalSeparators(y, headerHeight);
+  const minRowHeight = 25;
+  const cellPadding = 6;
+  const tableRadius = 6;
+
+  // Pré-calculer la hauteur de chaque ligne selon le contenu
+  doc.fontSize(10).font("Helvetica");
+  const rowHeights = services.map((service) => {
+    const textHeight = doc.heightOfString(service.description || "", {
+      width: col1Width - 10,
+    });
+    return Math.max(minRowHeight, textHeight + 2 * cellPadding);
+  });
+
+  const totalRowsHeight = rowHeights.reduce((sum, h) => sum + h, 0);
+  const tableHeight = Math.max(100, headerHeight + totalRowsHeight);
+
+  // Clip arrondi sur tout le tableau
+  doc.save();
+  doc.roundedRect(margin, y, tableWidth, tableHeight, tableRadius).clip();
+
+  // En-tête
+  doc.font("Helvetica-Bold");
+  doc.rect(margin, y, tableWidth, headerHeight).fill("#244b63");
 
   doc
-    .fillColor("#1e293b")
+    .fillColor("#ffffff")
     .text("Description", margin + 5, y + 8, { width: col1Width - 10 })
     .text("Quantité", margin + col1Width + 5, y + 8, {
       width: col2Width - 10,
@@ -371,75 +382,103 @@ function renderServices(doc, services) {
   // Lignes du tableau
   doc.font("Helvetica");
   services.forEach((service, index) => {
-    const rowHeight = 30;
+    const rowHeight = rowHeights[index];
 
     // Alterner les couleurs de fond
-    if (index % 2 === 0) {
-      doc
-        .rect(margin, y, tableWidth, rowHeight)
-        .fillAndStroke("#ffffff", "#e2e8f0");
-    } else {
-      doc
-        .rect(margin, y, tableWidth, rowHeight)
-        .fillAndStroke("#f8fafc", "#e2e8f0");
-    }
-    drawVerticalSeparators(y, rowHeight);
+    const bgColor = index % 2 === 0 ? "#ffffff" : "#f8fafc";
+    doc.rect(margin, y, tableWidth, rowHeight).fill(bgColor);
 
     doc
       .fillColor("#1e293b")
-      .text(service.description || "", margin + 5, y + 8, {
+      .text(service.description || "", margin + 5, y + cellPadding, {
         width: col1Width - 10,
-        height: rowHeight - 16,
       })
-      .text(String(num(service.quantity)), margin + col1Width + 5, y + 8, {
+      .text(String(num(service.quantity)), margin + col1Width + 5, y + cellPadding, {
         width: col2Width - 10,
         align: "right",
       })
-      .text(service.unit || "", margin + col1Width + col2Width + 5, y + 8, {
+      .text(service.unit || "", margin + col1Width + col2Width + 5, y + cellPadding, {
         width: col3Width - 10,
         align: "right",
       })
       .text(
         `${num(service.unitPriceHT).toFixed(2)} €`,
         margin + col1Width + col2Width + col3Width + 5,
-        y + 8,
+        y + cellPadding,
         { width: col4Width - 10, align: "right" },
       )
       .text(
         `${num(service.totalHT).toFixed(2)} €`,
         margin + col1Width + col2Width + col3Width + col4Width + 5,
-        y + 8,
+        y + cellPadding,
         { width: col5Width - 10, align: "right" },
       );
 
     y += rowHeight;
   });
 
-  doc.y = y + 10;
+  // Séparateurs verticaux sur toute la hauteur du tableau (sous le header)
+  drawVerticalSeparators(tableTop + headerHeight, tableHeight - headerHeight);
+
+  // Restaurer le contexte et dessiner le contour arrondi
+  doc.restore();
+  doc
+    .roundedRect(margin, tableTop, tableWidth, tableHeight, tableRadius)
+    .strokeColor("#6f8ca3")
+    .stroke();
+
+  doc.y = tableTop + tableHeight + 10;
 }
 
 /**
  * Rendre les totaux
  */
-function renderTotals(doc, totals) {
+function renderTotals(doc, totals, billing, type) {
   const margin = doc.page.margins.left;
   const pageWidth = doc.page.width;
-  const rightX = pageWidth - margin - 200;
 
-  const startY = doc.y + 10;
+  const boxPadding = 10;
+  const contentWidth = 200;
+  const boxWidth = contentWidth + 2 * boxPadding;
+  const boxX = pageWidth - margin - boxWidth;
+  const boxHeight = 55 + 2 * boxPadding;
+  const boxRadius = 6;
+  const boxY = doc.y + 10;
+  const contentX = boxX + boxPadding;
+  const contentY = boxY + boxPadding;
+
+  // Moyens de règlement à gauche (pour devis)
+  if (type === "devis" && billing.meansOfPayment) {
+    const leftWidth = boxX - margin - 20;
+    doc
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .fillColor("#1e293b")
+      .text("Moyens de règlement :", margin, contentY, { width: leftWidth });
+    doc.font("Helvetica").text(billing.meansOfPayment, margin, contentY + 12, {
+      width: leftWidth,
+    });
+  }
+
+  // Contour arrondi de l'encart
+  doc
+    .roundedRect(boxX, boxY, boxWidth, boxHeight, boxRadius)
+    .strokeColor("#6f8ca3")
+    .stroke();
 
   doc
-    .fontSize(10)
+    .fontSize(11)
     .font("Helvetica")
-    .text("Total HT:", rightX, startY, { width: 120, align: "left" })
-    .text(`${num(totals.totalHT).toFixed(2)} €`, rightX + 120, startY, {
+    .fillColor("#1e293b")
+    .text("Total HT:", contentX, contentY, { width: 120, align: "left" })
+    .text(`${num(totals.totalHT).toFixed(2)} €`, contentX + 120, contentY, {
       width: 80,
       align: "right",
     });
 
   doc
-    .text("TVA (0%):", rightX, startY + 20, { width: 120, align: "left" })
-    .text(`${num(totals.VAT).toFixed(2)} €`, rightX + 120, startY + 20, {
+    .text("TVA (0%):", contentX, contentY + 20, { width: 120, align: "left" })
+    .text(`${num(totals.VAT).toFixed(2)} €`, contentX + 120, contentY + 20, {
       width: 80,
       align: "right",
     });
@@ -448,24 +487,34 @@ function renderTotals(doc, totals) {
   doc
     .fontSize(12)
     .font("Helvetica-Bold")
-    .text("Total TTC:", rightX, startY + 45, { width: 120, align: "left" })
-    .text(`${num(totals.totalTTC).toFixed(2)} €`, rightX + 120, startY + 45, {
-      width: 80,
-      align: "right",
-    });
+    .text("Total TTC:", contentX, contentY + 45, { width: 120, align: "left" })
+    .text(
+      `${num(totals.totalTTC).toFixed(2)} €`,
+      contentX + 120,
+      contentY + 45,
+      {
+        width: 80,
+        align: "right",
+      },
+    );
 
   // Mention TVA
   doc
     .fontSize(9)
     .font("Helvetica-Oblique")
     .fillColor("#64748b")
-    .text("TVA non applicable, art. 293 B du CGI", margin, startY + 70, {
-      align: "right",
-      width: pageWidth - 2 * margin,
-    });
+    .text(
+      "TVA non applicable, art. 293 B du CGI",
+      margin,
+      boxY + boxHeight + 5,
+      {
+        align: "right",
+        width: pageWidth - 2 * margin,
+      },
+    );
 
   doc.fillColor("#1e293b");
-  doc.y = startY + 30;
+  doc.y = boxY + boxHeight + 20;
 }
 
 /**
@@ -478,13 +527,12 @@ function renderFooter(doc, company, billing, rib, type) {
   const contentWidth = pageWidth - 2 * margin;
 
   // Hauteur réservée pour le bandeau identité en bas de page
-  const identityHeight = 40;
+  const identityHeight = 30;
   const identityY = pageHeight - margin - identityHeight;
 
   // Calculer la hauteur du contenu footer (mentions, RIB, etc.)
   let footerContentHeight = 5;
   if (type === "devis") footerContentHeight += 15;
-  if (type === "devis" && billing.meansOfPayment) footerContentHeight += 15;
   if (type === "factures" && billing.paymentTerms) footerContentHeight += 30;
   if (type === "factures" && billing.latePenalties) footerContentHeight += 30;
   if (billing.legalNotice) footerContentHeight += 25;
@@ -492,6 +540,8 @@ function renderFooter(doc, company, billing, rib, type) {
 
   // Mention bon pour accord (pour devis)
   if (type === "devis") {
+    doc.moveDown(2);
+
     doc
       .fontSize(11)
       .font("Helvetica")
@@ -500,7 +550,7 @@ function renderFooter(doc, company, billing, rib, type) {
         "Devis à retourner signé avec la mention « BON POUR ACCORD » pour valider le devis et lancer la commande en production.",
         margin,
         doc.y,
-        { width: contentWidth },
+        { width: 350 },
       );
     doc.y += 15;
   }
@@ -513,19 +563,6 @@ function renderFooter(doc, company, billing, rib, type) {
 
   // Positionner le footer juste au-dessus du bandeau identité
   doc.y = footerStartY;
-
-  // Moyens de règlement (pour devis)
-  if (type === "devis" && billing.meansOfPayment) {
-    doc
-      .fontSize(9)
-      .font("Helvetica-Bold")
-      .fillColor("#1e293b")
-      .text("Moyens de règlement :", margin, doc.y, { width: contentWidth });
-    doc.font("Helvetica").text(billing.meansOfPayment, margin, doc.y + 12, {
-      width: contentWidth,
-    });
-    doc.y += 30;
-  }
 
   // Conditions de paiement (pour factures)
   if (type === "factures" && billing.paymentTerms) {
@@ -567,7 +604,7 @@ function renderFooter(doc, company, billing, rib, type) {
       .font("Helvetica-Bold")
       .fillColor("#1e293b")
       .text("Coordonnées bancaires :", margin, doc.y, { width: contentWidth });
-    doc.font("Helvetica").fontSize(8);
+    doc.font("Helvetica").fontSize(9);
     let ribY = doc.y + 13;
     doc.text(`IBAN : ${formatIban(rib.iban)}`, margin, ribY, {
       width: contentWidth,
@@ -583,8 +620,8 @@ function renderFooter(doc, company, billing, rib, type) {
   const parts = [
     company.companyName,
     company.ownerName,
-    company.registeredAddress,
-    company.companyId ? `SIRET ${formatSiret(company.companyId)}` : null,
+    `Siège social : ${company.registeredAddress}`,
+    company.companyId ? `SIRET : ${formatSiret(company.companyId)}` : null,
     "Entrepreneur individuel",
     company.phoneNumber ? formatPhone(company.phoneNumber) : null,
     company.email,
@@ -592,7 +629,7 @@ function renderFooter(doc, company, billing, rib, type) {
   ].filter(Boolean);
 
   doc
-    .fontSize(7)
+    .fontSize(9)
     .font("Helvetica")
     .fillColor("#64748b")
     .text(parts.join("  -  "), margin, identityY + 8, {
