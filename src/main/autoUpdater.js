@@ -9,15 +9,9 @@ const CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 heures
  * @param {BrowserWindow} mainWindow - Fenêtre principale pour envoyer les événements
  */
 function setupAutoUpdater(mainWindow) {
-  // Simulation en mode développement
+  // Ne pas exécuter en mode développement
   if (!app.isPackaged) {
-    log.info("Auto-updater: dev mode, simulating update check...");
-    setTimeout(() => {
-      mainWindow.webContents.send("checking-for-update");
-    }, 2000);
-    setTimeout(() => {
-      mainWindow.webContents.send("update-not-available");
-    }, 5000);
+    log.info("Auto-updater disabled in development mode");
     return;
   }
 

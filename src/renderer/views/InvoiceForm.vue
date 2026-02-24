@@ -4,7 +4,7 @@
       <div
         class="header flex flex-space-between flex-vertical-center mg-bottom-16"
       >
-        <h1>{{ isEditMode ? "Modifier la facture" : "Nouvelle facture" }}</h1>
+        <h1>{{ isEditMode ? "Modifier la facture" : "Nouvelle facture" }} {{ invoice.numero }}</h1>
         <p :class="['status-badge', `status-${invoice.status}`]">
           {{ statusLabel(invoice.status) }}
         </p>
@@ -134,11 +134,21 @@
             <label for="invoiceObjet">Objet</label>
             <textarea
               id="invoiceObjet"
-              v-model="invoice.objectt"
+              v-model="invoice.object"
               placeholder="Objet de la facture"
               class="form-control"
               rows="2"
             ></textarea>
+          </div>
+          <div class="form-group">
+            <label for="invoicePrestationDelay">Délai</label>
+            <input
+              id="invoicePrestationDelay"
+              type="text"
+              v-model="invoice.prestationDelay"
+              placeholder="Ex : 2 semaines, 30 jours..."
+              class="form-control"
+            />
           </div>
           <ServiceLinesTable ref="serviceLinesRef" v-model="invoice.services" />
         </section>
@@ -200,6 +210,7 @@
 <script setup>
 import { ref, onMounted, computed, toRaw } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { useToast } from "@/composables/useToast";
 import CustomerForm from "@/components/forms/CustomerForm.vue";
 import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
 import { useDocuments } from "@/composables/useDocuments";
@@ -208,6 +219,7 @@ import { statusLabel } from "@/utils/statusLabels";
 
 const router = useRouter();
 const route = useRoute();
+const { showToast } = useToast();
 
 const { loadOne, save } = useDocuments("factures");
 const { nextNumber, loadConfig, incrementNumber } = useNumbering("factures");
@@ -232,6 +244,7 @@ const invoice = ref({
     clientType: "professionnel",
   },
   object: "",
+  prestationDelay: "",
   services: [],
   totals: {
     totalHT: 0,
@@ -304,6 +317,7 @@ function convertQuoteToInvoice(quote) {
     customer: { ...quote.customer },
     services: [...quote.services],
     object: quote.object || "",
+    prestationDelay: quote.prestationDelay || "",
     notes: quote.notes || "",
     associatedQuote: quote.numero,
     numero: nextNumber.value,
@@ -315,6 +329,7 @@ function convertQuoteToInvoice(quote) {
 async function saveAsDraft() {
   invoice.value.status = "draft";
   await saveInvoice();
+  showToast(`Facture ${invoice.value.numero} enregistrée`);
   router.push("/factures");
 }
 
@@ -385,11 +400,11 @@ async function handleGeneratePDF() {
     const filePath = await window.electronAPI.generatePDF("factures", raw);
 
     if (filePath) {
-      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);
+      showToast(`PDF enregistré : ${filePath}`);
     }
   } catch (err) {
     error.value = err.message || "Erreur lors de la génération du PDF";
-    alert(`Erreur lors de la génération du PDF : ${err.message}`);
+    showToast(`Erreur lors de la génération du PDF : ${err.message}`, "error");
   } finally {
     generatingPDF.value = false;
   }

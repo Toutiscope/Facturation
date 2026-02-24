@@ -4,7 +4,7 @@
       <div
         class="header flex flex-space-between flex-vertical-center mg-bottom-16"
       >
-        <h1>{{ isEditMode ? "Modifier le devis" : "Nouveau devis" }}</h1>
+        <h1>{{ isEditMode ? "Modifier le devis" : "Nouveau devis" }} {{ quote.numero }}</h1>
         <p :class="['status-badge', `status-${quote.status}`]">
           {{ statusLabel(quote.status) }}
         </p>
@@ -94,6 +94,16 @@
               rows="2"
             ></textarea>
           </div>
+          <div class="form-group">
+            <label for="quotePrestationDelay">Délai</label>
+            <input
+              id="quotePrestationDelay"
+              type="text"
+              v-model="quote.prestationDelay"
+              placeholder="Ex : 2 semaines, 30 jours..."
+              class="form-control"
+            />
+          </div>
           <ServiceLinesTable ref="serviceLinesRef" v-model="quote.services" />
         </section>
 
@@ -131,6 +141,7 @@
 <script setup>
 import { ref, onMounted, computed, toRaw } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { useToast } from "@/composables/useToast";
 import CustomerForm from "@/components/forms/CustomerForm.vue";
 import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
 import { useDocuments } from "@/composables/useDocuments";
@@ -139,6 +150,7 @@ import { statusLabel } from "@/utils/statusLabels";
 
 const router = useRouter();
 const route = useRoute();
+const { showToast } = useToast();
 
 const { loadOne, save } = useDocuments("devis");
 const { nextNumber, loadConfig, incrementNumber } = useNumbering("devis");
@@ -163,6 +175,7 @@ const quote = ref({
     clientType: "professionnel",
   },
   object: "",
+  prestationDelay: "",
   services: [],
   totals: {
     totalHT: 0,
@@ -215,6 +228,7 @@ function getValidityDate() {
 async function saveAsDraft() {
   quote.value.status = "draft";
   await saveQuote();
+  showToast(`Devis ${quote.value.numero} enregistré`);
   router.push("/devis");
 }
 
@@ -285,11 +299,11 @@ async function handleGeneratePDF() {
     const filePath = await window.electronAPI.generatePDF("devis", raw);
 
     if (filePath) {
-      alert(`PDF généré avec succès !\nEmplacement : ${filePath}`);
+      showToast(`PDF enregistré : ${filePath}`);
     }
   } catch (err) {
     error.value = err.message || "Erreur lors de la génération du PDF";
-    alert(`Erreur lors de la génération du PDF : ${err.message}`);
+    showToast(`Erreur lors de la génération du PDF : ${err.message}`, "error");
   } finally {
     generatingPDF.value = false;
   }

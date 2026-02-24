@@ -1,6 +1,7 @@
 import PDFDocument from "pdfkit";
 import fs from "fs";
-import { dialog } from "electron";
+import path from "path";
+import { app } from "electron";
 import log from "electron-log";
 import { loadConfig } from "./fileManager";
 import paths from "./utils/paths";
@@ -60,20 +61,14 @@ export async function generatePDF(type, document) {
     const billing = config?.billing || {};
     const rib = config?.rib || {};
 
-    // Dialogue pour choisir l'emplacement de sauvegarde
+    // Construire le chemin de sauvegarde
     const filename = `QBMaker ${type === "devis" ? "Devis" : "Facture"} ${document.numero || "document"}.pdf`;
-    const defaultPath = billing.pdfOutputPath
-      ? `${billing.pdfOutputPath}/${filename}`
-      : filename;
+    const outputDir = billing.pdfOutputPath || app.getPath("documents");
+    const filePath = path.join(outputDir, filename);
 
-    const { filePath, canceled } = await dialog.showSaveDialog({
-      title: `Enregistrer le ${type === "devis" ? "devis" : "la facture"}`,
-      defaultPath,
-      filters: [{ name: "PDF", extensions: ["pdf"] }],
-    });
-
-    if (canceled || !filePath) {
-      return null;
+    // Créer le dossier si nécessaire
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
     }
 
     // Créer le document PDF
@@ -93,6 +88,7 @@ export async function generatePDF(type, document) {
     // Rendre le contenu
     renderHeader(doc, company, type, document, document.customer || {});
     renderObjet(doc, document.object);
+    renderPrestationDelay(doc, document.prestationDelay);
     renderServices(doc, document.services || []);
     renderTotals(doc, document.totals || {}, billing, rib, type);
     renderFooter(doc, company, billing, rib, type);
@@ -290,6 +286,26 @@ function renderObjet(doc, object) {
 }
 
 /**
+ * Rendre le délai de prestation
+ */
+function renderPrestationDelay(doc, prestationDelay) {
+  if (!prestationDelay) return;
+
+  const margin = doc.page.margins.left;
+
+  doc.fontSize(11).font("Helvetica-Bold").text("Délai :", margin, doc.y);
+
+  doc
+    .fontSize(11)
+    .font("Helvetica")
+    .text(prestationDelay, margin, doc.y, {
+      width: doc.page.width - 2 * margin,
+    });
+
+  doc.moveDown(1);
+}
+
+/**
  * Rendre le tableau des prestations
  */
 function renderServices(doc, services) {
@@ -393,14 +409,24 @@ function renderServices(doc, services) {
       .text(service.description || "", margin + 5, y + cellPadding, {
         width: col1Width - 10,
       })
-      .text(String(num(service.quantity)), margin + col1Width + 5, y + cellPadding, {
-        width: col2Width - 10,
-        align: "right",
-      })
-      .text(service.unit || "", margin + col1Width + col2Width + 5, y + cellPadding, {
-        width: col3Width - 10,
-        align: "right",
-      })
+      .text(
+        String(num(service.quantity)),
+        margin + col1Width + 5,
+        y + cellPadding,
+        {
+          width: col2Width - 10,
+          align: "right",
+        },
+      )
+      .text(
+        service.unit || "",
+        margin + col1Width + col2Width + 5,
+        y + cellPadding,
+        {
+          width: col3Width - 10,
+          align: "right",
+        },
+      )
       .text(
         `${num(service.unitPriceHT).toFixed(2)} €`,
         margin + col1Width + col2Width + col3Width + 5,

@@ -3,6 +3,7 @@ import { RouterView } from "vue-router";
 import { provide, ref, onMounted } from "vue";
 import MainLayout from "./components/layout/MainLayout.vue";
 import UpdateNotification from "./components/UpdateNotification.vue";
+import ToastNotification from "./components/ToastNotification.vue";
 
 const config = ref(null);
 const logo = ref(null);
@@ -39,6 +40,7 @@ provide("logo", logo);
     </div>
     <template v-else>
       <UpdateNotification />
+      <ToastNotification />
       <MainLayout>
         <RouterView />
       </MainLayout>
