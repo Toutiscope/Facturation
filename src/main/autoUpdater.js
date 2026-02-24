@@ -9,9 +9,15 @@ const CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 heures
  * @param {BrowserWindow} mainWindow - Fenêtre principale pour envoyer les événements
  */
 function setupAutoUpdater(mainWindow) {
-  // Ne pas exécuter en mode développement
+  // Simulation en mode développement
   if (!app.isPackaged) {
-    log.info("Auto-updater disabled in development mode");
+    log.info("Auto-updater: dev mode, simulating update check...");
+    setTimeout(() => {
+      mainWindow.webContents.send("checking-for-update");
+    }, 2000);
+    setTimeout(() => {
+      mainWindow.webContents.send("update-not-available");
+    }, 5000);
     return;
   }
 
@@ -21,10 +27,9 @@ function setupAutoUpdater(mainWindow) {
   autoUpdater.logger = log;
 
   // Événements
-  autoUpdater.checkForUpdates();
-
   autoUpdater.on("checking-for-update", () => {
     log.info("Checking for update...");
+    mainWindow.webContents.send("checking-for-update");
   });
 
   autoUpdater.on("update-available", (info) => {
@@ -37,6 +42,7 @@ function setupAutoUpdater(mainWindow) {
 
   autoUpdater.on("update-not-available", () => {
     log.info("No update available");
+    mainWindow.webContents.send("update-not-available");
   });
 
   autoUpdater.on("download-progress", (progress) => {
@@ -53,6 +59,7 @@ function setupAutoUpdater(mainWindow) {
 
   autoUpdater.on("error", (error) => {
     log.error("Auto-updater error:", error);
+    mainWindow.webContents.send("update-error");
   });
 
   // Vérification initiale (avec délai pour laisser l'app démarrer)

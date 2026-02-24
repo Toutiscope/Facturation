@@ -23,10 +23,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("fetch-chorus-invoices", filters),
   downloadChorusPDF: (invoiceId) =>
     ipcRenderer.invoke("download-chorus-pdf", invoiceId),
+  onCheckingForUpdate: (callback) =>
+    ipcRenderer.on("checking-for-update", () => callback()),
   onUpdateAvailable: (callback) =>
     ipcRenderer.on("update-available", (_, info) => callback(info)),
+  onUpdateNotAvailable: (callback) =>
+    ipcRenderer.on("update-not-available", () => callback()),
   onUpdateDownloaded: (callback) =>
     ipcRenderer.on("update-downloaded", (_, info) => callback(info)),
+  onUpdateError: (callback) =>
+    ipcRenderer.on("update-error", () => callback()),
   installUpdate: () => ipcRenderer.invoke("install-update"),
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
   openExternal: (url) => ipcRenderer.invoke("open-external", url),

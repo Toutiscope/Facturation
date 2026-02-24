@@ -1,9 +1,14 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted } from "vue";
 
-const status = ref(null); // 'downloading' | 'ready'
+const status = ref(null); // 'checking' | 'downloading' | 'ready'
 const version = ref("");
 const dismissed = ref(false);
+
+function onCheckingForUpdate() {
+  status.value = "checking";
+  dismissed.value = false;
+}
 
 function onUpdateAvailable(info) {
   status.value = "downloading";
@@ -11,10 +16,22 @@ function onUpdateAvailable(info) {
   dismissed.value = false;
 }
 
+function onUpdateNotAvailable() {
+  status.value = "up-to-date";
+  dismissed.value = false;
+  setTimeout(() => {
+    dismissed.value = true;
+  }, 3000);
+}
+
 function onUpdateDownloaded(info) {
   status.value = "ready";
   version.value = info.version;
   dismissed.value = false;
+}
+
+function onUpdateError() {
+  dismissed.value = true;
 }
 
 function installNow() {
@@ -26,8 +43,11 @@ function dismiss() {
 }
 
 onMounted(() => {
+  window.electronAPI.onCheckingForUpdate(onCheckingForUpdate);
   window.electronAPI.onUpdateAvailable(onUpdateAvailable);
+  window.electronAPI.onUpdateNotAvailable(onUpdateNotAvailable);
   window.electronAPI.onUpdateDownloaded(onUpdateDownloaded);
+  window.electronAPI.onUpdateError(onUpdateError);
 });
 </script>
 
@@ -35,7 +55,15 @@ onMounted(() => {
   <Transition name="slide">
     <div v-if="status && !dismissed" class="update-banner" :class="status">
       <div class="update-banner__content">
-        <span v-if="status === 'downloading'" class="update-banner__message">
+        <span v-if="status === 'checking'" class="update-banner__message">
+          <span class="update-banner__spinner"></span>
+          Recherche de mises à jour...
+        </span>
+        <span v-else-if="status === 'up-to-date'" class="update-banner__message">
+          L'application est à jour.
+        </span>
+        <span v-else-if="status === 'downloading'" class="update-banner__message">
+          <span class="update-banner__spinner"></span>
           Mise à jour v{{ version }} en cours de téléchargement...
         </span>
         <template v-else>
@@ -82,8 +110,13 @@ onMounted(() => {
   font-size: $font-size-sm;
   color: $white;
 
+  &.checking,
   &.downloading {
     background-color: $info-color;
+  }
+
+  &.up-to-date {
+    background-color: $success-color;
   }
 
   &.ready {
@@ -99,6 +132,19 @@ onMounted(() => {
 
   &__message {
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  &__spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba($white, 0.3);
+    border-top-color: $white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
   }
 
   &__actions {
@@ -149,6 +195,12 @@ onMounted(() => {
     &:hover {
       opacity: 1;
     }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
