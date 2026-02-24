@@ -1,5 +1,12 @@
 # Guidelines - Application Electron "Facturation"
 
+## Règles strictes
+
+- **Ne jamais exécuter de commandes git** (commit, push, pull, add, etc.)
+- **Ne jamais proposer de commit** ni de message de commit
+
+---
+
 ## Vue d'ensemble
 
 Application desktop Electron pour la création, gestion et conformité de devis et factures selon la réglementation française 2027 pour Entrepreneur Individuel en prestation de services.
