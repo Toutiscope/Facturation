@@ -14,6 +14,9 @@ onMounted(async () => {
   try {
     config.value = await window.electronAPI.loadConfig();
     logo.value = await window.electronAPI.getLogo();
+
+    const version = await window.electronAPI.getAppVersion();
+    document.title = `Facturation - ${version}`;
   } catch (err) {
     console.error("Failed to load config:", err);
     error.value = err.message;

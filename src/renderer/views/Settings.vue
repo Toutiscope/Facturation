@@ -21,199 +21,207 @@
         {{ successMessage }}
       </div>
 
-      <div class="settings-grid grid grid--cols-3 gap-16 grid-start">
+      <div class="settings-grid flex flex-column gap-16">
+        <h2 class="mg-top-24">Mes informations</h2>
         <!-- Section Entreprise -->
-        <section class="card settings-card">
-          <h2>Entreprise</h2>
+        <section class="card settings-card grid grid--cols-3 gap-64 grid-start">
+          <div>
+            <h2>Entreprise</h2>
 
-          <!-- Logo upload -->
-          <div class="form-group logo-upload">
-            <label>Logo de l'entreprise</label>
-            <div class="logo-upload__container">
-              <div v-if="logoPreview" class="logo-upload__preview">
-                <img :src="logoPreview" alt="Logo" />
+            <!-- Logo upload -->
+            <div class="form-group logo-upload pd-bottom-8">
+              <label>Logo de l'entreprise</label>
+              <div class="logo-upload__container">
+                <div v-if="logoPreview" class="logo-upload__preview">
+                  <img :src="logoPreview" alt="Logo" />
+                </div>
+                <div v-else class="logo-upload__placeholder">
+                  <svg
+                    viewBox="0 0 48 48"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <rect
+                      x="6"
+                      y="6"
+                      width="36"
+                      height="36"
+                      rx="4"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-dasharray="4 4"
+                    />
+                    <path
+                      d="M18 30l4-5 3 3 5-7 6 9H12z"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linejoin="round"
+                    />
+                    <circle
+                      cx="18"
+                      cy="18"
+                      r="3"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                  </svg>
+                </div>
+                <div class="logo-upload__actions">
+                  <button
+                    type="button"
+                    class="btn btn-outline btn-sm"
+                    @click="uploadLogo"
+                    :disabled="uploadingLogo"
+                  >
+                    {{
+                      uploadingLogo
+                        ? "Chargement..."
+                        : logoPreview
+                          ? "Changer"
+                          : "Choisir un logo"
+                    }}
+                  </button>
+                  <button
+                    v-if="logoPreview"
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    @click="removeLogo"
+                  >
+                    Supprimer
+                  </button>
+                </div>
               </div>
-              <div v-else class="logo-upload__placeholder">
-                <svg
-                  viewBox="0 0 48 48"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect
-                    x="6"
-                    y="6"
-                    width="36"
-                    height="36"
-                    rx="4"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-dasharray="4 4"
-                  />
-                  <path
-                    d="M18 30l4-5 3 3 5-7 6 9H12z"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linejoin="round"
-                  />
-                  <circle
-                    cx="18"
-                    cy="18"
-                    r="3"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                  />
-                </svg>
-              </div>
-              <div class="logo-upload__actions">
-                <button
-                  type="button"
-                  class="btn btn-outline btn-sm"
-                  @click="uploadLogo"
-                  :disabled="uploadingLogo"
-                >
-                  {{
-                    uploadingLogo
-                      ? "Chargement..."
-                      : logoPreview
-                        ? "Changer"
-                        : "Choisir un logo"
-                  }}
-                </button>
-                <button
-                  v-if="logoPreview"
-                  type="button"
-                  class="btn btn-danger btn-sm"
-                  @click="removeLogo"
-                >
-                  Supprimer
-                </button>
-              </div>
+              <small>PNG ou JPG</small>
             </div>
-            <small>PNG ou JPG</small>
+
+            <div class="form-group">
+              <label>Nom de l'entreprise *</label>
+              <input
+                v-model="config.company.companyName"
+                type="text"
+                :class="{ error: errors.companyName }"
+                placeholder="Ex: SARL Dupont Services"
+              />
+              <span v-if="errors.companyName" class="error-message">
+                {{ errors.companyName }}
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label>Nom et prénom du dirigeant</label>
+              <input
+                v-model="config.company.ownerName"
+                type="text"
+                placeholder="Jean Dupont"
+              />
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Nom de l'entreprise *</label>
-            <input
-              v-model="config.company.companyName"
-              type="text"
-              :class="{ error: errors.companyName }"
-              placeholder="Ex: SARL Dupont Services"
-            />
-            <span v-if="errors.companyName" class="error-message">
-              {{ errors.companyName }}
-            </span>
+          <div>
+            <div class="form-group">
+              <label>Adresse du siège social</label>
+              <input
+                v-model="config.company.registeredAddress"
+                type="text"
+                placeholder="123 Rue Example, 44000 Nantes"
+              />
+              <small>Apparaît en pied de page des documents</small>
+            </div>
+
+            <div class="form-group">
+              <label>Adresse (n° et rue) *</label>
+              <input
+                v-model="config.company.address"
+                type="text"
+                :class="{ error: errors.address }"
+                placeholder="123 Rue Example"
+              />
+              <span v-if="errors.address" class="error-message">
+                {{ errors.address }}
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label>Code postal *</label>
+              <input
+                v-model="config.company.postalCode"
+                type="text"
+                :class="{ error: errors.postalCode }"
+                placeholder="44000"
+                maxlength="5"
+              />
+              <span v-if="errors.postalCode" class="error-message">
+                {{ errors.postalCode }}
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label>Ville *</label>
+              <input
+                v-model="config.company.city"
+                type="text"
+                :class="{ error: errors.city }"
+                placeholder="Nantes"
+              />
+              <span v-if="errors.city" class="error-message">
+                {{ errors.city }}
+              </span>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Nom et prénom du dirigeant</label>
-            <input
-              v-model="config.company.ownerName"
-              type="text"
-              placeholder="Jean Dupont"
-            />
-          </div>
+          <div>
+            <div class="form-group">
+              <label>SIRET *</label>
+              <input
+                v-model="config.company.companyId"
+                type="text"
+                :class="{ error: errors.companyId }"
+                placeholder="123 456 789 00012"
+                maxlength="14"
+              />
+              <small>14 chiffres obligatoires</small>
+              <span v-if="errors.companyId" class="error-message">
+                {{ errors.companyId }}
+              </span>
+            </div>
 
-          <div class="form-group">
-            <label>SIRET *</label>
-            <input
-              v-model="config.company.companyId"
-              type="text"
-              :class="{ error: errors.companyId }"
-              placeholder="123 456 789 00012"
-              maxlength="14"
-            />
-            <small>14 chiffres obligatoires</small>
-            <span v-if="errors.companyId" class="error-message">
-              {{ errors.companyId }}
-            </span>
-          </div>
+            <div class="form-group">
+              <label>Email *</label>
+              <input
+                v-model="config.company.email"
+                type="email"
+                :class="{ error: errors.email }"
+                placeholder="contact@exemple.fr"
+              />
+              <span v-if="errors.email" class="error-message">
+                {{ errors.email }}
+              </span>
+            </div>
 
-          <div class="form-group">
-            <label>Adresse du siège social</label>
-            <input
-              v-model="config.company.registeredAddress"
-              type="text"
-              placeholder="123 Rue Example, 44000 Nantes"
-            />
-            <small>Apparaît en pied de page des documents</small>
-          </div>
+            <div class="form-group">
+              <label>Téléphone</label>
+              <input
+                v-model="config.company.phoneNumber"
+                type="tel"
+                maxlength="10"
+                placeholder="02 XX XX XX XX"
+              />
+            </div>
 
-          <div class="form-group">
-            <label>Adresse *</label>
-            <input
-              v-model="config.company.address"
-              type="text"
-              :class="{ error: errors.address }"
-              placeholder="123 Rue Example"
-            />
-            <span v-if="errors.address" class="error-message">
-              {{ errors.address }}
-            </span>
-          </div>
-
-          <div class="form-group">
-            <label>Code postal *</label>
-            <input
-              v-model="config.company.postalCode"
-              type="text"
-              :class="{ error: errors.postalCode }"
-              placeholder="44000"
-              maxlength="5"
-            />
-            <span v-if="errors.postalCode" class="error-message">
-              {{ errors.postalCode }}
-            </span>
-          </div>
-
-          <div class="form-group">
-            <label>Ville *</label>
-            <input
-              v-model="config.company.city"
-              type="text"
-              :class="{ error: errors.city }"
-              placeholder="Nantes"
-            />
-            <span v-if="errors.city" class="error-message">
-              {{ errors.city }}
-            </span>
-          </div>
-
-          <div class="form-group">
-            <label>Email *</label>
-            <input
-              v-model="config.company.email"
-              type="email"
-              :class="{ error: errors.email }"
-              placeholder="contact@exemple.fr"
-            />
-            <span v-if="errors.email" class="error-message">
-              {{ errors.email }}
-            </span>
-          </div>
-
-          <div class="form-group">
-            <label>Téléphone</label>
-            <input
-              v-model="config.company.phoneNumber"
-              type="tel"
-              maxlength="10"
-              placeholder="02 XX XX XX XX"
-            />
-          </div>
-
-          <div class="form-group">
-            <label>Site web</label>
-            <input
-              v-model="config.company.webSite"
-              type="text"
-              placeholder="https://www.exemple.fr"
-            />
+            <div class="form-group">
+              <label>Site web</label>
+              <input
+                v-model="config.company.webSite"
+                type="text"
+                placeholder="https://www.exemple.fr"
+              />
+            </div>
           </div>
         </section>
 
+        <h2 class="mg-top-24">Mentions légales</h2>
         <!-- Section RIB -->
-        <div class="flex flex-column gap-16">
+        <div class="grid grid--cols-2 gap-16">
           <section class="card settings-card">
             <h2>Coordonnées bancaires</h2>
 
@@ -246,8 +254,98 @@
             </div>
           </section>
 
-          <!-- Section Chorus Pro -->
-          <section class="card mg-top-16 settings-card">
+          <div class="flex flex-column gap-16">
+            <!-- Section Facturation -->
+            <section class="card settings-card">
+              <h2>Facturation</h2>
+
+              <div class="form-group">
+                <label>Mentions légales</label>
+                <textarea
+                  v-model="config.billing.legalNotice"
+                  rows="2"
+                  placeholder="Dispensé d'immatriculation..."
+                ></textarea>
+                <small>Mention obligatoire sur tous les documents</small>
+              </div>
+
+              <div class="form-group">
+                <label>Conditions de paiement</label>
+                <input
+                  v-model="config.billing.paymentTerms"
+                  type="text"
+                  placeholder="Paiement à 30 jours"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Moyens de règlement</label>
+                <input
+                  v-model="config.billing.meansOfPayment"
+                  type="text"
+                  placeholder="Virement bancaire, chèque"
+                />
+                <small>Affiché sur les devis</small>
+              </div>
+
+              <div class="form-group">
+                <label>Pénalités de retard</label>
+                <textarea
+                  v-model="config.billing.latePenalties"
+                  rows="2"
+                  placeholder="En cas de retard de paiement..."
+                ></textarea>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <h2 class="mg-top-24">Paramètres généraux</h2>
+        <section class="card settings-card" style="width: calc(50% - 8px)">
+          <div class="form-group">
+            <label>Dernier n° de devis</label>
+            <input
+              v-model.number="config.billing.latestQuoteNumber"
+              type="number"
+              min="0"
+            />
+            <small>Numérotation automatique à partir de ce numéro</small>
+          </div>
+
+          <div class="form-group">
+            <label>Dernier n° de facture</label>
+            <input
+              v-model.number="config.billing.latestInvoiceNumber"
+              type="number"
+              min="0"
+            />
+            <small>Numérotation automatique à partir de ce numéro</small>
+          </div>
+
+          <div class="form-group">
+            <label>Dossier d'enregistrement des PDF</label>
+            <div class="path-input">
+              <input
+                v-model="config.billing.pdfOutputPath"
+                type="text"
+                placeholder="Aucun dossier sélectionné"
+                readonly
+              />
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                @click="selectPdfFolder"
+                :disabled="selectingFolder"
+              >
+                {{ selectingFolder ? "Chargement..." : "Parcourir" }}
+              </button>
+            </div>
+            <small>Les PDF seront enregistrés dans ce dossier par défaut</small>
+          </div>
+        </section>
+
+        <!-- Section Chorus Pro -->
+        <!-- <section class="card mg-top-16 settings-card">
             <h2>Chorus Pro</h2>
             <p class="section-hint">
               Configuration pour l'envoi de factures électroniques à
@@ -289,98 +387,7 @@
                 placeholder="https://chorus-pro.gouv.fr/api/"
               />
             </div>
-          </section>
-        </div>
-
-        <div class="flex flex-column gap-16">
-          <!-- Section Facturation -->
-          <section class="card settings-card">
-            <h2>Facturation</h2>
-
-            <div class="form-group">
-              <label>Mention légale</label>
-              <textarea
-                v-model="config.billing.legalNotice"
-                rows="2"
-                placeholder="Dispensé d'immatriculation..."
-              ></textarea>
-              <small>Mention obligatoire sur tous les documents</small>
-            </div>
-
-            <div class="form-group">
-              <label>Conditions de paiement</label>
-              <input
-                v-model="config.billing.paymentTerms"
-                type="text"
-                placeholder="Paiement à 30 jours"
-              />
-            </div>
-
-            <div class="form-group">
-              <label>Moyens de règlement</label>
-              <input
-                v-model="config.billing.meansOfPayment"
-                type="text"
-                placeholder="Virement bancaire, chèque"
-              />
-              <small>Affiché sur les devis</small>
-            </div>
-
-            <div class="form-group">
-              <label>Pénalités de retard</label>
-              <textarea
-                v-model="config.billing.latePenalties"
-                rows="2"
-                placeholder="En cas de retard de paiement..."
-              ></textarea>
-            </div>
-          </section>
-
-          <section class="card settings-card">
-            <div class="form-group">
-              <label>Dernier n° de devis</label>
-              <input
-                v-model.number="config.billing.latestQuoteNumber"
-                type="number"
-                min="0"
-              />
-              <small>Numérotation automatique à partir de ce numéro</small>
-            </div>
-
-            <div class="form-group">
-              <label>Dernier n° de facture</label>
-              <input
-                v-model.number="config.billing.latestInvoiceNumber"
-                type="number"
-                min="0"
-              />
-              <small>Numérotation automatique à partir de ce numéro</small>
-            </div>
-
-            <div class="form-group">
-              <label>Dossier d'enregistrement des PDF</label>
-              <div class="path-input">
-                <input
-                  v-model="config.billing.pdfOutputPath"
-                  type="text"
-                  placeholder="Aucun dossier sélectionné"
-                  readonly
-                />
-                <button
-                  type="button"
-                  class="btn btn-outline btn-sm"
-                  @click="selectPdfFolder"
-                  :disabled="selectingFolder"
-                >
-                  {{ selectingFolder ? "Chargement..." : "Parcourir" }}
-                </button>
-              </div>
-              <small
-                >Les PDF seront enregistrés dans ce dossier par défaut</small
-              >
-            </div>
-          </section>
-        </div>
+          </section> -->
       </div>
 
       <!-- Actions -->
@@ -542,12 +549,6 @@ async function saveConfig() {
 
 .settings {
   padding: $spacing-xl;
-}
-
-.logo-upload {
-  margin-bottom: $spacing-lg;
-  padding-bottom: $spacing-lg;
-  border-bottom: 1px solid $grey-20;
 }
 
 .logo-upload__container {

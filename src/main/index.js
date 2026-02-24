@@ -16,6 +16,7 @@ let mainWindow;
  */
 function createWindow() {
   mainWindow = new BrowserWindow({
+    title: `Facturation - ${app.getVersion()}`,
     width: 1400,
     height: 900,
     minWidth: 1200,
