@@ -139,7 +139,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, toRaw } from "vue";
+import { ref, onMounted, computed, toRaw, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useToast } from "@/composables/useToast";
 import CustomerForm from "@/components/forms/CustomerForm.vue";
@@ -219,11 +219,20 @@ onMounted(async () => {
   }
 });
 
-function getValidityDate() {
-  const date = new Date();
+function getValidityDate(from) {
+  const date = from ? new Date(from) : new Date();
   date.setDate(date.getDate() + 30);
   return date.toISOString().split("T")[0];
 }
+
+watch(
+  () => quote.value.date,
+  (newDate) => {
+    if (newDate) {
+      quote.value.validityDate = getValidityDate(newDate);
+    }
+  }
+);
 
 async function saveAsDraft() {
   quote.value.status = "draft";

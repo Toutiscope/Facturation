@@ -208,7 +208,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, toRaw } from "vue";
+import { ref, onMounted, computed, toRaw, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useToast } from "@/composables/useToast";
 import CustomerForm from "@/components/forms/CustomerForm.vue";
@@ -304,11 +304,20 @@ onMounted(async () => {
   }
 });
 
-function getDueDate() {
-  const date = new Date();
+function getDueDate(from) {
+  const date = from ? new Date(from) : new Date();
   date.setDate(date.getDate() + 30);
   return date.toISOString().split("T")[0];
 }
+
+watch(
+  () => invoice.value.date,
+  (newDate) => {
+    if (newDate) {
+      invoice.value.dueDate = getDueDate(newDate);
+    }
+  }
+);
 
 function convertQuoteToInvoice(quote) {
   // Copier toutes les données du devis
