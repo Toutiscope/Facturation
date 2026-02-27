@@ -37,6 +37,11 @@ const routes = [
     component: () => import('@/views/InvoiceForm.vue')
   },
   {
+    path: '/clients',
+    name: 'ClientDirectory',
+    component: () => import('@/views/ClientDirectory.vue')
+  },
+  {
     path: '/factures-recues',
     name: 'ReceivedInvoices',
     component: () => import('@/views/ReceivedInvoices.vue')

@@ -38,3 +38,6 @@ temp/
 # Environment variables
 .env
 .env.local
+
+
+nul

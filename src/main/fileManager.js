@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { randomUUID } from "crypto";
 import paths, { getYearFolder } from "./utils/paths";
 import log from "electron-log";
 
@@ -262,5 +263,89 @@ export async function deleteDocument(type, id) {
     }
     log.error(`Failed to delete ${type} ${id}:`, error);
     throw new Error("Erreur lors de la suppression du document");
+  }
+}
+
+// ==================== Clients ====================
+
+/**
+ * Charge tous les clients depuis clients.json
+ * @returns {Promise<Array>} Liste des clients
+ */
+export async function loadClients() {
+  try {
+    const data = await fs.readFile(paths.CLIENTS_PATH, "utf-8");
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return [];
+    }
+    log.error("Failed to load clients:", error);
+    throw new Error("Impossible de charger les clients");
+  }
+}
+
+/**
+ * Ajoute ou met à jour un client
+ * @param {Object} client - Client à sauvegarder
+ * @returns {Promise<Object>} Client sauvegardé
+ */
+export async function saveClient(client) {
+  try {
+    const clients = await loadClients();
+    const now = new Date().toISOString();
+
+    if (!client.id) {
+      client.id = randomUUID();
+      client.createdAt = now;
+    }
+    client.editedAt = now;
+
+    const index = clients.findIndex((c) => c.id === client.id);
+    if (index >= 0) {
+      clients[index] = client;
+    } else {
+      clients.push(client);
+    }
+
+    await fs.writeFile(
+      paths.CLIENTS_PATH,
+      JSON.stringify(clients, null, 2),
+      "utf-8",
+    );
+
+    log.info(`Client ${client.id} saved successfully`);
+    return client;
+  } catch (error) {
+    log.error("Failed to save client:", error);
+    throw new Error("Erreur lors de la sauvegarde du client");
+  }
+}
+
+/**
+ * Supprime un client par id
+ * @param {string} id - ID du client
+ * @returns {Promise<boolean>}
+ */
+export async function deleteClient(id) {
+  try {
+    const clients = await loadClients();
+    const filtered = clients.filter((c) => c.id !== id);
+
+    if (filtered.length === clients.length) {
+      throw new Error("Client introuvable");
+    }
+
+    await fs.writeFile(
+      paths.CLIENTS_PATH,
+      JSON.stringify(filtered, null, 2),
+      "utf-8",
+    );
+
+    log.info(`Client ${id} deleted successfully`);
+    return true;
+  } catch (error) {
+    log.error(`Failed to delete client ${id}:`, error);
+    throw new Error("Erreur lors de la suppression du client");
   }
 }

@@ -9,6 +9,9 @@ import {
   saveLogo,
   deleteLogo,
   getLogoAsBase64,
+  loadClients,
+  saveClient,
+  deleteClient,
 } from "./fileManager";
 import { validateDocument } from "./validator";
 import { generatePDF } from "./pdfGenerator";
@@ -133,6 +136,35 @@ export function initializeIPC() {
       return await deleteDocument(type, id);
     } catch (error) {
       log.error(`Failed to delete ${type} ${id}:`, error);
+      throw error;
+    }
+  });
+
+  // ==================== Clients ====================
+
+  ipcMain.handle("load-clients", async () => {
+    try {
+      return await loadClients();
+    } catch (error) {
+      log.error("Failed to load clients:", error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle("save-client", async (event, client) => {
+    try {
+      return await saveClient(client);
+    } catch (error) {
+      log.error("Failed to save client:", error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle("delete-client", async (event, id) => {
+    try {
+      return await deleteClient(id);
+    } catch (error) {
+      log.error(`Failed to delete client ${id}:`, error);
       throw error;
     }
   });

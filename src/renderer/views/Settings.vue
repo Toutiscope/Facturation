@@ -390,6 +390,15 @@
           </section> -->
       </div>
 
+      <ConfirmModal
+        :visible="showUnsavedModal"
+        title="Modifications non sauvegardées"
+        warning="Les modifications seront perdues si vous quittez cette page."
+        confirmLabel="Quitter sans sauvegarder"
+        @cancel="showUnsavedModal = false"
+        @confirm="confirmLeave"
+      />
+
       <!-- Actions -->
       <div class="form-actions">
         <button
@@ -411,7 +420,9 @@
 
 <script setup>
 import { ref, onMounted, toRaw, inject } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, onBeforeRouteLeave } from "vue-router";
+import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
+import ConfirmModal from "@/components/common/ConfirmModal.vue";
 
 const router = useRouter();
 const globalLogo = inject("logo");
@@ -424,11 +435,35 @@ const successMessage = ref("");
 const logoPreview = ref(null);
 const uploadingLogo = ref(false);
 const selectingFolder = ref(false);
+const showUnsavedModal = ref(false);
+const pendingRoute = ref(null);
+let skipGuard = false;
+
+const { isDirty, setInitialState, markAsSaved } = useUnsavedChanges(config);
+
+onBeforeRouteLeave((to) => {
+  if (skipGuard) {
+    skipGuard = false;
+    return true;
+  }
+  if (isDirty.value) {
+    pendingRoute.value = to.fullPath;
+    showUnsavedModal.value = true;
+    return false;
+  }
+});
+
+function confirmLeave() {
+  showUnsavedModal.value = false;
+  skipGuard = true;
+  router.push(pendingRoute.value);
+}
 
 onMounted(async () => {
   try {
     config.value = await window.electronAPI.loadConfig();
     logoPreview.value = await window.electronAPI.getLogo();
+    setInitialState();
   } catch (error) {
     console.error("Failed to load config:", error);
     errors.value.general = "Impossible de charger la configuration";
@@ -528,6 +563,7 @@ async function saveConfig() {
 
   try {
     await window.electronAPI.saveConfig(toRaw(config.value));
+    markAsSaved();
     successMessage.value = "Configuration sauvegardée avec succès !";
 
     setTimeout(() => {

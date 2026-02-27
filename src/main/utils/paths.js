@@ -47,6 +47,7 @@ const getPaths = () => {
     CONFIG_PATH: path.join(DATA_DIR, "config.json"),
     DEVIS_DIR: path.join(DATA_DIR, "devis"),
     FACTURES_DIR: path.join(DATA_DIR, "factures"),
+    CLIENTS_PATH: path.join(DATA_DIR, "clients.json"),
   };
 };
 
@@ -75,6 +76,15 @@ export async function initializeDataFolder() {
         "utf-8",
       );
       log.info("config.json created successfully");
+    }
+
+    // Si clients.json n'existe pas, créer un tableau vide
+    const { CLIENTS_PATH } = getPaths();
+    try {
+      await fs.access(CLIENTS_PATH);
+    } catch {
+      await fs.writeFile(CLIENTS_PATH, "[]", "utf-8");
+      log.info("clients.json created successfully");
     }
 
     return true;
@@ -113,6 +123,9 @@ const paths = {
   },
   get LOGO_PATH() {
     return path.join(getPaths().DATA_DIR, "logo.png");
+  },
+  get CLIENTS_PATH() {
+    return getPaths().CLIENTS_PATH;
   },
 };
 

@@ -203,16 +203,27 @@
           </button> -->
         </div>
       </form>
+
+      <ConfirmModal
+        :visible="showUnsavedModal"
+        title="Modifications non sauvegardées"
+        warning="Les modifications seront perdues si vous quittez cette page."
+        confirmLabel="Quitter sans sauvegarder"
+        @cancel="showUnsavedModal = false"
+        @confirm="confirmLeave"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, toRaw, watch } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
 import { useToast } from "@/composables/useToast";
+import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import CustomerForm from "@/components/forms/CustomerForm.vue";
 import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
+import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import { useDocuments } from "@/composables/useDocuments";
 import { useNumbering } from "@/composables/useNumbering";
 import { statusLabel } from "@/utils/statusLabels";
@@ -269,8 +280,31 @@ const loading = ref(false);
 const saving = ref(false);
 const generatingPDF = ref(false);
 const error = ref(null);
+const showUnsavedModal = ref(false);
+const pendingRoute = ref(null);
+let skipGuard = false;
+
+const { isDirty, setInitialState, markAsSaved } = useUnsavedChanges(invoice);
 
 const isEditMode = computed(() => !!route.params.id);
+
+onBeforeRouteLeave((to) => {
+  if (skipGuard) {
+    skipGuard = false;
+    return true;
+  }
+  if (isDirty.value) {
+    pendingRoute.value = to.fullPath;
+    showUnsavedModal.value = true;
+    return false;
+  }
+});
+
+function confirmLeave() {
+  showUnsavedModal.value = false;
+  skipGuard = true;
+  router.push(pendingRoute.value);
+}
 
 onMounted(async () => {
   try {
@@ -296,6 +330,7 @@ onMounted(async () => {
         // Numéro auto
         invoice.value.numero = nextNumber.value;
       }
+      setInitialState();
     }
   } catch (err) {
     error.value = err.message || "Erreur lors du chargement";
@@ -369,6 +404,11 @@ async function saveInvoice() {
     if (!isEditMode.value) {
       await incrementNumber(invoice.value.numero);
     }
+
+    // Enregistrer le client dans le répertoire s'il est nouveau
+    await saveClientIfNew(raw.customer);
+
+    markAsSaved();
   } catch (err) {
     error.value = err.message || "Erreur lors de la sauvegarde";
     throw err;
@@ -416,6 +456,27 @@ async function handleGeneratePDF() {
     showToast(`Erreur lors de la génération du PDF : ${err.message}`, "error");
   } finally {
     generatingPDF.value = false;
+  }
+}
+
+async function saveClientIfNew(customer) {
+  if (!customer?.customerName?.trim()) return;
+
+  try {
+    const clients = await window.electronAPI.loadClients();
+    const exists = clients.some(
+      (c) =>
+        c.customerName?.toLowerCase() === customer.customerName.toLowerCase() &&
+        c.clientType === customer.clientType,
+    );
+    if (!exists) {
+      const { clientType, customerName, companyName, companyId, address, postalCode, city, email, phoneNumber } = customer;
+      await window.electronAPI.saveClient({
+        clientType, customerName, companyName, companyId, address, postalCode, city, email, phoneNumber,
+      });
+    }
+  } catch (err) {
+    console.error("Failed to auto-save client:", err);
   }
 }
 

@@ -9,16 +9,46 @@
     />
 
     <div class="form-row">
-      <div class="form-group">
+      <div class="form-group autocomplete-wrapper">
         <label for="customerName">Nom du client</label>
         <input
           id="customerName"
           type="text"
           v-model="localCustomer.customerName"
-          @input="emitUpdate"
+          @input="onNameInput"
+          @focus="onNameFocus"
+          @blur="onNameBlur"
+          @keydown.down.prevent="onArrowDown"
+          @keydown.up.prevent="onArrowUp"
+          @keydown.enter.prevent="onEnter"
+          @keydown.escape="closeDropdown"
           placeholder="Nom et prénom"
           class="form-control"
+          autocomplete="off"
         />
+        <ul
+          v-if="showDropdown && suggestions.length > 0"
+          class="autocomplete-dropdown"
+        >
+          <li
+            v-for="(client, index) in suggestions"
+            :key="client.id"
+            class="autocomplete-dropdown__item"
+            :class="{ 'autocomplete-dropdown__item--highlighted': index === highlightedIndex }"
+            @mousedown.prevent="selectClient(client)"
+          >
+            <span class="autocomplete-dropdown__name">{{ client.customerName }}</span>
+            <span
+              v-if="client.clientType === 'professionnel' && client.companyName"
+              class="autocomplete-dropdown__company"
+            >
+              {{ client.companyName }}
+            </span>
+            <span v-if="client.city" class="autocomplete-dropdown__city">
+              {{ client.city }}
+            </span>
+          </li>
+        </ul>
       </div>
 
       <div
@@ -120,7 +150,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import SegmentedControl from "@/components/common/SegmentedControl.vue";
 
 const props = defineProps({
@@ -144,6 +174,95 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue"]);
 
 const localCustomer = ref({ ...props.modelValue });
+
+// Client autocomplete state
+const clients = ref([]);
+const showDropdown = ref(false);
+const highlightedIndex = ref(-1);
+
+onMounted(async () => {
+  try {
+    clients.value = await window.electronAPI.loadClients();
+  } catch (err) {
+    console.error("Failed to load clients for autocomplete:", err);
+  }
+});
+
+function normalize(str) {
+  return str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+}
+
+const suggestions = computed(() => {
+  const query = localCustomer.value.customerName?.trim();
+  if (!query || query.length < 3) return [];
+
+  const q = normalize(query);
+  return clients.value.filter(
+    (c) =>
+      normalize(c.customerName).includes(q) ||
+      normalize(c.companyName).includes(q) ||
+      normalize(c.city).includes(q),
+  );
+});
+
+function onNameInput() {
+  highlightedIndex.value = -1;
+  showDropdown.value = suggestions.value.length > 0;
+  emitUpdate();
+}
+
+function onNameFocus() {
+  if (suggestions.value.length > 0) {
+    showDropdown.value = true;
+  }
+}
+
+function onNameBlur() {
+  // Small delay to allow click on dropdown item
+  setTimeout(() => {
+    showDropdown.value = false;
+  }, 150);
+}
+
+function onArrowDown() {
+  if (!showDropdown.value || suggestions.value.length === 0) return;
+  highlightedIndex.value = (highlightedIndex.value + 1) % suggestions.value.length;
+}
+
+function onArrowUp() {
+  if (!showDropdown.value || suggestions.value.length === 0) return;
+  highlightedIndex.value =
+    highlightedIndex.value <= 0
+      ? suggestions.value.length - 1
+      : highlightedIndex.value - 1;
+}
+
+function onEnter() {
+  if (showDropdown.value && highlightedIndex.value >= 0 && highlightedIndex.value < suggestions.value.length) {
+    selectClient(suggestions.value[highlightedIndex.value]);
+  }
+}
+
+function selectClient(client) {
+  localCustomer.value = {
+    customerName: client.customerName || "",
+    companyName: client.companyName || "",
+    companyId: client.companyId || "",
+    address: client.address || "",
+    postalCode: client.postalCode || "",
+    city: client.city || "",
+    email: client.email || "",
+    phoneNumber: client.phoneNumber || "",
+    clientType: client.clientType || "professionnel",
+  };
+  closeDropdown();
+  emitUpdate();
+}
+
+function closeDropdown() {
+  showDropdown.value = false;
+  highlightedIndex.value = -1;
+}
 
 // Synchroniser les changements du parent
 watch(
@@ -185,6 +304,61 @@ function handleClientTypeChange() {
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
     }
+  }
+}
+
+.autocomplete-wrapper {
+  position: relative;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: $white;
+  border: 1px solid $grey-20;
+  border-radius: $border-radius-sm;
+  box-shadow: $shadow-lg;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    padding: $spacing-sm $spacing-md;
+    cursor: pointer;
+    border-bottom: 1px solid $grey-10;
+    transition: background 0.1s ease;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover,
+    &--highlighted {
+      background: rgba($primary-color, 0.08);
+    }
+  }
+
+  &__name {
+    font-weight: 600;
+    font-size: $font-size-base;
+    color: $grey-100;
+  }
+
+  &__company {
+    font-size: $font-size-sm;
+    color: $grey-70;
+  }
+
+  &__city {
+    font-size: $font-size-xs;
+    color: $grey-50;
   }
 }
 </style>
