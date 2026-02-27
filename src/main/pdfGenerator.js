@@ -1,7 +1,7 @@
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
-import { app } from "electron";
+import { app, dialog, BrowserWindow } from "electron";
 import log from "electron-log";
 import { loadConfig } from "./fileManager";
 import paths from "./utils/paths";
@@ -39,6 +39,29 @@ function formatSiret(siret) {
 }
 
 /**
+ * Formate un nombre à la française : espace pour les milliers, virgule décimale
+ * Ex: 1234.5 → "1 234,50"  /  42 → "42"  /  1500.1 → "1 500,10"
+ * @param {number} value - Nombre à formater
+ * @param {number} [decimals] - Nombre de décimales (undefined = auto, supprime les .00)
+ */
+function formatFR(value, decimals) {
+  const n = num(value);
+  const hasDecimals = decimals !== undefined;
+  const fixed = hasDecimals ? n.toFixed(decimals) : n.toFixed(2);
+  const [intPart, decPart] = fixed.split(".");
+  const spacedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0");
+  if (!hasDecimals && decPart === "00") return spacedInt;
+  return `${spacedInt},${decPart}`;
+}
+
+/**
+ * Formate un montant en euros à la française : 1 234,50 €
+ */
+function formatEUR(value) {
+  return `${formatFR(value, 2)} €`;
+}
+
+/**
  * Formate un IBAN : FR76 1234 5678 9012 3456 7890 123
  */
 function formatIban(iban) {
@@ -61,12 +84,25 @@ export async function generatePDF(type, document) {
     const billing = config?.billing || {};
     const rib = config?.rib || {};
 
-    // Construire le chemin de sauvegarde
+    // Construire le nom de fichier et le dossier par défaut
     const filename = `QBMaker ${type === "devis" ? "Devis" : "Facture"} ${document.numero || "document"}.pdf`;
-    const outputDir = billing.pdfOutputPath || app.getPath("documents");
-    const filePath = path.join(outputDir, filename);
+    const defaultDir = billing.pdfOutputPath || app.getPath("documents");
+    const defaultPath = path.join(defaultDir, filename);
+
+    // Ouvrir la fenêtre de sauvegarde pour laisser l'utilisateur choisir
+    const parentWindow = BrowserWindow.getFocusedWindow();
+    const { filePath, canceled } = await dialog.showSaveDialog(parentWindow, {
+      title: "Enregistrer le PDF",
+      defaultPath,
+      filters: [{ name: "Fichiers PDF", extensions: ["pdf"] }],
+    });
+
+    if (canceled || !filePath) {
+      return null;
+    }
 
     // Créer le dossier si nécessaire
+    const outputDir = path.dirname(filePath);
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
@@ -410,7 +446,7 @@ function renderServices(doc, services) {
         width: col1Width - 10,
       })
       .text(
-        String(num(service.quantity)),
+        formatFR(service.quantity),
         margin + col1Width + 5,
         y + cellPadding,
         {
@@ -428,13 +464,13 @@ function renderServices(doc, services) {
         },
       )
       .text(
-        `${num(service.unitPriceHT).toFixed(2)} €`,
+        formatEUR(service.unitPriceHT),
         margin + col1Width + col2Width + col3Width + 5,
         y + cellPadding,
         { width: col4Width - 10, align: "right" },
       )
       .text(
-        `${num(service.totalHT).toFixed(2)} €`,
+        formatEUR(service.totalHT),
         margin + col1Width + col2Width + col3Width + col4Width + 5,
         y + cellPadding,
         { width: col5Width - 10, align: "right" },
@@ -551,14 +587,14 @@ function renderTotals(doc, totals, billing, rib, type) {
     .font("Helvetica")
     .fillColor("#1e293b")
     .text("Total HT:", contentX, contentY, { width: 120, align: "left" })
-    .text(`${num(totals.totalHT).toFixed(2)} €`, contentX + 120, contentY, {
+    .text(formatEUR(totals.totalHT), contentX + 120, contentY, {
       width: 80,
       align: "right",
     });
 
   doc
     .text("TVA (0%):", contentX, contentY + 20, { width: 120, align: "left" })
-    .text(`${num(totals.VAT).toFixed(2)} €`, contentX + 120, contentY + 20, {
+    .text(formatEUR(totals.VAT), contentX + 120, contentY + 20, {
       width: 80,
       align: "right",
     });
@@ -569,7 +605,7 @@ function renderTotals(doc, totals, billing, rib, type) {
     .font("Helvetica-Bold")
     .text("Total TTC:", contentX, contentY + 45, { width: 120, align: "left" })
     .text(
-      `${num(totals.totalTTC).toFixed(2)} €`,
+      formatEUR(totals.totalTTC),
       contentX + 120,
       contentY + 45,
       {
