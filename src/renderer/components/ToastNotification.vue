@@ -6,7 +6,12 @@ const { toast, dismissToast } = useToast();
 
 <template>
   <Transition name="toast">
-    <div v-if="toast" class="toast" :class="toast.type" @click="dismissToast">
+    <div
+      v-if="toast"
+      class="toast"
+      :class="`toast--${toast.type}`"
+      @click="dismissToast"
+    >
       <span class="toast__message">{{ toast.message }}</span>
       <button class="toast__close" aria-label="Fermer">&times;</button>
     </div>
@@ -31,14 +36,15 @@ const { toast, dismissToast } = useToast();
   font-size: $font-size-sm;
   cursor: pointer;
   box-shadow: $shadow-lg;
-  max-width: 500px;
-  word-break: break-all;
+  max-width: 600px;
+  overflow-wrap: break-word;
+  word-break: normal;
 
-  &.success {
+  &--success {
     background-color: $success-color;
   }
 
-  &.error {
+  &--error {
     background-color: $error-color;
   }
 

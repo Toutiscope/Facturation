@@ -71,13 +71,5 @@ provide("logo", logo);
   > .loading .loading-spinner {
     @include spinner;
   }
-
-  > .error {
-    @include flex-center;
-    flex-direction: column;
-    height: 100vh;
-    padding: $spacing-xl;
-    color: $error-color;
-  }
 }
 </style>

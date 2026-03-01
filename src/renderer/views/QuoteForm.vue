@@ -4,7 +4,10 @@
       <div
         class="header flex flex-space-between flex-vertical-center mg-bottom-16"
       >
-        <h1>{{ isEditMode ? "Modifier le devis" : "Nouveau devis" }} {{ quote.numero }}</h1>
+        <h1>
+          {{ isEditMode ? "Modifier le devis" : "Nouveau devis" }}
+          {{ quote.numero }}
+        </h1>
         <p :class="['status-badge', `status-${quote.status}`]">
           {{ statusLabel(quote.status) }}
         </p>
@@ -104,6 +107,18 @@
               class="form-control"
             />
           </div>
+          <div class="form-group">
+            <label for="quoteDepositRequested">Acompte demandé (€)</label>
+            <input
+              id="quoteDepositRequested"
+              type="number"
+              v-model.number="quote.depositRequested"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              class="form-control"
+            />
+          </div>
           <ServiceLinesTable ref="serviceLinesRef" v-model="quote.services" />
         </section>
 
@@ -187,6 +202,7 @@ const quote = ref({
   },
   object: "",
   prestationDelay: "",
+  depositRequested: 0,
   services: [],
   totals: {
     totalHT: 0,
@@ -266,7 +282,7 @@ watch(
     if (newDate) {
       quote.value.validityDate = getValidityDate(newDate);
     }
-  }
+  },
 );
 
 async function saveAsDraft() {
@@ -351,8 +367,16 @@ async function handleGeneratePDF() {
       showToast(`PDF enregistré : ${filePath}`);
     }
   } catch (err) {
-    error.value = err.message || "Erreur lors de la génération du PDF";
-    showToast(`Erreur lors de la génération du PDF : ${err.message}`, "error");
+    const raw = (err.message || "").replace(
+      /^Error invoking remote method '[^']+': /,
+      "",
+    );
+    const msg =
+      raw.includes("EBUSY")
+        ? `Erreur : vérifiez que le devis ${quote.value.numero} n'est pas déjà ouvert sur une autre application.`
+        : raw || "Erreur lors de la génération du PDF";
+    error.value = msg;
+    showToast(msg, "error");
   } finally {
     generatingPDF.value = false;
   }
@@ -369,9 +393,27 @@ async function saveClientIfNew(customer) {
         c.clientType === customer.clientType,
     );
     if (!exists) {
-      const { clientType, customerName, companyName, companyId, address, postalCode, city, email, phoneNumber } = customer;
+      const {
+        clientType,
+        customerName,
+        companyName,
+        companyId,
+        address,
+        postalCode,
+        city,
+        email,
+        phoneNumber,
+      } = customer;
       await window.electronAPI.saveClient({
-        clientType, customerName, companyName, companyId, address, postalCode, city, email, phoneNumber,
+        clientType,
+        customerName,
+        companyName,
+        companyId,
+        address,
+        postalCode,
+        city,
+        email,
+        phoneNumber,
       });
     }
   } catch (err) {

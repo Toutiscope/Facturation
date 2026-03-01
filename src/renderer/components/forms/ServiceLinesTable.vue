@@ -95,6 +95,16 @@
           <span class="total-label">Total TTC :</span>
           <span class="total-value">{{ formatCurrency(totals.totalTTC) }}</span>
         </div>
+        <template v-if="props.deposit > 0">
+          <div class="total-row">
+            <span class="total-label">{{ props.depositLabel }} :</span>
+            <span class="total-value">- {{ formatCurrency(props.deposit) }}</span>
+          </div>
+          <div class="total-row total-remaining">
+            <span class="total-label">Reste à payer :</span>
+            <span class="total-value">{{ formatCurrency(totals.totalTTC - props.deposit) }}</span>
+          </div>
+        </template>
       </div>
       <p class="vat-notice">TVA non applicable, art. 293 B du CGI</p>
     </div>
@@ -109,6 +119,14 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => [],
+  },
+  deposit: {
+    type: Number,
+    default: 0,
+  },
+  depositLabel: {
+    type: String,
+    default: "Acompte",
   },
 });
 
@@ -281,6 +299,19 @@ if (localServices.value.length === 0) {
       }
 
       &.total-ttc {
+        margin-top: $spacing-sm;
+        padding-top: $spacing-sm;
+        border-top: 2px solid $grey-30;
+        font-size: $font-size-lg;
+
+        .total-label,
+        .total-value {
+          color: $primary-color;
+          font-weight: 700;
+        }
+      }
+
+      &.total-remaining {
         margin-top: $spacing-sm;
         padding-top: $spacing-sm;
         border-top: 2px solid $grey-30;

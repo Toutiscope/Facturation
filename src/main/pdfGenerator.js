@@ -123,10 +123,10 @@ export async function generatePDF(type, document) {
 
     // Rendre le contenu
     renderHeader(doc, company, type, document, document.customer || {});
-    renderObjet(doc, document.object);
+    renderObjet(doc, document.object, document.associatedQuote);
     renderPrestationDelay(doc, document.prestationDelay);
     renderServices(doc, document.services || []);
-    renderTotals(doc, document.totals || {}, billing, rib, type);
+    renderTotals(doc, document.totals || {}, billing, rib, type, document);
     renderFooter(doc, company, billing, rib, type);
 
     // Finaliser le PDF
@@ -238,7 +238,7 @@ function renderHeader(doc, company, type, document, customer) {
   });
   rightY += 14;
 
-  // Date de validité / échéance
+  // Date de validité (devis uniquement)
   if (type === "devis") {
     doc.text(
       `Valable jusqu'au : ${document.validityDate || ""}`,
@@ -246,10 +246,6 @@ function renderHeader(doc, company, type, document, customer) {
       rightY,
       { width: rightColWidth },
     );
-  } else {
-    doc.text(`Échéance : ${document.dueDate || ""}`, rightX, rightY, {
-      width: rightColWidth,
-    });
   }
   rightY += 25;
 
@@ -301,10 +297,20 @@ function renderHeader(doc, company, type, document, customer) {
 /**
  * Rendre l'objet du document
  */
-function renderObjet(doc, object) {
+function renderObjet(doc, object, associatedQuote) {
   if (!object) return;
 
   const margin = doc.page.margins.left;
+
+  if (associatedQuote) {
+    doc
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .text("Devis associé : ", margin, doc.y, { continued: true })
+      .font("Helvetica")
+      .text(associatedQuote);
+    doc.moveDown(0.5);
+  }
 
   doc
     .fontSize(11)
@@ -495,15 +501,20 @@ function renderServices(doc, services) {
 /**
  * Rendre les totaux
  */
-function renderTotals(doc, totals, billing, rib, type) {
+function renderTotals(doc, totals, billing, rib, type, document) {
   const margin = doc.page.margins.left;
   const pageWidth = doc.page.width;
+
+  // Acompte : demandé (devis, colonne gauche) ou payé (facture, encart)
+  const quoteDeposit = num(document.depositRequested);
+  const invoiceDeposit = num(document.depositPaid);
+  const showDepositInBox = type !== "devis" && invoiceDeposit > 0;
 
   const boxPadding = 10;
   const contentWidth = 200;
   const boxWidth = contentWidth + 2 * boxPadding;
   const boxX = pageWidth - margin - boxWidth;
-  const boxHeight = 55 + 2 * boxPadding;
+  const boxHeight = (showDepositInBox ? 98 : 55) + 2 * boxPadding;
   const boxRadius = 6;
   const boxY = doc.y + 10;
   const contentX = boxX + boxPadding;
@@ -512,6 +523,19 @@ function renderTotals(doc, totals, billing, rib, type) {
   // Informations à gauche du bloc totaux
   const leftWidth = boxX - margin - 20;
   let leftY = contentY;
+
+  if (type === "devis" && quoteDeposit > 0) {
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .fillColor("#1e293b")
+      .text("Acompte demandé :", margin, leftY, { width: leftWidth });
+    leftY += 16;
+    doc.font("Helvetica").text(formatEUR(quoteDeposit), margin, leftY, {
+      width: leftWidth,
+    });
+    leftY = doc.y + 10;
+  }
 
   if (type === "devis" && billing.meansOfPayment) {
     doc
@@ -546,7 +570,7 @@ function renderTotals(doc, totals, billing, rib, type) {
   }
 
   if (type === "factures" && billing.paymentTerms) {
-    leftY += 6;
+    leftY += 12;
     doc
       .fontSize(11)
       .font("Helvetica-Bold")
@@ -603,16 +627,54 @@ function renderTotals(doc, totals, billing, rib, type) {
   doc
     .fontSize(12)
     .font("Helvetica-Bold")
-    .text("Total TTC:", contentX, contentY + 45, { width: 120, align: "left" })
-    .text(
-      formatEUR(totals.totalTTC),
-      contentX + 120,
-      contentY + 45,
-      {
+    .text("Total TTC:", contentX, contentY + 40, {
+      width: 120,
+      align: "left",
+    })
+    .text(formatEUR(totals.totalTTC), contentX + 120, contentY + 40, {
+      width: 80,
+      align: "right",
+    });
+
+  // Acompte payé et reste à payer (factures uniquement)
+  if (showDepositInBox) {
+    const remaining = num(totals.totalTTC) - invoiceDeposit;
+
+    // Séparateur horizontal (toute la largeur du contenu)
+    const sepX = contentX;
+    doc
+      .strokeColor("#c0cdd6")
+      .lineWidth(0.5)
+      .moveTo(sepX, contentY + 64)
+      .lineTo(sepX + contentWidth, contentY + 64)
+      .stroke();
+
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .fillColor("#64748b")
+      .text("Acompte :", contentX, contentY + 73, {
+        width: 120,
+        align: "left",
+      })
+      .text(`- ${formatEUR(invoiceDeposit)}`, contentX + 120, contentY + 73, {
         width: 80,
         align: "right",
-      },
-    );
+      });
+
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .fillColor("#1e293b")
+      .text("Reste à payer :", contentX, contentY + 90, {
+        width: 120,
+        align: "left",
+      })
+      .text(formatEUR(remaining), contentX + 120, contentY + 90, {
+        width: 80,
+        align: "right",
+      });
+  }
 
   // Mention TVA
   doc

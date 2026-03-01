@@ -4,7 +4,10 @@
       <div
         class="header flex flex-space-between flex-vertical-center mg-bottom-16"
       >
-        <h1>{{ isEditMode ? "Modifier la facture" : "Nouvelle facture" }} {{ invoice.numero }}</h1>
+        <h1>
+          {{ isEditMode ? "Modifier la facture" : "Nouvelle facture" }}
+          {{ invoice.numero }}
+        </h1>
         <p :class="['status-badge', `status-${invoice.status}`]">
           {{ statusLabel(invoice.status) }}
         </p>
@@ -150,7 +153,24 @@
               class="form-control"
             />
           </div>
-          <ServiceLinesTable ref="serviceLinesRef" v-model="invoice.services" />
+          <div class="form-group">
+            <label for="invoiceDepositPaid">Acompte payé (€)</label>
+            <input
+              id="invoiceDepositPaid"
+              type="number"
+              v-model.number="invoice.depositPaid"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              class="form-control"
+            />
+          </div>
+          <ServiceLinesTable
+            ref="serviceLinesRef"
+            v-model="invoice.services"
+            :deposit="parseFloat(invoice.depositPaid) || 0"
+            depositLabel="Acompte payé"
+          />
         </section>
 
         <!-- Notes internes -->
@@ -256,6 +276,8 @@ const invoice = ref({
   },
   object: "",
   prestationDelay: "",
+  depositRequested: 0,
+  depositPaid: 0,
   services: [],
   totals: {
     totalHT: 0,
@@ -351,7 +373,7 @@ watch(
     if (newDate) {
       invoice.value.dueDate = getDueDate(newDate);
     }
-  }
+  },
 );
 
 function convertQuoteToInvoice(quote) {
@@ -362,6 +384,8 @@ function convertQuoteToInvoice(quote) {
     services: [...quote.services],
     object: quote.object || "",
     prestationDelay: quote.prestationDelay || "",
+    depositRequested: parseFloat(quote.depositRequested) || 0,
+    depositPaid: parseFloat(quote.depositRequested) || 0,
     notes: quote.notes || "",
     associatedQuote: quote.numero,
     numero: nextNumber.value,
@@ -452,8 +476,16 @@ async function handleGeneratePDF() {
       showToast(`PDF enregistré : ${filePath}`);
     }
   } catch (err) {
-    error.value = err.message || "Erreur lors de la génération du PDF";
-    showToast(`Erreur lors de la génération du PDF : ${err.message}`, "error");
+    const raw = (err.message || "").replace(
+      /^Error invoking remote method '[^']+': /,
+      "",
+    );
+    const msg =
+      raw.includes("EBUSY")
+        ? `Erreur : vérifiez que la facture ${invoice.value.numero} n'est pas déjà ouverte sur une autre application.`
+        : raw || "Erreur lors de la génération du PDF";
+    error.value = msg;
+    showToast(msg, "error");
   } finally {
     generatingPDF.value = false;
   }
@@ -470,9 +502,27 @@ async function saveClientIfNew(customer) {
         c.clientType === customer.clientType,
     );
     if (!exists) {
-      const { clientType, customerName, companyName, companyId, address, postalCode, city, email, phoneNumber } = customer;
+      const {
+        clientType,
+        customerName,
+        companyName,
+        companyId,
+        address,
+        postalCode,
+        city,
+        email,
+        phoneNumber,
+      } = customer;
       await window.electronAPI.saveClient({
-        clientType, customerName, companyName, companyId, address, postalCode, city, email, phoneNumber,
+        clientType,
+        customerName,
+        companyName,
+        companyId,
+        address,
+        postalCode,
+        city,
+        email,
+        phoneNumber,
       });
     }
   } catch (err) {
