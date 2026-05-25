@@ -6,7 +6,12 @@
     </div>
 
     <!-- Plot area -->
-    <div ref="plotRef" class="chart__plot">
+    <div
+      ref="plotRef"
+      class="chart__plot"
+      @mousemove="onMouseMove"
+      @mouseleave="hoveredIndex = null"
+    >
       <svg
         :viewBox="`0 0 ${plotWidth} ${plotHeight}`"
         :width="plotWidth"
@@ -22,6 +27,16 @@
           :y1="y"
           :y2="y"
           class="chart__grid"
+        />
+
+        <!-- Vertical guide on hover (line / area modes) -->
+        <line
+          v-if="hoveredIndex !== null && type !== 'bar'"
+          :x1="xs[hoveredIndex]"
+          :x2="xs[hoveredIndex]"
+          :y1="0"
+          :y2="plotHeight"
+          class="chart__guide"
         />
 
         <!-- Area mode -->
@@ -41,7 +56,7 @@
             :key="`r${i}`"
             :cx="x"
             :cy="yRev[i]"
-            r="3"
+            :r="hoveredIndex === i ? 5 : 3"
             class="chart__dot chart__dot--income"
           />
           <circle
@@ -49,7 +64,7 @@
             :key="`e${i}`"
             :cx="x"
             :cy="yExp[i]"
-            r="3"
+            :r="hoveredIndex === i ? 5 : 3"
             class="chart__dot chart__dot--expense"
           />
         </template>
@@ -63,6 +78,7 @@
               :width="barWidth"
               :height="plotHeight - yRev[i]"
               class="chart__bar chart__bar--income"
+              :class="{ 'chart__bar--dimmed': hoveredIndex !== null && hoveredIndex !== i }"
               :rx="barRadius"
             />
             <rect
@@ -71,16 +87,75 @@
               :width="barWidth"
               :height="plotHeight - yExp[i]"
               class="chart__bar chart__bar--expense"
+              :class="{ 'chart__bar--dimmed': hoveredIndex !== null && hoveredIndex !== i }"
               :rx="barRadius"
             />
           </g>
         </template>
+
+        <!-- Highlight dots (area mode) -->
+        <template v-if="type === 'area' && hoveredIndex !== null">
+          <circle
+            :cx="xs[hoveredIndex]"
+            :cy="yRev[hoveredIndex]"
+            r="4"
+            class="chart__dot chart__dot--income"
+          />
+          <circle
+            :cx="xs[hoveredIndex]"
+            :cy="yExp[hoveredIndex]"
+            r="4"
+            class="chart__dot chart__dot--expense"
+          />
+        </template>
       </svg>
+
+      <!-- Tooltip -->
+      <div
+        v-if="hoveredIndex !== null"
+        class="chart__tooltip"
+        :style="tooltipStyle"
+        role="tooltip"
+      >
+        <div class="chart__tooltip-title">{{ MONTH_NAMES[hoveredIndex] }}</div>
+        <div class="chart__tooltip-row">
+          <span class="chart__tooltip-dot chart__tooltip-dot--income" />
+          <span class="chart__tooltip-label">Revenus</span>
+          <span class="chart__tooltip-value">
+            {{ formatCurrency(revenue[hoveredIndex]) }}
+          </span>
+        </div>
+        <div class="chart__tooltip-row">
+          <span class="chart__tooltip-dot chart__tooltip-dot--expense" />
+          <span class="chart__tooltip-label">Dépenses</span>
+          <span class="chart__tooltip-value">
+            {{ formatCurrency(expense[hoveredIndex]) }}
+          </span>
+        </div>
+        <div class="chart__tooltip-row chart__tooltip-row--total">
+          <span class="chart__tooltip-label">Bénéfice</span>
+          <span
+            class="chart__tooltip-value"
+            :class="{
+              'chart__tooltip-value--positive': monthBenefit >= 0,
+              'chart__tooltip-value--negative': monthBenefit < 0,
+            }"
+          >
+            {{ formatCurrency(monthBenefit) }}
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- X axis labels -->
     <div class="chart__x-axis">
-      <span v-for="(m, i) in months" :key="i">{{ m }}</span>
+      <span
+        v-for="(m, i) in months"
+        :key="i"
+        :class="{ 'chart__x-axis-label--active': hoveredIndex === i }"
+      >
+        {{ m }}
+      </span>
     </div>
   </div>
 </template>
@@ -109,13 +184,29 @@ const props = defineProps({
 });
 
 const months = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+const MONTH_NAMES = [
+  "Janvier",
+  "Février",
+  "Mars",
+  "Avril",
+  "Mai",
+  "Juin",
+  "Juillet",
+  "Août",
+  "Septembre",
+  "Octobre",
+  "Novembre",
+  "Décembre",
+];
 
-// Marges réservées dans le composant pour les axes
 const X_AXIS_HEIGHT = 22;
+const TOOLTIP_WIDTH = 180;
 
 const plotRef = ref(null);
 const plotWidth = ref(600);
 const plotHeight = computed(() => Math.max(props.height - X_AXIS_HEIGHT, 1));
+
+const hoveredIndex = ref(null);
 
 let resizeObserver = null;
 
@@ -147,7 +238,6 @@ const maxValue = computed(() => {
   return Math.ceil(max / step) * step;
 });
 
-// Slot horizontal de chaque mois (offset au centre pour les barres)
 const slotWidth = computed(() => plotWidth.value / 12);
 
 const xs = computed(() =>
@@ -170,9 +260,7 @@ const gridLines = computed(() =>
   [0, 0.25, 0.5, 0.75, 1].map((r) => r * plotHeight.value)
 );
 
-const barWidth = computed(() =>
-  Math.max((slotWidth.value - 8) / 2, 4)
-);
+const barWidth = computed(() => Math.max((slotWidth.value - 8) / 2, 4));
 const barGap = 4;
 const barRadius = 2;
 
@@ -183,9 +271,54 @@ const yLabels = computed(() => {
   );
 });
 
+const monthBenefit = computed(() => {
+  if (hoveredIndex.value === null) return 0;
+  return (
+    (props.revenue[hoveredIndex.value] || 0) -
+    (props.expense[hoveredIndex.value] || 0)
+  );
+});
+
+const tooltipStyle = computed(() => {
+  if (hoveredIndex.value === null) return {};
+  const slotPixelWidth = plotWidth.value / 12;
+  const centerX = slotPixelWidth * (hoveredIndex.value + 0.5);
+  // Centre le tooltip sur le mois en clamp au bord du plot
+  const half = TOOLTIP_WIDTH / 2;
+  let left = centerX - half;
+  if (left < 0) left = 0;
+  if (left + TOOLTIP_WIDTH > plotWidth.value) {
+    left = plotWidth.value - TOOLTIP_WIDTH;
+  }
+  return {
+    left: `${left}px`,
+    width: `${TOOLTIP_WIDTH}px`,
+  };
+});
+
+function onMouseMove(event) {
+  if (!plotRef.value) return;
+  const rect = plotRef.value.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  if (x < 0 || x > rect.width) {
+    hoveredIndex.value = null;
+    return;
+  }
+  const idx = Math.min(11, Math.max(0, Math.floor((x / rect.width) * 12)));
+  hoveredIndex.value = idx;
+}
+
 function formatShort(v) {
   if (v >= 1000) return `${(v / 1000).toLocaleString("fr-FR")}k`;
   return v.toLocaleString("fr-FR");
+}
+
+function formatCurrency(v) {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(v || 0);
 }
 
 function linePath(values) {
@@ -259,13 +392,25 @@ function areaPath(values) {
   span {
     width: calc(100% / 12);
     text-align: center;
+    transition: color 0.15s ease;
   }
+}
+
+.chart__x-axis-label--active {
+  color: $grey-100;
+  font-weight: 600;
 }
 
 .chart__grid {
   stroke: $grey-20;
   stroke-width: 1;
   shape-rendering: crispEdges;
+}
+
+.chart__guide {
+  stroke: $grey-40;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
 }
 
 .chart__line {
@@ -296,6 +441,7 @@ function areaPath(values) {
 .chart__dot {
   stroke: $white;
   stroke-width: 1.5;
+  transition: r 0.12s ease;
 
   &--income {
     fill: $success-color;
@@ -307,12 +453,84 @@ function areaPath(values) {
 }
 
 .chart__bar {
+  transition: opacity 0.15s ease;
+
   &--income {
     fill: $success-color;
   }
 
   &--expense {
     fill: $error-color;
+  }
+
+  &--dimmed {
+    opacity: 0.35;
+  }
+}
+
+.chart__tooltip {
+  position: absolute;
+  top: -8px;
+  transform: translateY(-100%);
+  background: $grey-100;
+  color: $white;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-md;
+  font-size: $font-size-xs;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.chart__tooltip-title {
+  font-weight: 600;
+  font-size: $font-size-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.chart__tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 3px 0;
+
+  &--total {
+    margin-top: $spacing-xs;
+    padding-top: $spacing-xs;
+    border-top: 1px solid rgba($white, 0.15);
+  }
+}
+
+.chart__tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+
+  &--income {
+    background: $success-color;
+  }
+
+  &--expense {
+    background: $error-color;
+  }
+}
+
+.chart__tooltip-label {
+  color: rgba($white, 0.7);
+  flex: 1;
+}
+
+.chart__tooltip-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+
+  &--positive {
+    color: $success-color;
+  }
+
+  &--negative {
+    color: $error-color;
   }
 }
 </style>

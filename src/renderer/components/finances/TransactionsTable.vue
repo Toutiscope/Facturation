@@ -33,9 +33,6 @@
               : 'source-badge--manual'
           "
         >
-          <span v-if="row.source === 'facture'" class="source-badge__lock">
-            🔒
-          </span>
           {{ row.source === "facture" ? "Facture" : "Manuel" }}
         </span>
       </div>

@@ -146,6 +146,18 @@ export function useFinances() {
   }
 
   /**
+   * Une transaction est comptée dans le CA / bénéfice si :
+   *  - c'est un revenu manuel (encaissé par nature)
+   *  - OU une facture marquée comme payée
+   * Les factures en attente ne sont PAS encore du chiffre d'affaires.
+   */
+  function isEarnedRevenue(t) {
+    if (t.type !== 'revenu') return false
+    if (t.source === 'facture') return !!t.paid
+    return true
+  }
+
+  /**
    * Calcule les KPIs pour une liste de transactions.
    * Les KPIs ont une sémantique fixe (mois courant / année courante) et
    * ne suivent pas la période sélectionnée dans l'UI.
@@ -155,7 +167,7 @@ export function useFinances() {
     const filteredYear = filterByPeriod(list, 'Année')
 
     const sumRevenue = (txs) =>
-      txs.filter(t => t.type === 'revenu').reduce((s, t) => s + t.amount, 0)
+      txs.filter(isEarnedRevenue).reduce((s, t) => s + t.amount, 0)
     const sumExpense = (txs) =>
       txs.filter(t => t.type === 'depense').reduce((s, t) => s + t.amount, 0)
 
@@ -184,7 +196,9 @@ export function useFinances() {
   }
 
   /**
-   * Évolution mensuelle revenus vs dépenses sur l'année courante
+   * Évolution mensuelle revenus vs dépenses sur l'année courante.
+   * Seuls les revenus effectivement encaissés (factures payées + revenus
+   * manuels) entrent dans la série revenue.
    */
   function computeMonthlySeries(list) {
     const year = new Date().getFullYear()
@@ -195,20 +209,21 @@ export function useFinances() {
       const d = new Date(t.isoDate)
       if (d.getFullYear() !== year) continue
       const m = d.getMonth()
-      if (t.type === 'revenu') revenue[m] += t.amount
+      if (isEarnedRevenue(t)) revenue[m] += t.amount
       else if (t.type === 'depense') expense[m] += t.amount
     }
     return { revenue, expense }
   }
 
   /**
-   * Répartition des revenus par source
+   * Répartition des revenus encaissés par source.
+   * Les factures en attente ne sont pas comptabilisées.
    */
   function computeRevenueBySource(list) {
     let invoiceTotal = 0
     let manualTotal = 0
     for (const t of list) {
-      if (t.type !== 'revenu') continue
+      if (!isEarnedRevenue(t)) continue
       if (t.source === 'facture') invoiceTotal += t.amount
       else manualTotal += t.amount
     }
