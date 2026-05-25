@@ -349,3 +349,88 @@ export async function deleteClient(id) {
     throw new Error("Erreur lors de la suppression du client");
   }
 }
+
+// ==================== Transactions ====================
+
+/**
+ * Charge toutes les transactions manuelles depuis transactions.json
+ * @returns {Promise<Array>} Liste des transactions
+ */
+export async function loadTransactions() {
+  try {
+    const data = await fs.readFile(paths.TRANSACTIONS_PATH, "utf-8");
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return [];
+    }
+    log.error("Failed to load transactions:", error);
+    throw new Error("Impossible de charger les transactions");
+  }
+}
+
+/**
+ * Ajoute ou met à jour une transaction manuelle
+ * @param {Object} transaction - Transaction à sauvegarder
+ * @returns {Promise<Object>} Transaction sauvegardée
+ */
+export async function saveTransaction(transaction) {
+  try {
+    const transactions = await loadTransactions();
+    const now = new Date().toISOString();
+
+    if (!transaction.id) {
+      transaction.id = randomUUID();
+      transaction.createdAt = now;
+    }
+    transaction.editedAt = now;
+    transaction.source = "manuel";
+
+    const index = transactions.findIndex((t) => t.id === transaction.id);
+    if (index >= 0) {
+      transactions[index] = transaction;
+    } else {
+      transactions.push(transaction);
+    }
+
+    await fs.writeFile(
+      paths.TRANSACTIONS_PATH,
+      JSON.stringify(transactions, null, 2),
+      "utf-8",
+    );
+
+    log.info(`Transaction ${transaction.id} saved successfully`);
+    return transaction;
+  } catch (error) {
+    log.error("Failed to save transaction:", error);
+    throw new Error("Erreur lors de la sauvegarde de la transaction");
+  }
+}
+
+/**
+ * Supprime une transaction manuelle par id
+ * @param {string} id - ID de la transaction
+ * @returns {Promise<boolean>}
+ */
+export async function deleteTransaction(id) {
+  try {
+    const transactions = await loadTransactions();
+    const filtered = transactions.filter((t) => t.id !== id);
+
+    if (filtered.length === transactions.length) {
+      throw new Error("Transaction introuvable");
+    }
+
+    await fs.writeFile(
+      paths.TRANSACTIONS_PATH,
+      JSON.stringify(filtered, null, 2),
+      "utf-8",
+    );
+
+    log.info(`Transaction ${id} deleted successfully`);
+    return true;
+  } catch (error) {
+    log.error(`Failed to delete transaction ${id}:`, error);
+    throw new Error("Erreur lors de la suppression de la transaction");
+  }
+}

@@ -16,6 +16,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   loadClients: () => ipcRenderer.invoke("load-clients"),
   saveClient: (client) => ipcRenderer.invoke("save-client", client),
   deleteClient: (id) => ipcRenderer.invoke("delete-client", id),
+  loadTransactions: () => ipcRenderer.invoke("load-transactions"),
+  saveTransaction: (transaction) =>
+    ipcRenderer.invoke("save-transaction", transaction),
+  deleteTransaction: (id) => ipcRenderer.invoke("delete-transaction", id),
   validateDocument: (type, document) =>
     ipcRenderer.invoke("validate-document", type, document),
   generatePDF: (type, document) =>

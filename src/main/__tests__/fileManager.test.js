@@ -40,6 +40,9 @@ vi.mock("../utils/paths", () => {
       get LOGO_PATH() {
         return path.join(mockPaths.DATA_DIR, "logo.png");
       },
+      get TRANSACTIONS_PATH() {
+        return mockPaths.TRANSACTIONS_PATH;
+      },
     },
     getYearFolder(type, year) {
       const baseDir =
@@ -60,6 +63,9 @@ const {
   loadClients,
   saveClient,
   deleteClient,
+  loadTransactions,
+  saveTransaction,
+  deleteTransaction,
 } = await import("../fileManager.js");
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -111,6 +117,7 @@ beforeEach(async () => {
     DEVIS_DIR: path.join(tmpDir, "devis"),
     FACTURES_DIR: path.join(tmpDir, "factures"),
     CLIENTS_PATH: path.join(tmpDir, "clients.json"),
+    TRANSACTIONS_PATH: path.join(tmpDir, "transactions.json"),
   };
   // Create directories
   await fs.mkdir(mockPaths.DEVIS_DIR, { recursive: true });
@@ -425,5 +432,122 @@ describe("Clients", () => {
     await deleteClient(saved.id);
     clients = await loadClients();
     expect(clients).toHaveLength(0);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+//  Transactions
+// ──────────────────────────────────────────────────────────────
+
+describe("Transactions", () => {
+  function makeTransaction(overrides = {}) {
+    return {
+      type: "revenu",
+      date: "15/05/2026",
+      isoDate: "2026-05-15T00:00:00.000Z",
+      amount: 320,
+      label: "Cours particulier",
+      category: "Particulier",
+      paymentMethod: "Espèces",
+      ...overrides,
+    };
+  }
+
+  it("loadTransactions returns [] if file does not exist", async () => {
+    const txns = await loadTransactions();
+    expect(txns).toEqual([]);
+  });
+
+  it("saveTransaction creates a new transaction with id, createdAt, editedAt, source", async () => {
+    const t = makeTransaction();
+    const saved = await saveTransaction(t);
+    expect(saved.id).toBeDefined();
+    expect(saved.createdAt).toBeDefined();
+    expect(saved.editedAt).toBeDefined();
+    expect(saved.source).toBe("manuel");
+  });
+
+  it("saveTransaction persists the transaction to disk", async () => {
+    const t = makeTransaction({ label: "Achat papier" });
+    const saved = await saveTransaction(t);
+
+    const raw = JSON.parse(
+      await fs.readFile(mockPaths.TRANSACTIONS_PATH, "utf-8"),
+    );
+    expect(raw).toHaveLength(1);
+    expect(raw[0].id).toBe(saved.id);
+    expect(raw[0].label).toBe("Achat papier");
+  });
+
+  it("saveTransaction always forces source to 'manuel' (ignores incoming source)", async () => {
+    const saved = await saveTransaction(
+      makeTransaction({ source: "facture" }),
+    );
+    expect(saved.source).toBe("manuel");
+  });
+
+  it("saveTransaction updates an existing transaction by id (no duplicate)", async () => {
+    const saved = await saveTransaction(makeTransaction({ amount: 100 }));
+    // Wait at least 1ms so editedAt timestamp differs
+    await new Promise((r) => setTimeout(r, 5));
+    const updated = await saveTransaction({ ...saved, amount: 250 });
+
+    expect(updated.id).toBe(saved.id);
+    expect(updated.amount).toBe(250);
+    expect(updated.createdAt).toBe(saved.createdAt);
+    expect(updated.editedAt).not.toBe(saved.editedAt);
+
+    const all = await loadTransactions();
+    expect(all).toHaveLength(1);
+    expect(all[0].amount).toBe(250);
+  });
+
+  it("saveTransaction does not modify other transactions when updating one", async () => {
+    const a = await saveTransaction(makeTransaction({ label: "A" }));
+    const b = await saveTransaction(makeTransaction({ label: "B" }));
+    await saveTransaction({ ...a, label: "A updated" });
+
+    const all = await loadTransactions();
+    expect(all).toHaveLength(2);
+    const stillB = all.find((t) => t.id === b.id);
+    expect(stillB.label).toBe("B");
+  });
+
+  it("loadTransactions returns all saved transactions", async () => {
+    await saveTransaction(makeTransaction({ label: "A" }));
+    await saveTransaction(makeTransaction({ label: "B" }));
+    const all = await loadTransactions();
+    expect(all).toHaveLength(2);
+  });
+
+  it("deleteTransaction removes only the matching transaction", async () => {
+    const a = await saveTransaction(makeTransaction({ label: "A" }));
+    const b = await saveTransaction(makeTransaction({ label: "B" }));
+
+    await deleteTransaction(a.id);
+    const all = await loadTransactions();
+    expect(all).toHaveLength(1);
+    expect(all[0].id).toBe(b.id);
+  });
+
+  it("deleteTransaction throws if id does not exist", async () => {
+    await saveTransaction(makeTransaction());
+    await expect(deleteTransaction("nonexistent-id")).rejects.toThrow();
+  });
+
+  it("full cycle: save → load → update → delete → verify", async () => {
+    const saved = await saveTransaction(makeTransaction({ amount: 320 }));
+    expect(saved.id).toBeDefined();
+
+    let all = await loadTransactions();
+    expect(all).toHaveLength(1);
+
+    await saveTransaction({ ...saved, amount: 400 });
+    all = await loadTransactions();
+    expect(all[0].amount).toBe(400);
+
+    await deleteTransaction(saved.id);
+    all = await loadTransactions();
+    expect(all).toHaveLength(0);
   });
 });

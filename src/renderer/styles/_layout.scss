@@ -4,9 +4,9 @@
 @use "mixins" as *;
 
 .container {
-  padding: $spacing-xl;
-  max-width: 1400px;
   margin: 0 auto;
+  max-width: 1400px;
+  padding: $spacing-xl;
 }
 
 .card {
@@ -17,9 +17,9 @@
 .errors-list {
   background: rgba($error-color, 0.1);
   border-left: 4px solid $error-color;
-  padding: $spacing-md;
-  margin-bottom: $spacing-lg;
   border-radius: $border-radius-md;
+  margin-bottom: $spacing-lg;
+  padding: $spacing-md;
 
   h3 {
     color: $error-color;
@@ -34,9 +34,9 @@
   }
 
   li {
-    margin-bottom: $spacing-xs;
     color: $error-color;
     font-size: $font-size-sm;
+    margin-bottom: $spacing-xs;
 
     strong {
       font-weight: 600;
@@ -116,6 +116,7 @@ $percents: 20, 30, 40, 50, 60, 80;
   @include state-box;
   background-color: color.scale($error-color, $lightness: 40%);
   color: $error-color;
+  text-align: left;
 }
 
 .loading-spinner {
@@ -125,48 +126,48 @@ $percents: 20, 30, 40, 50, 60, 80;
 
 // État vide
 .empty-state {
-  text-align: center;
-  padding: $spacing-2xl;
   color: $grey-80;
+  padding: $spacing-2xl;
+  text-align: center;
 
   p {
-    margin-bottom: $spacing-md;
     font-size: $font-size-lg;
+    margin-bottom: $spacing-md;
   }
 }
 
 // Modal
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba($black, 0.5);
-  display: flex;
   align-items: center;
+  background-color: rgba($black, 0.5);
+  bottom: 0;
+  display: flex;
   justify-content: center;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
   z-index: 1000;
 }
 
 .modal {
   background: $white;
-  padding: $spacing-xl;
   border-radius: $border-radius-lg;
   box-shadow: $shadow-lg;
   max-width: 500px;
+  padding: $spacing-xl;
   width: 90%;
 
   h3 {
+    color: $grey-100;
     font-size: $font-size-xl;
     font-weight: 600;
     margin-bottom: $spacing-md;
-    color: $grey-100;
   }
 
   p {
-    margin-bottom: $spacing-sm;
     color: $grey-80;
+    margin-bottom: $spacing-sm;
 
     &.warning {
       color: $error-color;

@@ -12,6 +12,9 @@ import {
   loadClients,
   saveClient,
   deleteClient,
+  loadTransactions,
+  saveTransaction,
+  deleteTransaction,
 } from "./fileManager";
 import { validateDocument } from "./validator";
 import { generatePDF } from "./pdfGenerator";
@@ -165,6 +168,35 @@ export function initializeIPC() {
       return await deleteClient(id);
     } catch (error) {
       log.error(`Failed to delete client ${id}:`, error);
+      throw error;
+    }
+  });
+
+  // ==================== Transactions ====================
+
+  ipcMain.handle("load-transactions", async () => {
+    try {
+      return await loadTransactions();
+    } catch (error) {
+      log.error("Failed to load transactions:", error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle("save-transaction", async (event, transaction) => {
+    try {
+      return await saveTransaction(transaction);
+    } catch (error) {
+      log.error("Failed to save transaction:", error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle("delete-transaction", async (event, id) => {
+    try {
+      return await deleteTransaction(id);
+    } catch (error) {
+      log.error(`Failed to delete transaction ${id}:`, error);
       throw error;
     }
   });
