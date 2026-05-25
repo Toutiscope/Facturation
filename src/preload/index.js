@@ -24,12 +24,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("validate-document", type, document),
   generatePDF: (type, document) =>
     ipcRenderer.invoke("generate-pdf", type, document),
-  exportFacturX: (invoice) => ipcRenderer.invoke("export-facturx", invoice),
-  sendToChorus: (invoice) => ipcRenderer.invoke("send-chorus", invoice),
-  fetchChorusInvoices: (filters) =>
-    ipcRenderer.invoke("fetch-chorus-invoices", filters),
-  downloadChorusPDF: (invoiceId) =>
-    ipcRenderer.invoke("download-chorus-pdf", invoiceId),
   onCheckingForUpdate: (callback) =>
     ipcRenderer.on("checking-for-update", () => callback()),
   onUpdateAvailable: (callback) =>

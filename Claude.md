@@ -18,7 +18,7 @@ Application desktop Electron pour la création, gestion et conformité de devis 
 - SCSS (pas de framework CSS)
 - Node.js backend simple
 - Stockage : fichiers JSON locaux
-- Intégration : Chorus Pro (API)
+- Intégration : API d'une plateforme de facturation agréée (PDP – Plateforme de Dématérialisation Partenaire, choix de la PDP laissé à l'utilisateur)
 - Auto-update : GitHub Releases
 
 ---
@@ -31,8 +31,8 @@ Application desktop Electron pour la création, gestion et conformité de devis 
 2. **Création de factures** avec numérotation automatique modifiable
 3. **Export PDF** des devis et factures
 4. **Stockage JSON local** organisé par année
-5. **Envoi à Chorus Pro** (format Factur-X)
-6. **Réception de factures Chorus Pro** avec visualisation et export PDF
+5. **Envoi à une plateforme de facturation agréée** (PDP) via son API, au format e-invoicing standard (Factur-X, UBL ou équivalent selon la PDP)
+6. **Réception de factures via la plateforme agréée** avec visualisation et export PDF
 7. **Validation automatique** des mentions obligatoires
 8. **Auto-update** via GitHub Releases
 9. **Configuration utilisateur** via interface (pas de manipulation JSON manuelle)
@@ -54,7 +54,7 @@ facturation/
 ├── src/
 │   ├── main/                    # Process principal Electron
 │   │   ├── index.js            # Entry point Electron
-│   │   ├── chorusApi.js        # Intégration Chorus Pro
+│   │   ├── einvoiceApi.js      # Intégration plateforme agréée (PDP)
 │   │   ├── pdfGenerator.js     # Génération PDF
 │   │   ├── validator.js        # Validation factures
 │   │   └── autoUpdater.js      # Gestion des mises à jour
@@ -104,11 +104,12 @@ facturation/
     "bic": "XXXXXXXX",
     "holder": "Nom du titulaire"
   },
-  "chorusPro": {
+  "einvoicePlatform": {
+    "providerName": "",
     "identifier": "",
     "password": "",
     "apiKey": "",
-    "urlApi": "https://chorus-pro.gouv.fr/api/..."
+    "urlApi": ""
   },
   "billing": {
     "legalNotice": "Dispensé d'immatriculation au registre du commerce...",
@@ -171,7 +172,7 @@ facturation/
   "numero": "000375",
   "dueDate": "15/02/2027",
   "associatedQuote": "000875",
-  "chorusPro": {
+  "einvoice": {
     "isSent": false,
     "dateSending": null,
     "depositNumber": null,
@@ -236,18 +237,24 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 
 **L'application doit :**
 
-- Vérifier la présence de tous ces champs avant export PDF ou envoi Chorus Pro
+- Vérifier la présence de tous ces champs avant export PDF ou envoi à la plateforme agréée
 - Afficher des alertes claires si des champs sont manquants
 - Bloquer l'envoi/export si validation échoue
 - Auto-remplir certains champs depuis config.json
 
-### 3. Intégration Chorus Pro
+### 3. Intégration avec une plateforme de facturation agréée (PDP)
 
-**API Chorus Pro :**
+**Principe :**
 
-- Documentation officielle : https://developer.chorus-pro.gouv.fr/
-- Authentification : OAuth2 ou API Key (selon API disponible)
-- Format de facture : **Factur-X** (PDF + XML embarqué) recommandé pour compatibilité
+L'application doit se brancher sur l'API d'une **Plateforme de Dématérialisation Partenaire (PDP)** choisie par l'utilisateur. La PDP est responsable de la transmission des factures électroniques entre émetteur et destinataire conformément à la réglementation française.
+
+- Authentification : OAuth2, API Key ou identifiants selon la PDP retenue
+- Format de facture : format e-invoicing standard supporté par la PDP (Factur-X PDF/A-3 + XML CII, UBL 2.1, ou équivalent)
+- L'URL d'API, les credentials et le format à utiliser sont configurables dans les paramètres
+
+**Couche d'abstraction :**
+
+Prévoir une interface technique unique (`einvoiceApi.js`) qui expose des opérations standard — `sendInvoice`, `fetchReceivedInvoices`, `downloadInvoicePdf` — et qui isole le code spécifique au fournisseur dans un adaptateur dédié. Cela permet de changer de PDP sans toucher au code applicatif.
 
 **Fonctionnalités à implémenter :**
 
@@ -255,24 +262,24 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 
 ```javascript
 // Processus :
-// 1. Générer le Factur-X (PDF/A-3 + XML CII)
-// 2. Valider le format avant envoi
-// 3. Envoyer via API Chorus Pro
-// 4. Récupérer le numéro de dépôt
-// 5. Mettre à jour le JSON de la facture avec infos Chorus Pro
+// 1. Générer le document e-invoice au format attendu par la PDP
+// 2. Valider le format avant envoi (schéma + mentions obligatoires)
+// 3. Envoyer via l'API de la plateforme agréée
+// 4. Récupérer l'identifiant de dépôt retourné par la plateforme
+// 5. Mettre à jour le JSON de la facture avec les infos de transmission
 // 6. Afficher confirmation ou erreurs
 ```
 
 **Boutons dans l'interface :**
 
-- **"Envoyer à Chorus Pro"** : envoi direct via API
-- **"Exporter Factur-X"** : téléchargement du fichier pour envoi manuel
+- **"Envoyer à la plateforme"** : envoi direct via l'API configurée
+- **"Exporter le fichier e-invoice"** : téléchargement local du fichier pour envoi manuel
 
 #### B. Réception de factures
 
 ```javascript
 // Processus :
-// 1. Récupérer la liste des factures reçues via API
+// 1. Récupérer la liste des factures reçues via l'API de la PDP
 // 2. Afficher dans une liste (tableau)
 // 3. Permettre visualisation (affichage PDF)
 // 4. Permettre export PDF local
@@ -283,15 +290,15 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 
 - Onglet "Factures reçues"
 - Tableau avec colonnes : Date, Émetteur, Numéro, Montant, Statut
-- Boutons : "Enregistrer", "Télécharger PDF", "Envoyer à Chorus Pro"
+- Boutons : "Enregistrer", "Télécharger PDF"
 - Filtres : date, statut, émetteur
 
 #### C. Validation pré-envoi
 
-- Vérifier conformité du XML CII
+- Vérifier conformité du document e-invoice (XML CII, UBL, etc.)
 - Vérifier mentions obligatoires
 - Vérifier format des données (SIRET valide, IBAN valide si présent, etc.)
-- Simuler la validation Chorus Pro en local avant envoi
+- Simuler la validation localement avant l'envoi à la plateforme
 
 ### 4. Génération PDF
 
@@ -308,11 +315,11 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 - Conditions de paiement et mentions légales en pied de page
 - RIB (optionnel, configurable)
 
-**Export Factur-X :**
+**Export au format e-invoicing :**
 
 - PDF/A-3 (conforme archivage électronique)
-- XML CII embarqué (norme Cross Industry Invoice)
-- Bibliothèque : `facturx-js` ou équivalent
+- XML embarqué selon le standard requis par la PDP (CII Cross Industry Invoice, UBL 2.1, etc.)
+- Bibliothèque : à choisir selon le format ciblé (`facturx-js`, librairie UBL, etc.)
 
 ### 5. Auto-update
 
@@ -358,17 +365,17 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 3. **Factures**
    - Liste des factures (tableau filtrable/triable)
    - Bouton "Nouvelle facture"
-   - Actions : Voir, Modifier, Dupliquer, Exporter PDF, Envoyer Chorus Pro, Supprimer
+   - Actions : Voir, Modifier, Dupliquer, Exporter PDF, Envoyer à la plateforme agréée, Supprimer
 
-4. **Factures reçues** (Chorus Pro)
+4. **Factures reçues** (depuis la plateforme agréée)
    - Liste des factures reçues
    - Actions : Voir PDF, Télécharger PDF
 
 5. **Configuration**
    - Formulaire pour éditer config.json
-   - Sections : Entreprise, RIB, Chorus Pro, Facturation
+   - Sections : Entreprise, RIB, Plateforme de facturation, Facturation
    - Bouton "Sauvegarder"
-   - Validation des champs (SIRET, IBAN, email, etc.)
+   - Validation des champs (SIRET, IBAN, email, URL d'API, etc.)
 
 **Formulaire de création/édition devis/facture :**
 
@@ -382,7 +389,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
   - Calcul automatique des totaux
 - Bloc totaux : Total HT, TVA (auto-calculée), Total TTC
 - Notes internes (optionnel)
-- Boutons : Enregistrer brouillon, Valider et générer PDF, Envoyer Chorus Pro (factures uniquement)
+- Boutons : Enregistrer brouillon, Valider et générer PDF, Envoyer à la plateforme agréée (factures uniquement)
 
 **Design SCSS :**
 
@@ -415,10 +422,10 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 'save-document' → save devis ou facture
 'delete-document' → supprimer un document
 'generate-pdf' → générer PDF
-'export-facturx' → générer Factur-X
-'send-chorus' → envoyer facture à Chorus Pro
-'fetch-chorus-invoices' → récupérer factures reçues
-'download-chorus-pdf' → télécharger PDF d'une facture reçue
+'export-einvoice' → générer le fichier e-invoice au format attendu (Factur-X / UBL / …)
+'send-einvoice' → envoyer la facture à la plateforme agréée configurée
+'fetch-received-invoices' → récupérer les factures reçues via la plateforme agréée
+'download-received-pdf' → télécharger le PDF d'une facture reçue
 'validate-document' → valider avant envoi/export
 'install-update' → installer mise à jour
 ```
@@ -431,7 +438,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 - `config.template.json` versionné avec valeurs vides/exemple
 - Au premier lancement, copier template → `data/config.json` si n'existe pas
 - Guider l'utilisateur vers Configuration pour remplir ses données
-- Stocker credentials Chorus Pro de manière sécurisée (éviter plain text si possible, utiliser electron-store avec chiffrement)
+- Stocker les credentials de la plateforme agréée (API key, identifiants OAuth2, etc.) de manière sécurisée — éviter le plain text, utiliser `electron-store` avec chiffrement (`safeStorage` Electron de préférence)
 
 ### Gestion des erreurs
 
@@ -468,7 +475,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 - vue (v3)
 - electron-updater
 - pdfkit (ou jsPDF)
-- axios (pour appels API Chorus Pro)
+- axios (pour les appels HTTP vers l'API de la plateforme agréée)
 - electron-store (pour config sécurisée)
 - date-fns (manipulation dates)
 - Validation : validator.js ou zod
@@ -504,13 +511,14 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 ### Phase 3 : Export PDF
 
 - [ ] Génération PDF design professionnel
-- [ ] Export Factur-X
+- [ ] Export au format e-invoicing (Factur-X / UBL selon PDP)
 
-### Phase 4 : Chorus Pro
+### Phase 4 : Branchement avec une plateforme de facturation agréée (PDP)
 
-- [ ] Intégration API
-- [ ] Envoi factures
-- [ ] Réception factures
+- [ ] Couche d'abstraction `einvoiceApi.js` (adaptateur par fournisseur)
+- [ ] Configuration de la PDP dans les paramètres (URL, credentials, format)
+- [ ] Envoi de factures à la PDP
+- [ ] Réception et consultation des factures depuis la PDP
 - [ ] Validation pré-envoi
 
 ### Phase 5 : Finitions
@@ -528,7 +536,7 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 
 2. **Conformité 2027** : Se tenir informé des évolutions réglementaires et prévoir adaptabilité du code
 
-3. **Chorus Pro** : L'API peut changer, prévoir une couche d'abstraction pour faciliter les mises à jour
+3. **Plateforme agréée (PDP)** : l'utilisateur peut changer de PDP au fil du temps et chaque PDP a sa propre API. Prévoir une couche d'abstraction (`einvoiceApi.js` + adaptateurs) pour isoler l'intégration et faciliter l'ajout/le remplacement d'un fournisseur
 
 4. **Pas de framework CSS** : Créer un système de design cohérent en SCSS vanilla (variables, mixins, structure BEM ou similaire)
 
@@ -550,9 +558,9 @@ const nextQuoteNumber = `D${String(config.billing.latestQuoteNumber + 1).padStar
 
 - Documentation Electron : https://www.electronjs.org/docs
 - Vue 3 : https://vuejs.org/
-- Chorus Pro API : https://developer.chorus-pro.gouv.fr/
-- Norme Factur-X : https://fnfe-mpe.org/factur-x/
 - Réglementation facturation électronique : https://www.impots.gouv.fr/
+- Norme Factur-X : https://fnfe-mpe.org/factur-x/
+- Liste des PDP immatriculées (DGFiP) : à consulter sur impots.gouv.fr
 
 ---
 

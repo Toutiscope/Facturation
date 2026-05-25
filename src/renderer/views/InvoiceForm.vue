@@ -92,40 +92,6 @@
               </div>
             </div>
 
-            <!-- Affichage statut Chorus Pro si envoyé -->
-            <div v-if="invoice.chorusPro?.isSent" class="chorus-status">
-              <h3>Statut Chorus Pro</h3>
-              <p>
-                <strong>Envoyé le :</strong>
-                {{ invoice.chorusPro.dateSending }}
-              </p>
-              <p v-if="invoice.chorusPro.depositNumber">
-                <strong>Numéro de dépôt :</strong>
-                {{ invoice.chorusPro.depositNumber }}
-              </p>
-              <p>
-                <strong>Statut :</strong>
-                <span
-                  :class="[
-                    'status-badge',
-                    `status-${invoice.chorusPro.status}`,
-                  ]"
-                >
-                  {{ statusLabel(invoice.chorusPro.status) }}
-                </span>
-              </p>
-              <div v-if="invoice.chorusPro.errors?.length > 0" class="errors">
-                <strong>Erreurs :</strong>
-                <ul>
-                  <li
-                    v-for="(err, index) in invoice.chorusPro.errors"
-                    :key="index"
-                  >
-                    {{ err }}
-                  </li>
-                </ul>
-              </div>
-            </div>
           </section>
         </div>
 
@@ -287,13 +253,6 @@ const invoice = ref({
   },
   notes: "",
   associatedQuote: "",
-  chorusPro: {
-    isSent: false,
-    dateSending: null,
-    depositNumber: null,
-    status: "draft",
-    errors: [],
-  },
   createdAt: "",
   editedAt: "",
 });
@@ -539,41 +498,4 @@ function cancel() {
 @use "@/styles/variables" as *;
 @use "@/styles/colors" as *;
 
-.chorus-status {
-  margin-top: $spacing-lg;
-  padding: $spacing-md;
-  background-color: $grey-50;
-  border-radius: $border-radius-md;
-  border: 1px solid $grey-30;
-
-  h3 {
-    margin-bottom: $spacing-sm;
-  }
-
-  p {
-    margin-bottom: $spacing-xs;
-    font-size: $font-size-sm;
-    color: $grey-80;
-
-    strong {
-      color: $grey-100;
-    }
-  }
-
-  .errors {
-    margin-top: $spacing-sm;
-    color: $error-color;
-
-    ul {
-      list-style: disc;
-      margin-left: $spacing-md;
-      margin-top: $spacing-xs;
-
-      li {
-        margin-bottom: $spacing-xs;
-        font-size: $font-size-sm;
-      }
-    }
-  }
-}
 </style>

@@ -42,11 +42,6 @@ const routes = [
     component: () => import('@/views/ClientDirectory.vue')
   },
   {
-    path: '/factures-recues',
-    name: 'ReceivedInvoices',
-    component: () => import('@/views/ReceivedInvoices.vue')
-  },
-  {
     path: '/finances',
     name: 'Finances',
     component: () => import('@/views/Finances.vue')

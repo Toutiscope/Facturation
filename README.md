@@ -10,7 +10,7 @@ Application desktop pour la création, gestion et conformité de devis et factur
 - **SCSS** - Styles (pas de framework CSS)
 - **PDFKit** - Génération PDF
 - **Zod** - Validation
-- **Axios** - Appels API (Chorus Pro)
+- **Axios** - Appels HTTP vers l'API d'une plateforme de facturation agréée (PDP)
 - **electron-updater** - Auto-update
 
 ## Prérequis
@@ -91,12 +91,13 @@ facturation/
 
 ### ⏳ Phase 3 : Export PDF
 - [ ] Génération PDF design professionnel
-- [ ] Export Factur-X
+- [ ] Export au format e-invoicing (Factur-X / UBL selon la PDP cible)
 
-### ⏳ Phase 4 : Chorus Pro
-- [ ] Intégration API
-- [ ] Envoi factures
-- [ ] Réception factures
+### ⏳ Phase 4 : Branchement avec une plateforme de facturation agréée (PDP)
+- [ ] Couche d'abstraction `einvoiceApi.js` (adaptateur par fournisseur)
+- [ ] Configuration de la PDP dans les paramètres
+- [ ] Envoi de factures à la PDP
+- [ ] Réception et consultation des factures
 - [ ] Validation pré-envoi
 
 ### ⏳ Phase 5 : Finitions
@@ -112,7 +113,7 @@ Au premier lancement, l'application copie `config.template.json` vers `data/conf
 Configurez votre application via l'interface (page Configuration):
 - Informations entreprise (SIRET, adresse, contact)
 - Coordonnées bancaires (RIB)
-- Paramètres Chorus Pro
+- Paramètres de la plateforme de facturation agréée (URL d'API, credentials, format)
 - Paramètres de facturation
 
 ## Sécurité

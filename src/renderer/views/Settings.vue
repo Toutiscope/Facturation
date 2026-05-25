@@ -344,50 +344,6 @@
           </div>
         </section>
 
-        <!-- Section Chorus Pro -->
-        <!-- <section class="card mg-top-16 settings-card">
-            <h2>Chorus Pro</h2>
-            <p class="section-hint">
-              Configuration pour l'envoi de factures électroniques à
-              l'administration.
-            </p>
-
-            <div class="form-group">
-              <label>Identifiant Chorus Pro</label>
-              <input
-                v-model="config.chorusPro.identifier"
-                type="text"
-                placeholder="Identifiant"
-              />
-            </div>
-
-            <div class="form-group">
-              <label>Mot de passe</label>
-              <input
-                v-model="config.chorusPro.password"
-                type="password"
-                placeholder="Mot de passe"
-              />
-            </div>
-
-            <div class="form-group">
-              <label>API Key</label>
-              <input
-                v-model="config.chorusPro.apiKey"
-                type="text"
-                placeholder="Clé API"
-              />
-            </div>
-
-            <div class="form-group">
-              <label>URL API</label>
-              <input
-                v-model="config.chorusPro.urlApi"
-                type="text"
-                placeholder="https://chorus-pro.gouv.fr/api/"
-              />
-            </div>
-          </section> -->
       </div>
 
       <ConfirmModal

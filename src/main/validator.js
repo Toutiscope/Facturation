@@ -62,25 +62,13 @@ export const quoteSchema = z.object({
 })
 
 /**
- * Schéma de validation pour Chorus Pro
- */
-export const chorusProSchema = z.object({
-  isSent: z.boolean(),
-  dateSending: z.string().nullable().optional(),
-  depositNumber: z.string().nullable().optional(),
-  status: z.enum(['draft', 'sent', 'accepted', 'rejected']).optional(),
-  errors: z.array(z.string()).optional()
-})
-
-/**
  * Schéma de validation pour une facture
  */
 export const invoiceSchema = quoteSchema.extend({
   type: z.literal('facture'),
   numero: z.string().regex(/^F\d{6}$/, 'Le numéro de facture doit être au format F000001'),
   dueDate: z.string().min(1, 'La date d\'échéance est requise'),
-  associatedQuote: z.string().optional(),
-  chorusPro: chorusProSchema.optional()
+  associatedQuote: z.string().optional()
 })
 
 /**

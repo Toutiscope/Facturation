@@ -223,32 +223,6 @@ export function initializeIPC() {
     }
   });
 
-  ipcMain.handle("export-facturx", async (event, invoice) => {
-    // TODO: Phase 3/4 - Implémenter export Factur-X
-    log.info("export-facturx called (stub)");
-    return null;
-  });
-
-  // ==================== Chorus Pro (Phase 4) ====================
-
-  ipcMain.handle("send-chorus", async (event, invoice) => {
-    // TODO: Phase 4 - Implémenter envoi Chorus Pro
-    log.info("send-chorus called (stub)");
-    return null;
-  });
-
-  ipcMain.handle("fetch-chorus-invoices", async (event, filters) => {
-    // TODO: Phase 4 - Implémenter récupération factures Chorus Pro
-    log.info("fetch-chorus-invoices called (stub)");
-    return [];
-  });
-
-  ipcMain.handle("download-chorus-pdf", async (event, invoiceId) => {
-    // TODO: Phase 4 - Implémenter download PDF Chorus Pro
-    log.info("download-chorus-pdf called (stub)");
-    return null;
-  });
-
   // ==================== Système ====================
 
   ipcMain.handle("get-app-version", () => {

@@ -21,12 +21,6 @@ const DEFAULT_CONFIG = {
     bic: "",
     holder: "",
   },
-  chorusPro: {
-    identifier: "",
-    password: "",
-    apiKey: "",
-    urlApi: "https://chorus-pro.gouv.fr/api/",
-  },
   billing: {
     legalNotice: "",
     paymentTerms: "Paiement à 30 jours",
