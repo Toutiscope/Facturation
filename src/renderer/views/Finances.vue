@@ -58,17 +58,35 @@
           <p class="kpi-card__delta kpi-card__delta--up">
             ▲ Mois en cours
           </p>
+          <p class="kpi-card__after-tax">
+            <span class="kpi-card__after-tax-amount">
+              ≈ {{ formatCurrency(kpis.caMonthAfterUrssaf) }}
+            </span>
+            après impôts
+          </p>
         </article>
         <article class="kpi-card">
           <p class="kpi-card__label">CA total (annuel)</p>
           <p class="kpi-card__value">{{ formatCurrency(kpis.caYear) }}</p>
           <p class="kpi-card__delta kpi-card__delta--up">▲ Année en cours</p>
+          <p class="kpi-card__after-tax">
+            <span class="kpi-card__after-tax-amount">
+              ≈ {{ formatCurrency(kpis.caYearAfterUrssaf) }}
+            </span>
+            après impôts
+          </p>
         </article>
         <article class="kpi-card">
           <p class="kpi-card__label">Bénéfice net</p>
           <p class="kpi-card__value">{{ formatCurrency(kpis.benefit) }}</p>
           <p class="kpi-card__delta kpi-card__delta--up">
             Marge {{ kpis.margin }}%
+          </p>
+          <p class="kpi-card__after-tax">
+            <span class="kpi-card__after-tax-amount">
+              ≈ {{ formatCurrency(kpis.benefitAfterUrssaf) }}
+            </span>
+            après impôts
           </p>
         </article>
         <article class="kpi-card">
@@ -270,7 +288,20 @@ const transactionsTitle = computed(() => {
   return "Transactions de l'année";
 });
 
-const kpis = computed(() => computeKpis(transactions.value));
+// Taux URSSAF auto-entrepreneur prestation de services (BNC libéral) :
+// cotisations sociales + CFP. Les cotisations URSSAF sont assises sur le CA,
+// pas sur le bénéfice — on applique donc le taux sur le CA pour estimer le net.
+const URSSAF_RATE = 0.232;
+
+const kpis = computed(() => {
+  const k = computeKpis(transactions.value);
+  return {
+    ...k,
+    caMonthAfterUrssaf: k.caMonth * (1 - URSSAF_RATE),
+    caYearAfterUrssaf: k.caYear * (1 - URSSAF_RATE),
+    benefitAfterUrssaf: k.benefit - k.caYear * URSSAF_RATE,
+  };
+});
 
 const chartSeries = computed(() =>
     computeChartSeries(transactions.value, period.value)
@@ -493,6 +524,19 @@ onMounted(() => {
   &--down {
     color: $error-color;
   }
+}
+
+.kpi-card__after-tax {
+  color: $grey-60;
+  font-size: $font-size-xs;
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  margin: $spacing-xs 0 0;
+}
+
+.kpi-card__after-tax-amount {
+  color: $grey-90;
+  font-weight: 500;
 }
 
 .charts-row {
