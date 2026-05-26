@@ -160,12 +160,9 @@
             id="txn-party"
             v-model="form.party"
             type="text"
-            placeholder="Nom ou recherche dans le répertoire…"
+            placeholder="Ex : Michel Dupont"
             class="form-control"
           />
-          <small class="field__hint">
-            Optionnel — pour les revenus issus d'un particulier.
-          </small>
         </div>
 
         <div class="field">
@@ -649,7 +646,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
   font-family: inherit;
 
   &:hover {
-    background: $grey-10;
+    background: $grey-30;
+    color: $grey-90;
   }
 
   &--active {

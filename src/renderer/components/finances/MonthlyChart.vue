@@ -71,7 +71,7 @@
 
         <!-- Bar mode -->
         <template v-else-if="type === 'bar'">
-          <g v-for="(m, i) in months" :key="i">
+          <g v-for="(_, i) in xs" :key="i">
             <rect
               :x="xs[i] - barWidth - barGap / 2"
               :y="yRev[i]"
@@ -117,7 +117,7 @@
         :style="tooltipStyle"
         role="tooltip"
       >
-        <div class="chart__tooltip-title">{{ MONTH_NAMES[hoveredIndex] }}</div>
+        <div class="chart__tooltip-title">{{ resolvedFullLabels[hoveredIndex] }}</div>
         <div class="chart__tooltip-row">
           <span class="chart__tooltip-dot chart__tooltip-dot--income" />
           <span class="chart__tooltip-label">Revenus</span>
@@ -150,9 +150,9 @@
     <!-- X axis labels -->
     <div class="chart__x-axis">
       <span
-        v-for="(m, i) in months"
+        v-for="(m, i) in displayedLabels"
         :key="i"
-        :class="{ 'chart__x-axis-label--active': hoveredIndex === i }"
+        :class="{ 'chart__x-axis-label--active': hoveredIndex === labelIndexes[i] }"
       >
         {{ m }}
       </span>
@@ -172,6 +172,14 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  labels: {
+    type: Array,
+    default: null,
+  },
+  fullLabels: {
+    type: Array,
+    default: null,
+  },
   type: {
     type: String,
     default: "line",
@@ -183,8 +191,8 @@ const props = defineProps({
   },
 });
 
-const months = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
-const MONTH_NAMES = [
+const DEFAULT_LABELS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+const DEFAULT_FULL_LABELS = [
   "Janvier",
   "Février",
   "Mars",
@@ -198,6 +206,43 @@ const MONTH_NAMES = [
   "Novembre",
   "Décembre",
 ];
+
+const pointCount = computed(() => props.revenue.length);
+
+const resolvedLabels = computed(() => {
+  if (props.labels && props.labels.length === pointCount.value) {
+    return props.labels;
+  }
+  if (pointCount.value === 12) return DEFAULT_LABELS;
+  return Array.from({ length: pointCount.value }, (_, i) => String(i + 1));
+});
+
+const resolvedFullLabels = computed(() => {
+  if (props.fullLabels && props.fullLabels.length === pointCount.value) {
+    return props.fullLabels;
+  }
+  if (pointCount.value === 12) return DEFAULT_FULL_LABELS;
+  return resolvedLabels.value;
+});
+
+// Limite à ~15 labels affichés sur l'axe X pour éviter le chevauchement
+// (utile pour la vue Mois avec 28-31 jours).
+const MAX_X_TICKS = 15;
+const labelIndexes = computed(() => {
+  const total = pointCount.value;
+  if (total <= MAX_X_TICKS) {
+    return Array.from({ length: total }, (_, i) => i);
+  }
+  const step = Math.ceil(total / MAX_X_TICKS);
+  const idx = [];
+  for (let i = 0; i < total; i += step) idx.push(i);
+  if (idx[idx.length - 1] !== total - 1) idx.push(total - 1);
+  return idx;
+});
+
+const displayedLabels = computed(() =>
+  labelIndexes.value.map((i) => resolvedLabels.value[i])
+);
 
 const X_AXIS_HEIGHT = 22;
 const TOOLTIP_WIDTH = 180;
@@ -238,10 +283,12 @@ const maxValue = computed(() => {
   return Math.ceil(max / step) * step;
 });
 
-const slotWidth = computed(() => plotWidth.value / 12);
+const slotWidth = computed(() =>
+  pointCount.value > 0 ? plotWidth.value / pointCount.value : plotWidth.value
+);
 
 const xs = computed(() =>
-  months.map((_, i) => slotWidth.value * (i + 0.5))
+  Array.from({ length: pointCount.value }, (_, i) => slotWidth.value * (i + 0.5))
 );
 
 const yRev = computed(() =>
@@ -281,7 +328,8 @@ const monthBenefit = computed(() => {
 
 const tooltipStyle = computed(() => {
   if (hoveredIndex.value === null) return {};
-  const slotPixelWidth = plotWidth.value / 12;
+  const total = pointCount.value || 1;
+  const slotPixelWidth = plotWidth.value / total;
   const centerX = slotPixelWidth * (hoveredIndex.value + 0.5);
   // Centre le tooltip sur le mois en clamp au bord du plot
   const half = TOOLTIP_WIDTH / 2;
@@ -298,13 +346,18 @@ const tooltipStyle = computed(() => {
 
 function onMouseMove(event) {
   if (!plotRef.value) return;
+  const total = pointCount.value;
+  if (total === 0) {
+    hoveredIndex.value = null;
+    return;
+  }
   const rect = plotRef.value.getBoundingClientRect();
   const x = event.clientX - rect.left;
   if (x < 0 || x > rect.width) {
     hoveredIndex.value = null;
     return;
   }
-  const idx = Math.min(11, Math.max(0, Math.floor((x / rect.width) * 12)));
+  const idx = Math.min(total - 1, Math.max(0, Math.floor((x / rect.width) * total)));
   hoveredIndex.value = idx;
 }
 
@@ -390,7 +443,7 @@ function areaPath(values) {
   font-size: 11px;
 
   span {
-    width: calc(100% / 12);
+    flex: 1 1 0;
     text-align: center;
     transition: color 0.15s ease;
   }

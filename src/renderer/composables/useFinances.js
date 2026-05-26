@@ -216,6 +216,82 @@ export function useFinances() {
   }
 
   /**
+   * Série temporelle adaptée à la période sélectionnée.
+   *  - 'Mois'      : un point par jour du mois courant
+   *  - 'Trimestre' : un point par semaine du trimestre courant (~13 semaines)
+   *  - 'Année'     : un point par mois sur l'année courante
+   *
+   * Renvoie deux tableaux de labels :
+   *  - `labels`     : labels courts (axe X)
+   *  - `fullLabels` : labels longs (tooltip)
+   */
+  function computeChartSeries(list, period) {
+    const now = new Date()
+    const year = now.getFullYear()
+
+    if (period === 'Mois') {
+      const month = now.getMonth()
+      const daysInMonth = new Date(year, month + 1, 0).getDate()
+      const revenue = Array(daysInMonth).fill(0)
+      const expense = Array(daysInMonth).fill(0)
+      const labels = Array.from({ length: daysInMonth }, (_, i) => String(i + 1))
+      const fullLabels = Array.from({ length: daysInMonth }, (_, i) => {
+        const d = new Date(year, month, i + 1)
+        return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+      })
+      for (const t of list) {
+        if (!t.isoDate) continue
+        const d = new Date(t.isoDate)
+        if (d.getFullYear() !== year || d.getMonth() !== month) continue
+        const idx = d.getDate() - 1
+        if (isEarnedRevenue(t)) revenue[idx] += t.amount
+        else if (t.type === 'depense') expense[idx] += t.amount
+      }
+      return { revenue, expense, labels, fullLabels }
+    }
+
+    if (period === 'Trimestre') {
+      const quarter = Math.floor(now.getMonth() / 3)
+      const startMonth = quarter * 3
+      const monthsInQuarter = [0, 1, 2]
+      const longMonthNames = [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      ]
+      const shortMonthNames = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+      const revenue = Array(3).fill(0)
+      const expense = Array(3).fill(0)
+      const labels = monthsInQuarter.map(i => shortMonthNames[startMonth + i])
+      const fullLabels = monthsInQuarter.map(i => `${longMonthNames[startMonth + i]} ${year}`)
+      for (const t of list) {
+        if (!t.isoDate) continue
+        const d = new Date(t.isoDate)
+        if (d.getFullYear() !== year) continue
+        const m = d.getMonth()
+        if (m < startMonth || m > startMonth + 2) continue
+        const idx = m - startMonth
+        if (isEarnedRevenue(t)) revenue[idx] += t.amount
+        else if (t.type === 'depense') expense[idx] += t.amount
+      }
+      return { revenue, expense, labels, fullLabels }
+    }
+
+    // Année (par défaut)
+    const longMonthNames = [
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ]
+    const shortMonthNames = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+    const { revenue, expense } = computeMonthlySeries(list)
+    return {
+      revenue,
+      expense,
+      labels: shortMonthNames,
+      fullLabels: longMonthNames.map(m => `${m} ${year}`)
+    }
+  }
+
+  /**
    * Répartition des revenus encaissés par source.
    * Les factures en attente ne sont pas comptabilisées.
    */
@@ -256,6 +332,7 @@ export function useFinances() {
     filterByPeriod,
     computeKpis,
     computeMonthlySeries,
+    computeChartSeries,
     computeRevenueBySource,
 
     // utils

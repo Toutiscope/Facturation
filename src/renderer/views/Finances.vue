@@ -99,7 +99,7 @@
           <header class="chart-card__header">
             <div>
               <h2>Revenus vs dépenses</h2>
-              <p class="chart-card__sub">Évolution sur 12 mois</p>
+              <p class="chart-card__sub">{{ chartSubtitle }}</p>
             </div>
             <div class="chart-card__legend">
               <span>
@@ -113,9 +113,11 @@
             </div>
           </header>
           <MonthlyChart
-              :expense="monthlySeries.expense"
+              :expense="chartSeries.expense"
+              :full-labels="chartSeries.fullLabels"
               :height="220"
-              :revenue="monthlySeries.revenue"
+              :labels="chartSeries.labels"
+              :revenue="chartSeries.revenue"
               :type="chartType"
           />
         </article>
@@ -203,7 +205,7 @@ const {
   saveTransaction,
   removeTransaction,
   computeKpis,
-  computeMonthlySeries,
+  computeChartSeries,
   computeRevenueBySource,
   filterByPeriod,
 } = useFinances();
@@ -270,7 +272,15 @@ const transactionsTitle = computed(() => {
 
 const kpis = computed(() => computeKpis(transactions.value));
 
-const monthlySeries = computed(() => computeMonthlySeries(transactions.value));
+const chartSeries = computed(() =>
+    computeChartSeries(transactions.value, period.value)
+);
+
+const chartSubtitle = computed(() => {
+  if (period.value === "Mois") return "Évolution jour par jour";
+  if (period.value === "Trimestre") return "Évolution mois par mois";
+  return "Évolution sur 12 mois";
+});
 
 const revenueBySource = computed(() =>
     computeRevenueBySource(
