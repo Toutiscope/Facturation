@@ -77,6 +77,14 @@ export default defineConfig({
 
   base: "./",
 
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: "modern-compiler",
+      },
+    },
+  },
+
   build: {
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,

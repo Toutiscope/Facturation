@@ -356,6 +356,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+@use "sass:math";
 @use "@/styles/colors" as *;
 @use "@/styles/variables" as *;
 @use "@/styles/mixins" as *;
@@ -396,7 +397,7 @@ onMounted(() => {
   border: 1px solid $grey-20;
   border-radius: $border-radius-md;
   display: inline-flex;
-  padding: $spacing-xs / 2;
+  padding: math.div($spacing-xs, 2);
 }
 
 .segmented__item {
@@ -517,7 +518,7 @@ onMounted(() => {
   color: $grey-60;
   display: block;
   font-size: $font-size-xs;
-  margin-top: $spacing-xs / 2;
+  margin-top: math.div($spacing-xs, 2);
 }
 
 .chart-card__legend {
@@ -540,7 +541,7 @@ onMounted(() => {
 }
 
 .legend-dot {
-  border-radius: $border-radius-sm / 2;
+  border-radius: math.div($border-radius-sm, 2);
   display: inline-block;
   height: $spacing-sm;
   width: $spacing-sm;
@@ -577,7 +578,7 @@ onMounted(() => {
   color: $grey-60;
   display: block;
   font-size: $font-size-xs;
-  margin-top: $spacing-xs / 2;
+  margin-top: math.div($spacing-xs, 2);
 }
 
 .filter-pills {
