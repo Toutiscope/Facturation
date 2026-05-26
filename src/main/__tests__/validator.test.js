@@ -201,3 +201,89 @@ describe("Validation — format numéro", () => {
     expect(result.valid).toBe(false);
   });
 });
+
+// ──────────────────────────────────────────────────────────────
+//  Bloc e-invoice (Phase 2 — intégration PDP)
+// ──────────────────────────────────────────────────────────────
+
+const { defaultEinvoice, einvoiceSchema, EINVOICE_STATUSES } = await import(
+  "../validator.js"
+);
+
+describe("Validation — bloc einvoice", () => {
+  it("une facture sans bloc einvoice reste valide (optional)", () => {
+    const doc = validInvoice();
+    delete doc.einvoice;
+    const result = validateDocument("factures", doc);
+    expect(result.valid).toBe(true);
+  });
+
+  it("une facture avec bloc einvoice par défaut est valide", () => {
+    const doc = validInvoice({ einvoice: defaultEinvoice() });
+    const result = validateDocument("factures", doc);
+    expect(result.valid).toBe(true);
+  });
+
+  it("defaultEinvoice() retourne le bloc initial attendu", () => {
+    expect(defaultEinvoice()).toEqual({
+      isSent: false,
+      dateSending: null,
+      depositNumber: null,
+      providerName: null,
+      status: "draft",
+      errors: [],
+      lastEventId: null,
+    });
+  });
+
+  it("EINVOICE_STATUSES couvre tout le cycle de vie", () => {
+    expect(EINVOICE_STATUSES).toEqual([
+      "draft",
+      "submitted",
+      "accepted",
+      "rejected",
+      "paid",
+      "cancelled",
+    ]);
+  });
+
+  it("un status non listé est refusé", () => {
+    const result = einvoiceSchema.safeParse({
+      ...defaultEinvoice(),
+      status: "envoyé-en-français-oups",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepte un bloc einvoice complet après envoi", () => {
+    const doc = validInvoice({
+      einvoice: {
+        isSent: true,
+        dateSending: "2026-03-15T10:00:00Z",
+        depositNumber: "DEP-42",
+        providerName: "superpdp",
+        status: "accepted",
+        errors: [],
+        lastEventId: 142,
+      },
+    });
+    const result = validateDocument("factures", doc);
+    expect(result.valid).toBe(true);
+  });
+
+  it("accepte un tableau d'erreurs PDP structurées", () => {
+    const result = einvoiceSchema.safeParse({
+      ...defaultEinvoice(),
+      status: "rejected",
+      errors: [
+        {
+          code: "SUPERPDP_HTTP_422",
+          message: "VAT scheme manquant",
+          statusCode: "fr:204",
+          receivedAt: "2026-03-15T10:05:00Z",
+        },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+});

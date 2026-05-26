@@ -43,6 +43,15 @@ vi.mock("../utils/paths", () => {
       get TRANSACTIONS_PATH() {
         return mockPaths.TRANSACTIONS_PATH;
       },
+      get EINVOICE_CREDENTIALS_PATH() {
+        return path.join(mockPaths.DATA_DIR, "credentials.enc");
+      },
+    },
+    DEFAULT_EINVOICE_PLATFORM: {
+      providerName: "",
+      urlApi: "",
+      isSandbox: false,
+      lastSyncedEventId: null,
     },
     getYearFolder(type, year) {
       const baseDir =

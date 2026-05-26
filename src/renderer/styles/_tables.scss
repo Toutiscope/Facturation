@@ -134,4 +134,27 @@ table {
     background: rgba($error-color, 0.1);
     color: $error-color;
   }
+
+  // ── Statuts e-invoice (cycle de vie PDP) ──
+  &.einvoice-draft {
+    background: rgba($grey-80, 0.1);
+    color: $grey-80;
+  }
+
+  &.einvoice-submitted {
+    background: rgba($info-color, 0.1);
+    color: $info-color;
+  }
+
+  &.einvoice-accepted,
+  &.einvoice-paid {
+    background: rgba($success-color, 0.1);
+    color: $success-color;
+  }
+
+  &.einvoice-rejected,
+  &.einvoice-cancelled {
+    background: rgba($error-color, 0.1);
+    color: $error-color;
+  }
 }

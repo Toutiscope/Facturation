@@ -8,6 +8,7 @@ export const customerSchema = z.object({
   customerName: z.string().min(1, 'Le nom du client est requis'),
   companyName: z.string().min(1, 'Le nom de l\'entreprise est requis'),
   companyId: z.string().optional(),
+  electronicAddress: z.string().optional(),
   address: z.string().min(1, 'L\'adresse est requise'),
   postalCode: z.string().regex(/^\d{5}$/, 'Le code postal doit contenir 5 chiffres'),
   city: z.string().min(1, 'La ville est requise'),
@@ -62,14 +63,65 @@ export const quoteSchema = z.object({
 })
 
 /**
+ * Statuts métier du cycle de vie e-invoicing (post-envoi à la PDP)
+ */
+export const EINVOICE_STATUSES = [
+  'draft',
+  'submitted',
+  'accepted',
+  'rejected',
+  'paid',
+  'cancelled',
+]
+
+/**
+ * Schéma de validation pour le bloc einvoice attaché à une facture
+ * envoyée (ou candidate à l'envoi) via une PDP.
+ */
+export const einvoiceSchema = z.object({
+  isSent: z.boolean(),
+  dateSending: z.string().nullable(),
+  depositNumber: z.string().nullable(),
+  providerName: z.string().nullable().optional(),
+  status: z.enum(EINVOICE_STATUSES, {
+    errorMap: () => ({ message: 'Statut e-invoice invalide' })
+  }),
+  errors: z.array(
+    z.object({
+      code: z.string(),
+      message: z.string(),
+      statusCode: z.string().optional(),
+      receivedAt: z.string().optional(),
+    })
+  ),
+  lastEventId: z.number().int().nonnegative().nullable(),
+})
+
+/**
  * Schéma de validation pour une facture
  */
 export const invoiceSchema = quoteSchema.extend({
   type: z.literal('facture'),
   numero: z.string().regex(/^F\d{6}$/, 'Le numéro de facture doit être au format F000001'),
   dueDate: z.string().min(1, 'La date d\'échéance est requise'),
-  associatedQuote: z.string().optional()
+  associatedQuote: z.string().optional(),
+  einvoice: einvoiceSchema.optional(),
 })
+
+/**
+ * Valeurs par défaut pour un bloc einvoice fraîchement initialisé.
+ */
+export function defaultEinvoice() {
+  return {
+    isSent: false,
+    dateSending: null,
+    depositNumber: null,
+    providerName: null,
+    status: 'draft',
+    errors: [],
+    lastEventId: null,
+  }
+}
 
 /**
  * Valide un document (devis ou facture)

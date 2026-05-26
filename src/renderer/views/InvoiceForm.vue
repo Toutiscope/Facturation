@@ -8,9 +8,17 @@
           {{ isEditMode ? "Modifier la facture" : "Nouvelle facture" }}
           {{ invoice.numero }}
         </h1>
-        <p :class="['status-badge', `status-${invoice.status}`]">
-          {{ statusLabel(invoice.status) }}
-        </p>
+        <div class="header-badges flex flex-vertical-center gap-8">
+          <p
+            v-if="isEditMode && invoice.einvoice?.isSent"
+            :class="['status-badge', `einvoice-${invoice.einvoice.status}`]"
+          >
+            PDP : {{ einvoiceStatusLabel(invoice.einvoice.status) }}
+          </p>
+          <p :class="['status-badge', `status-${invoice.status}`]">
+            {{ statusLabel(invoice.status) }}
+          </p>
+        </div>
       </div>
 
       <div v-if="loading" class="loading">Chargement...</div>
@@ -180,13 +188,15 @@
                 : "Enregistrer et générer le PDF"
             }}
           </button>
-          <!-- <button
-            type="submit"
+          <button
+            v-if="canSendToPdp"
+            type="button"
+            @click="openSendToPdp"
             class="btn btn-primary"
-            :disabled="saving"
+            :disabled="saving || sendingToPdp"
           >
-            {{ saving ? 'Sauvegarde...' : 'Valider et enregistrer' }}
-          </button> -->
+            {{ sendingToPdp ? "Préparation…" : pdpButtonLabel }}
+          </button>
         </div>
       </form>
 
@@ -197,6 +207,15 @@
         confirmLabel="Quitter sans sauvegarder"
         @cancel="showUnsavedModal = false"
         @confirm="confirmLeave"
+      />
+
+      <SendToPdpModal
+        :visible="showSendToPdpModal"
+        :invoice-id="invoice.id"
+        :provider-name="pdpProviderName"
+        :is-sandbox="pdpIsSandbox"
+        @close="showSendToPdpModal = false"
+        @sent="onPdpSent"
       />
     </div>
   </div>
@@ -210,9 +229,11 @@ import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import CustomerForm from "@/components/forms/CustomerForm.vue";
 import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
+import SendToPdpModal from "@/components/pdp/SendToPdpModal.vue";
 import { useDocuments } from "@/composables/useDocuments";
 import { useNumbering } from "@/composables/useNumbering";
-import { statusLabel } from "@/utils/statusLabels";
+import { usePdpConfig } from "@/composables/usePdpConfig";
+import { statusLabel, einvoiceStatusLabel } from "@/utils/statusLabels";
 
 const router = useRouter();
 const route = useRoute();
@@ -265,9 +286,29 @@ const showUnsavedModal = ref(false);
 const pendingRoute = ref(null);
 let skipGuard = false;
 
+// ── PDP ──────────────────────────────────────────────────────
+const pdp = usePdpConfig();
+const pdpProviderName = ref("");
+const pdpIsSandbox = ref(false);
+const showSendToPdpModal = ref(false);
+const sendingToPdp = ref(false);
+
 const { isDirty, setInitialState, markAsSaved } = useUnsavedChanges(invoice);
 
 const isEditMode = computed(() => !!route.params.id);
+
+const pdpReady = computed(
+  () => Boolean(pdpProviderName.value) && pdp.hasCredentials.value,
+);
+
+const canSendToPdp = computed(() => isEditMode.value && pdpReady.value);
+
+const pdpButtonLabel = computed(() => {
+  const status = invoice.value.einvoice?.status;
+  if (status === "rejected") return "Renvoyer à la plateforme";
+  if (invoice.value.einvoice?.isSent) return "Renvoyer à la plateforme";
+  return "Envoyer à la plateforme";
+});
 
 onBeforeRouteLeave((to) => {
   if (skipGuard) {
@@ -290,6 +331,7 @@ function confirmLeave() {
 onMounted(async () => {
   try {
     await loadConfig();
+    await loadPdpState();
 
     if (isEditMode.value) {
       // Mode édition : charger la facture existante
@@ -466,6 +508,7 @@ async function saveClientIfNew(customer) {
         customerName,
         companyName,
         companyId,
+        electronicAddress,
         address,
         postalCode,
         city,
@@ -477,6 +520,7 @@ async function saveClientIfNew(customer) {
         customerName,
         companyName,
         companyId,
+        electronicAddress,
         address,
         postalCode,
         city,
@@ -491,6 +535,39 @@ async function saveClientIfNew(customer) {
 
 function cancel() {
   router.push("/factures");
+}
+
+async function loadPdpState() {
+  try {
+    const config = await window.electronAPI.loadConfig();
+    pdpProviderName.value = config.einvoicePlatform?.providerName || "";
+    pdpIsSandbox.value = Boolean(config.einvoicePlatform?.isSandbox);
+    if (pdpProviderName.value) {
+      await pdp.refreshHasCredentials(pdpProviderName.value);
+    }
+  } catch (err) {
+    console.error("Failed to load PDP state:", err);
+  }
+}
+
+async function openSendToPdp() {
+  sendingToPdp.value = true;
+  try {
+    // S'assurer que la version sur disque est à jour avant l'envoi
+    await saveInvoice();
+    showSendToPdpModal.value = true;
+  } catch {
+    // saveInvoice gère déjà l'affichage de l'erreur
+  } finally {
+    sendingToPdp.value = false;
+  }
+}
+
+function onPdpSent(updatedInvoice) {
+  if (updatedInvoice?.einvoice) {
+    invoice.value.einvoice = updatedInvoice.einvoice;
+  }
+  showToast(`Facture ${invoice.value.numero} transmise à la plateforme`);
 }
 </script>
 

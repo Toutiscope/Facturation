@@ -81,6 +81,22 @@
       <small class="form-text">Format: 14 chiffres (espaces optionnels)</small>
     </div>
 
+    <div class="form-group" v-if="localCustomer.clientType === 'professionnel'">
+      <label for="electronicAddress">Adresse électronique PDP (optionnel)</label>
+      <input
+        id="electronicAddress"
+        type="text"
+        v-model="localCustomer.electronicAddress"
+        @input="emitUpdate"
+        placeholder="ex : 0225:315143296_8898"
+        class="form-control"
+      />
+      <small class="form-text">
+        Adresse de routage pour la facturation électronique. Laissez vide pour
+        une résolution automatique via l'annuaire (au format scheme:valeur sinon).
+      </small>
+    </div>
+
     <div class="form-group">
       <label for="address">Adresse</label>
       <input
@@ -161,6 +177,7 @@ const props = defineProps({
       customerName: "",
       companyName: "",
       companyId: "",
+      electronicAddress: "",
       address: "",
       postalCode: "",
       city: "",
@@ -248,6 +265,7 @@ function selectClient(client) {
     customerName: client.customerName || "",
     companyName: client.companyName || "",
     companyId: client.companyId || "",
+    electronicAddress: client.electronicAddress || "",
     address: client.address || "",
     postalCode: client.postalCode || "",
     city: client.city || "",

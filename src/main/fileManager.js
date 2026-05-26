@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import paths, { getYearFolder } from "./utils/paths";
+import { hydrateConfig, hydrateDocument } from "./utils/migrations.js";
 import log from "electron-log";
 
 // ==================== Logo ====================
@@ -88,7 +89,7 @@ export async function loadConfig() {
     }
 
     const data = await fs.readFile(paths.CONFIG_PATH, "utf-8");
-    configCache = JSON.parse(data);
+    configCache = hydrateConfig(JSON.parse(data));
     return configCache;
   } catch (error) {
     log.error("Failed to load config:", error);
@@ -147,7 +148,7 @@ export async function loadDocuments(type, filters = {}) {
       jsonFiles.map(async (file) => {
         const filePath = path.join(yearFolder, file);
         const content = await fs.readFile(filePath, "utf-8");
-        return JSON.parse(content);
+        return hydrateDocument(type, JSON.parse(content));
       }),
     );
 
@@ -193,7 +194,7 @@ export async function loadDocument(type, id) {
     const filePath = path.join(yearFolder, `${id}.json`);
 
     const content = await fs.readFile(filePath, "utf-8");
-    return JSON.parse(content);
+    return hydrateDocument(type, JSON.parse(content));
   } catch (error) {
     if (error.code === "ENOENT") {
       throw new Error("Document introuvable");

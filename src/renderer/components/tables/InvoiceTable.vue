@@ -15,6 +15,7 @@
           <th style="width: 60px">Montant TTC</th>
           <th style="width: 120px">Échéance</th>
           <th style="min-width: 150px; width: 150px">Statut</th>
+          <th style="min-width: 120px; width: 120px">Statut PDP</th>
           <th style="width: 50px">Actions</th>
         </tr>
       </thead>
@@ -35,6 +36,15 @@
             <span :class="['status-badge', `status-${invoice.status}`]">
               {{ statusLabel(invoice.status) }}
             </span>
+          </td>
+          <td>
+            <span
+              v-if="invoice.einvoice?.isSent"
+              :class="['status-badge', `einvoice-${invoice.einvoice.status}`]"
+            >
+              {{ einvoiceStatusLabel(invoice.einvoice.status) }}
+            </span>
+            <span v-else class="pdp-dash">—</span>
           </td>
           <td class="actions-cell">
             <div class="dropdown" v-click-outside="() => closeMenu(invoice.id)">
@@ -112,7 +122,7 @@
 <script setup>
 import { ref, toRaw } from "vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
-import { statusLabel } from "@/utils/statusLabels";
+import { statusLabel, einvoiceStatusLabel } from "@/utils/statusLabels";
 
 defineProps({
   invoices: {
@@ -250,5 +260,9 @@ const vClickOutside = {
   margin: 4px 0;
   border: none;
   border-top: 1px solid $grey-20;
+}
+
+.pdp-dash {
+  color: $grey-40;
 }
 </style>

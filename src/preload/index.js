@@ -37,4 +37,31 @@ contextBridge.exposeInMainWorld("electronAPI", {
   installUpdate: () => ipcRenderer.invoke("install-update"),
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
   openExternal: (url) => ipcRenderer.invoke("open-external", url),
+
+  pdp: {
+    testConnection: (platform) =>
+      ipcRenderer.invoke("pdp:test-connection", platform),
+    saveCredentials: (providerName, credentials, platform) =>
+      ipcRenderer.invoke(
+        "pdp:save-credentials",
+        providerName,
+        credentials,
+        platform,
+      ),
+    deleteCredentials: (providerName) =>
+      ipcRenderer.invoke("pdp:delete-credentials", providerName),
+    hasCredentials: (providerName) =>
+      ipcRenderer.invoke("pdp:has-credentials", providerName),
+    sendInvoice: (invoiceId, options) =>
+      ipcRenderer.invoke("pdp:send-invoice", invoiceId, options),
+    validateInvoice: (file, fileName) =>
+      ipcRenderer.invoke("pdp:validate-invoice", file, fileName),
+    fetchReceived: (opts) => ipcRenderer.invoke("pdp:fetch-received", opts),
+    downloadReceivedPdf: (id) =>
+      ipcRenderer.invoke("pdp:download-received-pdf", id),
+    listEvents: (opts) => ipcRenderer.invoke("pdp:list-events", opts),
+    createEvent: (payload) => ipcRenderer.invoke("pdp:create-event", payload),
+    searchDirectory: (siren) =>
+      ipcRenderer.invoke("pdp:search-directory", siren),
+  },
 });
