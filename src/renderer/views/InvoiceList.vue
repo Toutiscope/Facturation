@@ -3,9 +3,19 @@
     <div class="container">
       <div class="header">
         <h1>Factures</h1>
-        <button @click="createNew" class="btn btn-primary">
-          + Nouvelle facture
-        </button>
+        <div class="header-actions flex gap-8">
+          <button
+            v-if="pdpEnabled"
+            @click="onSync"
+            class="btn btn-outline"
+            :disabled="syncing"
+          >
+            {{ syncing ? "Synchronisation…" : "Synchroniser les statuts" }}
+          </button>
+          <button @click="createNew" class="btn btn-primary">
+            + Nouvelle facture
+          </button>
+        </div>
       </div>
 
       <!-- Filtres -->
@@ -81,13 +91,18 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDocuments } from "@/composables/useDocuments";
+import { useEinvoiceSync } from "@/composables/useEinvoiceSync";
+import { useToast } from "@/composables/useToast";
 import InvoiceTable from "@/components/tables/InvoiceTable.vue";
 
 const router = useRouter();
 const { documents, loading, error, loadAll, save, remove } =
   useDocuments("factures");
+const { syncing, sync } = useEinvoiceSync();
+const { showToast } = useToast();
 
 const currentYear = new Date().getFullYear();
+const pdpEnabled = ref(false);
 const filters = ref({
   search: "",
   status: "",
@@ -96,7 +111,32 @@ const filters = ref({
 
 onMounted(async () => {
   await applyFilters();
+  try {
+    const config = await window.electronAPI.loadConfig();
+    pdpEnabled.value = Boolean(config.einvoicePlatform?.providerName);
+  } catch {
+    pdpEnabled.value = false;
+  }
 });
+
+async function onSync() {
+  const result = await sync();
+  if (!result.ok) {
+    showToast(result.error?.message || "Synchronisation impossible", "error");
+    return;
+  }
+  const { updatedInvoices, processedEvents } = result.data;
+  if (updatedInvoices > 0) {
+    showToast(`${updatedInvoices} facture(s) mise(s) à jour`);
+    await applyFilters();
+  } else {
+    showToast(
+      processedEvents > 0
+        ? "Statuts déjà à jour"
+        : "Aucun nouvel événement",
+    );
+  }
+}
 
 async function applyFilters() {
   await loadAll({

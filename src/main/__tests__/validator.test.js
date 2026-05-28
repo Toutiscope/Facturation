@@ -233,6 +233,8 @@ describe("Validation — bloc einvoice", () => {
       status: "draft",
       errors: [],
       lastEventId: null,
+      statusLabel: null,
+      lastEventAt: null,
     });
   });
 

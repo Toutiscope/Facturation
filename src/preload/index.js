@@ -57,11 +57,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     validateInvoice: (file, fileName) =>
       ipcRenderer.invoke("pdp:validate-invoice", file, fileName),
     fetchReceived: (opts) => ipcRenderer.invoke("pdp:fetch-received", opts),
-    downloadReceivedPdf: (id) =>
-      ipcRenderer.invoke("pdp:download-received-pdf", id),
+    downloadReceivedPdf: (id, opts) =>
+      ipcRenderer.invoke("pdp:download-received-pdf", id, opts),
     listEvents: (opts) => ipcRenderer.invoke("pdp:list-events", opts),
     createEvent: (payload) => ipcRenderer.invoke("pdp:create-event", payload),
     searchDirectory: (siren) =>
       ipcRenderer.invoke("pdp:search-directory", siren),
+    sync: () => ipcRenderer.invoke("pdp:sync"),
   },
 });

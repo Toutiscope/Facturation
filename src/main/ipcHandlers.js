@@ -24,18 +24,20 @@ import {
   testConnection as pdpTestConnection,
   sendInvoice as pdpSendInvoice,
   validateInvoiceFile as pdpValidateInvoiceFile,
-  fetchInvoices as pdpFetchInvoices,
+  fetchReceivedInvoices as pdpFetchReceivedInvoices,
   downloadInvoice as pdpDownloadInvoice,
   listEvents as pdpListEvents,
   createEvent as pdpCreateEvent,
   searchFrenchDirectory as pdpSearchFrenchDirectory,
   resetAdapterCache,
 } from "./einvoiceApi/index.js";
+import { promises as fsp } from "fs";
 import {
   saveProviderCredentials,
   deleteProviderCredentials,
   hasProviderCredentials,
 } from "./einvoiceApi/secureCredentials.js";
+import { applyEventsToInvoice } from "./einvoiceApi/mappers/statusMapping.js";
 
 /**
  * Initialise tous les handlers IPC
@@ -350,18 +352,37 @@ export function initializeIPC() {
   ipcMain.handle("pdp:fetch-received", (event, opts) =>
     wrapPdp(async () => {
       const config = await loadConfig();
-      return pdpFetchInvoices(config, opts);
+      return pdpFetchReceivedInvoices(config, opts);
     }),
   );
 
-  ipcMain.handle("pdp:download-received-pdf", (event, id) =>
+  ipcMain.handle("pdp:download-received-pdf", (event, id, opts = {}) =>
     wrapPdp(async () => {
       const config = await loadConfig();
-      const buffer = await pdpDownloadInvoice(config, id);
-      return {
-        base64: buffer.toString("base64"),
-        size: buffer.length,
-      };
+      // Par défaut, on télécharge la version Factur-X lisible (PDF). format=null → fichier original.
+      const format = opts.format === undefined ? "factur-x" : opts.format;
+      const { buffer, contentType, filename } = await pdpDownloadInvoice(
+        config,
+        id,
+        format ? { format } : {},
+      );
+
+      const ext = contentType.includes("pdf")
+        ? "pdf"
+        : contentType.includes("xml")
+          ? "xml"
+          : "bin";
+      const defaultName = filename || `facture-${id}.${ext}`;
+
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: "Enregistrer la facture reçue",
+        defaultPath: defaultName,
+        filters: [{ name: ext.toUpperCase(), extensions: [ext] }],
+      });
+      if (canceled || !filePath) return { canceled: true };
+
+      await fsp.writeFile(filePath, buffer);
+      return { saved: true, path: filePath };
     }),
   );
 
@@ -388,7 +409,80 @@ export function initializeIPC() {
     }),
   );
 
+  ipcMain.handle("pdp:sync", () => wrapPdp(() => runEinvoiceSync()));
+
   log.info("IPC handlers initialized");
+}
+
+/**
+ * Synchronise les statuts de cycle de vie des factures envoyées :
+ * récupère les événements PDP depuis le dernier id traité, les applique
+ * aux factures locales (matchées par depositNumber), et persiste l'avancement.
+ *
+ * Périmètre : factures de l'année courante (les événements de cycle de vie
+ * surviennent dans les mois suivant l'envoi). saveDocument écrit dans le
+ * dossier de l'année courante.
+ *
+ * @returns {Promise<{ processedEvents: number, updatedInvoices: number }>}
+ */
+async function runEinvoiceSync() {
+  const config = await loadConfig();
+  const platform = config.einvoicePlatform || {};
+
+  // 1. Récupère les événements depuis le dernier id connu (paginé)
+  let cursor = platform.lastSyncedEventId || null;
+  const allEvents = [];
+  for (let page = 0; page < 50; page++) {
+    const res = await pdpListEvents(config, {
+      startingAfterId: cursor,
+      limit: 100,
+    });
+    const batch = (res && res.data) || [];
+    if (batch.length === 0) break;
+    allEvents.push(...batch);
+    cursor = batch[batch.length - 1].id;
+    if (res.has_after === false || batch.length < 100) break;
+  }
+
+  if (allEvents.length === 0) {
+    return { processedEvents: 0, updatedInvoices: 0 };
+  }
+
+  // 2. Indexe les factures locales (année courante) par depositNumber
+  const currentYear = new Date().getFullYear();
+  const invoices = await loadDocuments("factures", { year: currentYear });
+  const byDeposit = new Map();
+  for (const inv of invoices) {
+    const dep = inv.einvoice && inv.einvoice.depositNumber;
+    if (dep) byDeposit.set(String(dep), inv);
+  }
+
+  // 3. Groupe les événements par facture et applique aux factures connues
+  const grouped = new Map();
+  for (const e of allEvents) {
+    const key = String(e.invoice_id);
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(e);
+  }
+
+  let updated = 0;
+  for (const [invoiceId, events] of grouped) {
+    const local = byDeposit.get(invoiceId);
+    if (!local) continue;
+    const next = applyEventsToInvoice(local, events);
+    await saveDocument("factures", next);
+    updated += 1;
+  }
+
+  // 4. Persiste le dernier id d'événement traité
+  const maxId = allEvents.reduce(
+    (m, e) => Math.max(m, e.id || 0),
+    platform.lastSyncedEventId || 0,
+  );
+  config.einvoicePlatform = { ...platform, lastSyncedEventId: maxId };
+  await saveConfig(config);
+
+  return { processedEvents: allEvents.length, updatedInvoices: updated };
 }
 
 // ============================================================

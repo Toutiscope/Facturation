@@ -95,6 +95,8 @@ export const einvoiceSchema = z.object({
     })
   ),
   lastEventId: z.number().int().nonnegative().nullable(),
+  statusLabel: z.string().nullable().optional(),
+  lastEventAt: z.string().nullable().optional(),
 })
 
 /**
@@ -120,6 +122,8 @@ export function defaultEinvoice() {
     status: 'draft',
     errors: [],
     lastEventId: null,
+    statusLabel: null,
+    lastEventAt: null,
   }
 }
 

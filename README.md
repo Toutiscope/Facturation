@@ -93,18 +93,19 @@ facturation/
 - [ ] Génération PDF design professionnel
 - [ ] Export au format e-invoicing (Factur-X / UBL selon la PDP cible)
 
-### ⏳ Phase 4 : Branchement avec une plateforme de facturation agréée (PDP)
-- [ ] Couche d'abstraction `einvoiceApi.js` (adaptateur par fournisseur)
-- [ ] Configuration de la PDP dans les paramètres
-- [ ] Envoi de factures à la PDP
-- [ ] Réception et consultation des factures
-- [ ] Validation pré-envoi
+### ✅ Phase 4 : Branchement avec une plateforme de facturation agréée (PDP)
+- [x] Couche d'abstraction `einvoiceApi/` (adaptateur par fournisseur — SuperPDP)
+- [x] Configuration de la PDP dans les paramètres (OAuth2, bac à sable, test de connexion)
+- [x] Génération UBL EN16931 (validée schematron) + envoi de factures à la PDP
+- [x] Résolution de l'adresse destinataire (annuaire DGFiP + saisie manuelle)
+- [x] Réception et consultation des factures reçues (téléchargement Factur-X)
+- [x] Synchronisation des statuts du cycle de vie
 
-### ⏳ Phase 5 : Finitions
-- [ ] Auto-update
-- [ ] Tests utilisateur
-- [ ] Documentation utilisateur
-- [ ] Build Windows (.exe)
+### 🔄 Phase 5 : Finitions
+- [x] Auto-update
+- [x] Documentation utilisateur (voir ci-dessous)
+- [ ] Tests utilisateur de bout en bout
+- [x] Build Windows (.exe)
 
 ## Configuration
 
@@ -116,9 +117,56 @@ Configurez votre application via l'interface (page Configuration):
 - Paramètres de la plateforme de facturation agréée (URL d'API, credentials, format)
 - Paramètres de facturation
 
+## Facturation électronique (PDP)
+
+L'application envoie et reçoit des factures électroniques via une **Plateforme de Dématérialisation Partenaire (PDP)** agréée. SuperPDP est la plateforme prise en charge par défaut (l'architecture reste ouverte à d'autres fournisseurs).
+
+### 1. Créer un compte et une application chez la PDP
+
+1. Créez un compte sur [superpdp.tech](https://www.superpdp.tech) (un environnement **bac à sable** gratuit est fourni, avec deux entreprises fictives Burger Queen et Tricatel).
+2. Dans l'interface SuperPDP, créez une **application** rattachée à votre entreprise.
+3. Notez le `client_id` et le `client_secret` (le secret ne s'affiche qu'une seule fois).
+
+### 2. Configurer la plateforme dans l'application
+
+Dans **Mes paramètres → Plateforme de facturation électronique** :
+
+- Sélectionnez **SuperPDP**.
+- Cochez **bac à sable** pour tester sans échanger de vraies factures.
+- Renseignez le `client_id` et le `client_secret`, puis **Enregistrer les identifiants** (ils sont chiffrés localement, jamais stockés en clair).
+- Cliquez sur **Tester la connexion** : le nom de votre entreprise doit s'afficher.
+
+### 3. Envoyer une facture
+
+Depuis l'écran d'édition d'une facture enregistrée, le bouton **Envoyer à la plateforme** :
+
+1. valide les mentions obligatoires,
+2. génère le format électronique **UBL** (norme EN16931, conforme au schématron français),
+3. transmet la facture à la PDP.
+
+Le **statut PDP** de la facture (Transmise / Acceptée / Encaissée / Refusée…) s'affiche dans l'en-tête de la facture et dans la colonne « Statut PDP » de la liste.
+
+> **Adresse du destinataire** — Pour qu'une facture soit routée, le destinataire doit être joignable. L'application résout automatiquement son adresse via l'**annuaire DGFiP** (par SIREN). Si le client n'y figure pas (ou en bac à sable), renseignez son **adresse électronique PDP** dans la fiche client (champ optionnel, format `scheme:valeur`, ex. `0225:315143296_8898`).
+
+### 4. Suivre le cycle de vie
+
+Le traitement d'une facture est **asynchrone**. Sur la liste des factures, le bouton **Synchroniser les statuts** récupère les derniers événements de la PDP et met à jour le statut de chaque facture (acceptation, encaissement, refus…).
+
+### 5. Factures reçues
+
+L'onglet **Factures reçues** liste les factures que vos fournisseurs vous ont adressées via la PDP. Vous pouvez les consulter et **télécharger le PDF Factur-X** lisible. (Aucune sauvegarde locale : consultation uniquement.)
+
+### Notes
+
+- L'API SuperPDP est en version bêta (`/v1.beta`).
+- En production, l'identité du vendeur doit correspondre à l'entreprise authentifiée auprès de la PDP.
+- Référence technique des points d'API vérifiés : [`docs/superpdp-api-findings.md`](docs/superpdp-api-findings.md). Plan d'intégration : [`docs/pdp-integration-plan.md`](docs/pdp-integration-plan.md).
+
 ## Sécurité
 
 **IMPORTANT:** Le dossier `data/` contient vos données sensibles et est exclu du versionnement Git.
+
+- Identifiants PDP chiffrés au repos via `safeStorage` (jamais en clair, fichier `data/credentials.enc`)
 
 - Context Isolation activé
 - Node Integration désactivé
@@ -131,9 +179,10 @@ Configurez votre application via l'interface (page Configuration):
 - `npm run build` - Build production (Vite + Electron Builder)
 - `npm run build:win` - Build pour Windows uniquement
 
-## Plan d'implémentation complet
+## Plan d'implémentation
 
-Voir [PLAN.md](C:\Users\voile\.claude\plans\scalable-munching-valley.md) pour le plan détaillé des 5 phases.
+- Plan d'intégration PDP : [`docs/pdp-integration-plan.md`](docs/pdp-integration-plan.md)
+- Points d'API SuperPDP vérifiés : [`docs/superpdp-api-findings.md`](docs/superpdp-api-findings.md)
 
 ## Licence
 
