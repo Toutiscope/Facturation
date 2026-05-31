@@ -51,118 +51,7 @@
         <template v-if="editingClient">
           <h2>{{ isNew ? "Nouveau client" : "Modifier le client" }}</h2>
 
-          <SegmentedControl
-            v-model="editingClient.clientType"
-            @update:modelValue="handleClientTypeChange"
-            class="mg-bottom-16"
-          />
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="cd-customerName">Nom du client</label>
-              <input
-                id="cd-customerName"
-                type="text"
-                v-model="editingClient.customerName"
-                placeholder="Nom et prénom"
-                class="form-control"
-              />
-            </div>
-
-            <div
-              v-if="editingClient.clientType === 'professionnel'"
-              class="form-group"
-            >
-              <label for="cd-companyName">Nom de l'entreprise</label>
-              <input
-                id="cd-companyName"
-                type="text"
-                v-model="editingClient.companyName"
-                placeholder="Raison sociale"
-                class="form-control"
-              />
-            </div>
-          </div>
-
-          <div
-            class="form-group"
-            v-if="editingClient.clientType === 'professionnel'"
-          >
-            <label for="cd-companyId">SIRET</label>
-            <input
-              id="cd-companyId"
-              type="text"
-              v-model="editingClient.companyId"
-              placeholder="123 456 789 00012"
-              class="form-control"
-              maxlength="17"
-            />
-            <small class="form-text"
-              >Format: 14 chiffres (espaces optionnels)</small
-            >
-          </div>
-
-          <div class="form-group">
-            <label for="cd-address">Adresse</label>
-            <input
-              id="cd-address"
-              type="text"
-              v-model="editingClient.address"
-              placeholder="123 Rue Example"
-              class="form-control"
-            />
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="cd-postalCode">Code postal</label>
-              <input
-                id="cd-postalCode"
-                type="text"
-                v-model="editingClient.postalCode"
-                placeholder="44000"
-                class="form-control"
-                pattern="\d{5}"
-                maxlength="5"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="cd-city">Ville</label>
-              <input
-                id="cd-city"
-                type="text"
-                v-model="editingClient.city"
-                placeholder="Nantes"
-                class="form-control"
-              />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="cd-email">Email</label>
-              <input
-                id="cd-email"
-                type="email"
-                v-model="editingClient.email"
-                placeholder="client@exemple.fr"
-                class="form-control"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="cd-phoneNumber">Téléphone</label>
-              <input
-                id="cd-phoneNumber"
-                type="tel"
-                maxlength="10"
-                v-model="editingClient.phoneNumber"
-                placeholder="06 12 34 56 78"
-                class="form-control"
-              />
-            </div>
-          </div>
+          <CustomerFields v-model="editingClient" id-prefix="cd-" />
 
           <div class="form-actions">
             <button
@@ -231,7 +120,7 @@
 import { ref, computed, onMounted, toRaw } from "vue";
 import { useRouter, onBeforeRouteLeave } from "vue-router";
 import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
-import SegmentedControl from "@/components/common/SegmentedControl.vue";
+import CustomerFields from "@/components/forms/CustomerFields.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 
 const router = useRouter();
@@ -271,6 +160,7 @@ function emptyClient() {
     customerName: "",
     companyName: "",
     companyId: "",
+    electronicAddress: "",
     address: "",
     postalCode: "",
     city: "",
@@ -323,12 +213,6 @@ function cancelEdit() {
     isNew.value = false;
   } else if (selectedClient.value) {
     editingClient.value = { ...selectedClient.value };
-  }
-}
-
-function handleClientTypeChange() {
-  if (editingClient.value.clientType !== "professionnel") {
-    editingClient.value.companyId = "";
   }
 }
 
