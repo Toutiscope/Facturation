@@ -3,17 +3,16 @@
 @use "variables" as *;
 
 .btn {
-  padding: 8px 24px;
-  border: none;
   border-radius: $border-radius-md;
+  cursor: pointer;
   font-size: $font-size-base;
   font-weight: 500;
-  cursor: pointer;
+  padding: 8px 24px;
   transition: $transition-base;
 
   &:disabled {
-    opacity: 0.5;
     cursor: not-allowed;
+    opacity: 0.5;
   }
 
   &.btn-success {
@@ -27,8 +26,8 @@
 
   &.btn-outline {
     background-color: $white;
-    color: $primary-color;
     border: 1px solid $primary-color;
+    color: $primary-color;
 
     &:hover:not(:disabled) {
       background-color: rgba($primary-color, 0.1);
@@ -38,6 +37,7 @@
 
 .btn-primary {
   background: $primary-color;
+  border: 1px solid $primary-color;
   color: $white;
 
   &:hover:not(:disabled),
@@ -49,6 +49,7 @@
 .btn-secondary {
   background: $grey-20;
   color: $grey-100;
+  border: 1px solid $grey-20;
 
   &:hover:not(:disabled) {
     background: color.scale($grey-20, $lightness: -5%);
@@ -61,6 +62,7 @@
 
 .btn-danger {
   background: $error-color;
+  border: 1px solid $error-color;
   color: $white;
 
   &:hover:not(:disabled) {
@@ -74,18 +76,18 @@
 
 // Bouton d'action (icône emoji)
 .btn-icon {
+  align-items: center;
   background: none;
   border: none;
   border-radius: 100%;
   cursor: pointer;
+  display: inline-flex;
   font-size: $font-size-lg;
+  height: 42px;
+  justify-content: center;
+  margin-right: $spacing-xs;
   padding: $spacing-xs;
   transition: $transition-base;
-  margin-right: $spacing-xs;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 42px;
   width: 42px;
 
   &:hover:not(:disabled) {
@@ -94,8 +96,8 @@
   }
 
   &:disabled {
-    opacity: 0.3;
     cursor: not-allowed;
+    opacity: 0.3;
   }
 
   &.btn-danger:hover {
@@ -107,9 +109,9 @@
 .btn-action {
   background: transparent;
   border: none;
-  padding: $spacing-xs;
   cursor: pointer;
   font-size: $font-size-lg;
+  padding: $spacing-xs;
   transition: $transition-base;
 
   &:hover {
@@ -122,24 +124,24 @@
 }
 
 .btn-sm {
-  padding: $spacing-xs $spacing-md;
   font-size: $font-size-sm;
+  padding: $spacing-xs $spacing-md;
 }
 
 .back-button {
-  width: auto;
+  align-items: center;
+  background: $white;
   border: none;
   border-radius: $border-radius-pill;
-  background: $white;
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 1;
   cursor: pointer;
   display: flex;
   gap: $spacing-sm;
-  align-items: center;
+  left: 20px;
   padding: $spacing-sm $spacing-md;
+  position: absolute;
+  top: 20px;
+  width: auto;
+  z-index: 1;
 
   svg {
     width: 24px;

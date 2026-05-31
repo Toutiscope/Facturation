@@ -181,6 +181,7 @@
             @duplicate="onDuplicate"
             @edit="onEdit"
             @change-category="onChangeCategory"
+            @open-invoice="onOpenInvoice"
         />
       </section>
     </template>
@@ -207,6 +208,7 @@
 
 <script setup>
 import {computed, onMounted, ref} from "vue";
+import {useRouter} from "vue-router";
 import {useFinances} from "@/composables/useFinances";
 import {useToast} from "@/composables/useToast";
 import MonthlyChart from "@/components/finances/MonthlyChart.vue";
@@ -229,6 +231,11 @@ const {
 } = useFinances();
 
 const {showToast} = useToast();
+const router = useRouter();
+
+function onOpenInvoice(invoiceId) {
+  router.push(`/factures/${invoiceId}`);
+}
 
 const periodOptions = ["Mois", "Trimestre", "Année"];
 const period = ref("Mois");

@@ -13,7 +13,6 @@
           <th style="min-width: 200px">Client</th>
           <th style="width: 50%">Objet</th>
           <th style="width: 60px">Montant TTC</th>
-          <th style="width: 120px">Échéance</th>
           <th style="min-width: 150px; width: 150px">Statut</th>
           <th style="min-width: 120px; width: 120px">Statut PDP</th>
           <th style="width: 50px">Actions</th>
@@ -31,7 +30,6 @@
           <td class="client-name">{{ invoice.customer?.customerName }}</td>
           <td>{{ invoice.object }}</td>
           <td class="amount">{{ formatCurrency(invoice.totals?.totalTTC) }}</td>
-          <td>{{ invoice.dueDate }}</td>
           <td>
             <span :class="['status-badge', `status-${invoice.status}`]">
               {{ statusLabel(invoice.status) }}

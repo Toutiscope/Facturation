@@ -53,17 +53,61 @@
 
       <div
         v-if="localCustomer.clientType === 'professionnel'"
-        class="form-group"
+        class="form-group autocomplete-wrapper"
       >
         <label for="companyName">Nom de l'entreprise</label>
         <input
           id="companyName"
           type="text"
           v-model="localCustomer.companyName"
-          @input="emitUpdate"
+          @input="onCompanyInput"
+          @focus="onCompanyFocus"
+          @blur="onCompanyBlur"
+          @keydown.down.prevent="onCompanyArrowDown"
+          @keydown.up.prevent="onCompanyArrowUp"
+          @keydown.enter.prevent="onCompanyEnter"
+          @keydown.escape="closeCompanyDropdown"
           placeholder="Raison sociale"
           class="form-control"
+          autocomplete="off"
         />
+        <ul
+          v-if="showCompanyDropdown && (companyLoading || companyResults.length > 0)"
+          class="autocomplete-dropdown"
+        >
+          <li v-if="companyLoading" class="autocomplete-dropdown__status">
+            Recherche en cours…
+          </li>
+          <template v-else>
+            <li
+              v-for="(company, index) in companyResults"
+              :key="company.siren"
+              class="autocomplete-dropdown__item"
+              :class="{ 'autocomplete-dropdown__item--highlighted': index === companyHighlightedIndex }"
+              @mousedown.prevent="selectCompany(company)"
+            >
+              <span class="autocomplete-dropdown__name">
+                {{ company.companyName }}
+                <span v-if="company.closed" class="autocomplete-dropdown__badge">
+                  fermé
+                </span>
+              </span>
+              <span v-if="company.companyId" class="autocomplete-dropdown__company">
+                SIRET {{ company.companyId }}
+              </span>
+              <span
+                v-if="company.city"
+                class="autocomplete-dropdown__city"
+              >
+                {{ [company.postalCode, company.city].filter(Boolean).join(" ") }}
+              </span>
+            </li>
+          </template>
+        </ul>
+        <small class="form-text">
+          Tapez le nom pour rechercher dans l'annuaire des entreprises (SIRET et
+          adresse remplis automatiquement).
+        </small>
       </div>
     </div>
 
@@ -155,6 +199,7 @@
         <input
           id="phoneNumber"
           type="tel"
+          maxlength="10"
           v-model="localCustomer.phoneNumber"
           @input="emitUpdate"
           placeholder="06 12 34 56 78"
@@ -168,6 +213,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import SegmentedControl from "@/components/common/SegmentedControl.vue";
+import { useCompanySearch } from "@/composables/useCompanySearch";
 
 const props = defineProps({
   modelValue: {
@@ -299,8 +345,84 @@ function handleClientTypeChange() {
   // Réinitialiser le SIRET si on passe à particulier
   if (localCustomer.value.clientType !== "professionnel") {
     localCustomer.value.companyId = "";
+    closeCompanyDropdown();
   }
   emitUpdate();
+}
+
+// ==================== Recherche d'entreprise (annuaire public) ====================
+
+const {
+  results: companyResults,
+  loading: companyLoading,
+  search: searchCompany,
+  clear: clearCompany,
+} = useCompanySearch();
+
+const showCompanyDropdown = ref(false);
+const companyHighlightedIndex = ref(-1);
+
+function onCompanyInput() {
+  companyHighlightedIndex.value = -1;
+  showCompanyDropdown.value = true;
+  searchCompany(localCustomer.value.companyName);
+  emitUpdate();
+}
+
+function onCompanyFocus() {
+  if (companyResults.value.length > 0) {
+    showCompanyDropdown.value = true;
+  }
+}
+
+function onCompanyBlur() {
+  // Léger délai pour laisser le clic sur un item se déclencher.
+  setTimeout(() => {
+    showCompanyDropdown.value = false;
+  }, 150);
+}
+
+function onCompanyArrowDown() {
+  if (!showCompanyDropdown.value || companyResults.value.length === 0) return;
+  companyHighlightedIndex.value =
+    (companyHighlightedIndex.value + 1) % companyResults.value.length;
+}
+
+function onCompanyArrowUp() {
+  if (!showCompanyDropdown.value || companyResults.value.length === 0) return;
+  companyHighlightedIndex.value =
+    companyHighlightedIndex.value <= 0
+      ? companyResults.value.length - 1
+      : companyHighlightedIndex.value - 1;
+}
+
+function onCompanyEnter() {
+  if (
+    showCompanyDropdown.value &&
+    companyHighlightedIndex.value >= 0 &&
+    companyHighlightedIndex.value < companyResults.value.length
+  ) {
+    selectCompany(companyResults.value[companyHighlightedIndex.value]);
+  }
+}
+
+function selectCompany(company) {
+  // On ne remplit que les champs entreprise + adresse ; le nom du contact
+  // (customerName) reste saisi par l'utilisateur.
+  localCustomer.value.companyName = company.companyName || "";
+  localCustomer.value.companyId = company.companyId || localCustomer.value.companyId;
+  localCustomer.value.address = company.address || localCustomer.value.address;
+  localCustomer.value.postalCode =
+    company.postalCode || localCustomer.value.postalCode;
+  localCustomer.value.city = company.city || localCustomer.value.city;
+  closeCompanyDropdown();
+  emitUpdate();
+}
+
+function closeCompanyDropdown() {
+  showCompanyDropdown.value = false;
+  companyHighlightedIndex.value = -1;
+  clearCompany();
 }
 </script>
 
@@ -377,6 +499,25 @@ function handleClientTypeChange() {
   &__city {
     font-size: $font-size-xs;
     color: $grey-50;
+  }
+
+  &__status {
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-sm;
+    color: $grey-50;
+    font-style: italic;
+  }
+
+  &__badge {
+    display: inline-block;
+    margin-left: $spacing-xs;
+    padding: 0 $spacing-xs;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    color: $error-color;
+    border: 1px solid $error-color;
+    border-radius: $border-radius-sm;
+    vertical-align: middle;
   }
 }
 </style>

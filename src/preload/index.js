@@ -37,6 +37,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   installUpdate: () => ipcRenderer.invoke("install-update"),
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
   openExternal: (url) => ipcRenderer.invoke("open-external", url),
+  searchCompanies: (query) => ipcRenderer.invoke("company:search", query),
 
   pdp: {
     testConnection: (platform) =>

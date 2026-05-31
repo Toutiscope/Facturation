@@ -105,6 +105,8 @@ export const einvoiceSchema = z.object({
 export const invoiceSchema = quoteSchema.extend({
   type: z.literal('facture'),
   numero: z.string().regex(/^F\d{6}$/, 'Le numéro de facture doit être au format F000001'),
+  // Une facture n'a pas de date de validité (champ propre aux devis)
+  validityDate: z.string().optional(),
   dueDate: z.string().min(1, 'La date d\'échéance est requise'),
   associatedQuote: z.string().optional(),
   einvoice: einvoiceSchema.optional(),

@@ -156,6 +156,7 @@
               <input
                 id="cd-phoneNumber"
                 type="tel"
+                maxlength="10"
                 v-model="editingClient.phoneNumber"
                 placeholder="06 12 34 56 78"
                 class="form-control"

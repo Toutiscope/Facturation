@@ -2,7 +2,7 @@
   <div class="invoice-form-view">
     <div class="container">
       <div
-        class="header flex flex-space-between flex-vertical-center mg-bottom-16"
+          class="header flex flex-space-between flex-vertical-center mg-bottom-16"
       >
         <h1>
           {{ isEditMode ? "Modifier la facture" : "Nouvelle facture" }}
@@ -10,8 +10,8 @@
         </h1>
         <div class="header-badges flex flex-vertical-center gap-8">
           <p
-            v-if="isEditMode && invoice.einvoice?.isSent"
-            :class="['status-badge', `einvoice-${invoice.einvoice.status}`]"
+              v-if="isEditMode && invoice.einvoice?.isSent"
+              :class="['status-badge', `einvoice-${invoice.einvoice.status}`]"
           >
             PDP : {{ einvoiceStatusLabel(invoice.einvoice.status) }}
           </p>
@@ -24,11 +24,11 @@
       <div v-if="loading" class="loading">Chargement...</div>
       <div v-else-if="error" class="error">{{ error }}</div>
 
-      <form v-else @submit.prevent class="form flex flex-column gap-16">
+      <form v-else class="form flex flex-column gap-16" @submit.prevent>
         <div class="grid grid--6-4 gap-16">
           <!-- Formulaire client -->
           <section class="card">
-            <CustomerForm v-model="invoice.customer" />
+            <CustomerForm v-model="invoice.customer"/>
           </section>
 
           <!-- Informations de la facture -->
@@ -37,38 +37,38 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label for="numero" class="required">Numéro</label>
+                <label class="required" for="numero">Numéro</label>
                 <input
-                  id="numero"
-                  type="text"
-                  v-model="invoice.numero"
-                  placeholder="F000001"
-                  class="form-control"
-                  pattern="F\d{6}"
-                  required
+                    id="numero"
+                    v-model="invoice.numero"
+                    class="form-control"
+                    pattern="F\d{6}"
+                    placeholder="F000001"
+                    required
+                    type="text"
                 />
                 <small class="form-text">Format: F suivi de 6 chiffres</small>
               </div>
 
               <div class="form-group">
-                <label for="date" class="required">Date</label>
+                <label class="required" for="date">Date</label>
                 <input
-                  id="date"
-                  type="date"
-                  v-model="invoice.date"
-                  class="form-control"
-                  required
+                    id="date"
+                    v-model="invoice.date"
+                    class="form-control"
+                    required
+                    type="date"
                 />
               </div>
 
               <div class="form-group">
-                <label for="dueDate" class="required">Date d'échéance</label>
+                <label class="required" for="dueDate">Date d'échéance</label>
                 <input
-                  id="dueDate"
-                  type="date"
-                  v-model="invoice.dueDate"
-                  class="form-control"
-                  required
+                    id="dueDate"
+                    v-model="invoice.dueDate"
+                    class="form-control"
+                    required
+                    type="date"
                 />
               </div>
             </div>
@@ -77,9 +77,9 @@
               <div class="form-group">
                 <label for="status">Statut</label>
                 <select
-                  id="status"
-                  v-model="invoice.status"
-                  class="form-control"
+                    id="status"
+                    v-model="invoice.status"
+                    class="form-control"
                 >
                   <option value="draft">Brouillon</option>
                   <option value="sent">Envoyé</option>
@@ -91,11 +91,11 @@
               <div class="form-group">
                 <label for="associatedQuote">Devis associé (optionnel)</label>
                 <input
-                  id="associatedQuote"
-                  type="text"
-                  v-model="invoice.associatedQuote"
-                  placeholder="D000001"
-                  class="form-control"
+                    id="associatedQuote"
+                    v-model="invoice.associatedQuote"
+                    class="form-control"
+                    placeholder="D000001"
+                    type="text"
                 />
               </div>
             </div>
@@ -110,40 +110,40 @@
           <div class="form-group">
             <label for="invoiceObjet">Objet</label>
             <textarea
-              id="invoiceObjet"
-              v-model="invoice.object"
-              placeholder="Objet de la facture"
-              class="form-control"
-              rows="2"
+                id="invoiceObjet"
+                v-model="invoice.object"
+                class="form-control"
+                placeholder="Objet de la facture"
+                rows="2"
             ></textarea>
           </div>
           <div class="form-group">
             <label for="invoicePrestationDelay">Délai</label>
             <input
-              id="invoicePrestationDelay"
-              type="text"
-              v-model="invoice.prestationDelay"
-              placeholder="Ex : 2 semaines, 30 jours..."
-              class="form-control"
+                id="invoicePrestationDelay"
+                v-model="invoice.prestationDelay"
+                class="form-control"
+                placeholder="Ex : 2 semaines, 30 jours..."
+                type="text"
             />
           </div>
           <div class="form-group">
             <label for="invoiceDepositPaid">Acompte payé (€)</label>
             <input
-              id="invoiceDepositPaid"
-              type="number"
-              v-model.number="invoice.depositPaid"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              class="form-control"
+                id="invoiceDepositPaid"
+                v-model.number="invoice.depositPaid"
+                class="form-control"
+                min="0"
+                placeholder="0.00"
+                step="0.01"
+                type="number"
             />
           </div>
           <ServiceLinesTable
-            ref="serviceLinesRef"
-            v-model="invoice.services"
-            :deposit="parseFloat(invoice.depositPaid) || 0"
-            depositLabel="Acompte payé"
+              ref="serviceLinesRef"
+              v-model="invoice.services"
+              :deposit="parseFloat(invoice.depositPaid) || 0"
+              depositLabel="Acompte payé"
           />
         </section>
 
@@ -151,96 +151,103 @@
         <section class="card">
           <div class="form-group">
             <label for="invoiceNotes"
-              >Notes internes (elles n'apparaitront pas sur le PDF)</label
+            >Notes internes (elles n'apparaitront pas sur le PDF)</label
             >
             <textarea
-              id="invoiceNotes"
-              v-model="invoice.notes"
-              placeholder="Notes internes"
-              class="form-control"
-              rows="4"
+                id="invoiceNotes"
+                v-model="invoice.notes"
+                class="form-control"
+                placeholder="Notes internes"
+                rows="4"
             ></textarea>
           </div>
         </section>
 
         <!-- Actions -->
         <div class="actions">
-          <button type="button" @click="cancel" class="btn btn-secondary">
+          <button class="btn btn-secondary mg-right-auto" type="button" @click="cancel">
             Annuler
           </button>
+<!--          <button-->
+<!--              v-if="canSendToPdp"-->
+<!--              :disabled="saving || sendingToPdp"-->
+<!--              class="btn btn-primary"-->
+<!--              type="button"-->
+<!--              @click="openSendToPdp"-->
+<!--          >-->
+<!--            {{ sendingToPdp ? "Préparation…" : pdpButtonLabel }}-->
+<!--          </button>-->
+<!--          <p-->
+<!--              v-else-if="isEditMode && pdpReady && isAlreadySent"-->
+<!--              class="pdp-sent-note"-->
+<!--          >-->
+<!--            Facture déjà transmise à la plateforme. Le suivi se fait via la-->
+<!--            synchronisation des statuts.-->
+<!--          </p>-->
           <button
-            type="button"
-            @click="saveAsDraft"
-            class="btn btn-outline"
-            :disabled="saving"
-          >
-            Sauvegarder
-          </button>
-          <button
-            type="button"
-            @click="saveAndGeneratePDF"
-            class="btn btn-primary"
-            :disabled="saving || generatingPDF"
+              :disabled="saving || generatingPDF"
+              class="btn btn-outline"
+              type="button"
+              @click="saveAndGeneratePDF"
           >
             {{
               generatingPDF
-                ? "Génération du PDF..."
-                : "Enregistrer et générer le PDF"
+                  ? "Génération du PDF..."
+                  : "Générer le PDF"
             }}
           </button>
           <button
-            v-if="canSendToPdp"
-            type="button"
-            @click="openSendToPdp"
-            class="btn btn-primary"
-            :disabled="saving || sendingToPdp"
+              :disabled="saving"
+              class="btn btn-primary"
+              type="button"
+              @click="saveAsDraft"
           >
-            {{ sendingToPdp ? "Préparation…" : pdpButtonLabel }}
+            Enregistrer
           </button>
         </div>
       </form>
 
       <ConfirmModal
-        :visible="showUnsavedModal"
-        title="Modifications non sauvegardées"
-        warning="Les modifications seront perdues si vous quittez cette page."
-        confirmLabel="Quitter sans sauvegarder"
-        @cancel="showUnsavedModal = false"
-        @confirm="confirmLeave"
+          :visible="showUnsavedModal"
+          confirmLabel="Quitter sans sauvegarder"
+          title="Modifications non sauvegardées"
+          warning="Les modifications seront perdues si vous quittez cette page."
+          @cancel="showUnsavedModal = false"
+          @confirm="confirmLeave"
       />
 
       <SendToPdpModal
-        :visible="showSendToPdpModal"
-        :invoice-id="invoice.id"
-        :provider-name="pdpProviderName"
-        :is-sandbox="pdpIsSandbox"
-        @close="showSendToPdpModal = false"
-        @sent="onPdpSent"
+          :invoice-id="invoice.id"
+          :is-sandbox="pdpIsSandbox"
+          :provider-name="pdpProviderName"
+          :visible="showSendToPdpModal"
+          @close="showSendToPdpModal = false"
+          @sent="onPdpSent"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, toRaw, watch } from "vue";
-import { useRouter, useRoute, onBeforeRouteLeave } from "vue-router";
-import { useToast } from "@/composables/useToast";
-import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
+import {computed, onMounted, ref, toRaw, watch} from "vue";
+import {onBeforeRouteLeave, useRoute, useRouter} from "vue-router";
+import {useToast} from "@/composables/useToast";
+import {useUnsavedChanges} from "@/composables/useUnsavedChanges";
 import CustomerForm from "@/components/forms/CustomerForm.vue";
 import ServiceLinesTable from "@/components/forms/ServiceLinesTable.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import SendToPdpModal from "@/components/pdp/SendToPdpModal.vue";
-import { useDocuments } from "@/composables/useDocuments";
-import { useNumbering } from "@/composables/useNumbering";
-import { usePdpConfig } from "@/composables/usePdpConfig";
-import { statusLabel, einvoiceStatusLabel } from "@/utils/statusLabels";
+import {useDocuments} from "@/composables/useDocuments";
+import {useNumbering} from "@/composables/useNumbering";
+import {usePdpConfig} from "@/composables/usePdpConfig";
+import {einvoiceStatusLabel, statusLabel} from "@/utils/statusLabels";
 
 const router = useRouter();
 const route = useRoute();
-const { showToast } = useToast();
+const {showToast} = useToast();
 
-const { loadOne, save } = useDocuments("factures");
-const { nextNumber, loadConfig, incrementNumber } = useNumbering("factures");
+const {loadOne, save} = useDocuments("factures");
+const {nextNumber, loadConfig, incrementNumber} = useNumbering("factures");
 
 const serviceLinesRef = ref(null);
 const invoice = ref({
@@ -293,22 +300,24 @@ const pdpIsSandbox = ref(false);
 const showSendToPdpModal = ref(false);
 const sendingToPdp = ref(false);
 
-const { isDirty, setInitialState, markAsSaved } = useUnsavedChanges(invoice);
+const {isDirty, setInitialState, markAsSaved} = useUnsavedChanges(invoice);
 
 const isEditMode = computed(() => !!route.params.id);
 
 const pdpReady = computed(
-  () => Boolean(pdpProviderName.value) && pdp.hasCredentials.value,
+    () => Boolean(pdpProviderName.value) && pdp.hasCredentials.value,
 );
 
-const canSendToPdp = computed(() => isEditMode.value && pdpReady.value);
+// Une facture déjà transmise (déposée chez SuperPDP) ne doit plus pouvoir être
+// renvoyée : l'API ne déduplique pas (pas de 409, pas d'idempotence), un renvoi
+// créerait un doublon chez le destinataire. Le suivi se fait via les événements.
+const isAlreadySent = computed(() => Boolean(invoice.value.einvoice?.isSent));
 
-const pdpButtonLabel = computed(() => {
-  const status = invoice.value.einvoice?.status;
-  if (status === "rejected") return "Renvoyer à la plateforme";
-  if (invoice.value.einvoice?.isSent) return "Renvoyer à la plateforme";
-  return "Envoyer à la plateforme";
-});
+const canSendToPdp = computed(
+    () => isEditMode.value && pdpReady.value && !isAlreadySent.value,
+);
+
+const pdpButtonLabel = computed(() => "Envoyer à la plateforme");
 
 onBeforeRouteLeave((to) => {
   if (skipGuard) {
@@ -369,19 +378,19 @@ function getDueDate(from) {
 }
 
 watch(
-  () => invoice.value.date,
-  (newDate) => {
-    if (newDate) {
-      invoice.value.dueDate = getDueDate(newDate);
-    }
-  },
+    () => invoice.value.date,
+    (newDate) => {
+      if (newDate) {
+        invoice.value.dueDate = getDueDate(newDate);
+      }
+    },
 );
 
 function convertQuoteToInvoice(quote) {
   // Copier toutes les données du devis
   invoice.value = {
     ...invoice.value,
-    customer: { ...quote.customer },
+    customer: {...quote.customer},
     services: [...quote.services],
     object: quote.object || "",
     prestationDelay: quote.prestationDelay || "",
@@ -478,13 +487,13 @@ async function handleGeneratePDF() {
     }
   } catch (err) {
     const raw = (err.message || "").replace(
-      /^Error invoking remote method '[^']+': /,
-      "",
+        /^Error invoking remote method '[^']+': /,
+        "",
     );
     const msg =
-      raw.includes("EBUSY")
-        ? `Erreur : vérifiez que la facture ${invoice.value.numero} n'est pas déjà ouverte sur une autre application.`
-        : raw || "Erreur lors de la génération du PDF";
+        raw.includes("EBUSY")
+            ? `Erreur : vérifiez que la facture ${invoice.value.numero} n'est pas déjà ouverte sur une autre application.`
+            : raw || "Erreur lors de la génération du PDF";
     error.value = msg;
     showToast(msg, "error");
   } finally {
@@ -498,9 +507,9 @@ async function saveClientIfNew(customer) {
   try {
     const clients = await window.electronAPI.loadClients();
     const exists = clients.some(
-      (c) =>
-        c.customerName?.toLowerCase() === customer.customerName.toLowerCase() &&
-        c.clientType === customer.clientType,
+        (c) =>
+            c.customerName?.toLowerCase() === customer.customerName.toLowerCase() &&
+            c.clientType === customer.clientType,
     );
     if (!exists) {
       const {
@@ -571,8 +580,14 @@ function onPdpSent(updatedInvoice) {
 }
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 @use "@/styles/variables" as *;
 @use "@/styles/colors" as *;
 
+.pdp-sent-note {
+  align-self: center;
+  color: $grey-70;
+  font-size: $font-size-sm;
+  max-width: 280px;
+}
 </style>

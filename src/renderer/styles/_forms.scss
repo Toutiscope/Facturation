@@ -3,13 +3,13 @@
 @use "mixins" as *;
 
 .form-group {
-  margin-bottom: $spacing-md;
+  margin-bottom: $spacing-sm;
 }
 
 .form-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: $spacing-md;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 // Style commun pour tous les champs de formulaire
@@ -22,15 +22,14 @@ input[type="date"],
 select,
 textarea,
 .form-control {
-  width: 100%;
-  padding: 12px 8px;
-  border: none;
-  border-radius: 5px;
-  border: 1px solid $grey-40;
-  font-size: $font-size-base;
   background: #f9f9f9;
+  border: 1px solid $grey-40;
+  border-radius: 5px;
   color: $grey-100;
+  font-size: $font-size-base;
+  padding: 10px 8px;
   transition: $transition-base;
+  width: 100%;
 
   &:focus {
     @include focus-ring;
@@ -48,63 +47,66 @@ textarea,
 }
 
 select {
-  height: 47px;
+  cursor: pointer;
+  height: 43px;
+  padding: 0 $spacing-sm !important;
 }
 
 textarea {
-  resize: vertical;
   font-family: inherit;
+  resize: vertical;
 }
 
 // Label avec marqueur obligatoire
 label {
   &.required::after {
-    content: " *";
     color: $error-color;
+    content: " *";
   }
 }
 
 // Texte d'aide sous les champs
 .form-text {
-  display: block;
-  margin-top: $spacing-xs;
-  font-size: $font-size-sm;
   color: $grey-80;
+  display: block;
+  font-size: $font-size-xs;
+  line-height: normal;
+  margin-top: $spacing-xxs;
 }
 
 // Messages d'erreur et de succès
 .error-message {
-  display: block;
   color: $error-color;
+  display: block;
   font-size: $font-size-sm;
   margin-top: $spacing-xs;
 }
 
 .success-message {
   background: rgba($success-color, 0.1);
-  color: $success-color;
-  padding: $spacing-md;
-  border-radius: $border-radius-md;
-  margin-bottom: $spacing-md;
   border-left: 4px solid $success-color;
+  border-radius: $border-radius-md;
+  color: $success-color;
+  margin-bottom: $spacing-md;
+  padding: $spacing-md;
 }
 
 // Barre d'actions en bas de formulaire
 .form-actions {
+  bottom: $spacing-md;
   display: flex;
   gap: $spacing-md;
   justify-content: flex-end;
   padding-bottom: $spacing-lg;
   position: sticky;
-  bottom: $spacing-md;
   right: 0;
 }
 
 // Section de formulaire
 .form-section {
+  border-bottom: 1px solid $grey-30;
   margin-bottom: $spacing-xl;
   padding-bottom: $spacing-xl;
-  border-bottom: 1px solid $grey-30;
 
   &:last-of-type {
     border-bottom: none;

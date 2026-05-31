@@ -31,6 +31,7 @@ import {
   searchFrenchDirectory as pdpSearchFrenchDirectory,
   resetAdapterCache,
 } from "./einvoiceApi/index.js";
+import { searchCompanies as searchCompanyDirectory } from "./companyDirectory.js";
 import { promises as fsp } from "fs";
 import {
   saveProviderCredentials,
@@ -249,6 +250,24 @@ export function initializeIPC() {
 
   ipcMain.handle("open-external", async (event, url) => {
     await shell.openExternal(url);
+  });
+
+  // ==================== Recherche d'entreprises (annuaire public) ====================
+
+  ipcMain.handle("company:search", async (event, query) => {
+    try {
+      const data = await searchCompanyDirectory(query);
+      return { ok: true, data };
+    } catch (err) {
+      log.error("Company search failed:", err.message);
+      return {
+        ok: false,
+        error: {
+          code: "COMPANY_SEARCH",
+          message: "Recherche d'entreprise momentanément indisponible",
+        },
+      };
+    }
   });
 
   // ==================== Auto-update (Phase 5) ====================
@@ -532,11 +551,45 @@ async function wrapPdp(operation) {
     const code = err.code || "PDP_UNKNOWN";
     const status = err.status;
     const message = err.message || "Erreur inconnue";
-    log.error(`PDP operation failed [${code}${status ? ` HTTP ${status}` : ""}]:`, message);
+    const details = extractErrorDetails(err.body);
+    log.error(
+      `PDP operation failed [${code}${status ? ` HTTP ${status}` : ""}]:`,
+      message,
+      err.body ? `\nDétail PDP : ${err.body}` : "",
+    );
     return {
       ok: false,
-      error: { code, status, message },
+      error: { code, status, message, details },
     };
+  }
+}
+
+/**
+ * Extrait un message lisible du corps de réponse d'erreur d'une PDP.
+ * Les PDP renvoient généralement un JSON ({ message } / { error } / { errors: [...] }),
+ * parfois du texte brut. On retombe sur le texte tronqué si rien d'exploitable.
+ * @param {string|null|undefined} body
+ * @returns {string|null}
+ */
+function extractErrorDetails(body) {
+  if (!body || typeof body !== "string") return null;
+  try {
+    const json = JSON.parse(body);
+    if (typeof json === "string") return json;
+    if (json.message) return json.message;
+    if (json.error) {
+      return typeof json.error === "string"
+        ? json.error
+        : json.error.message || JSON.stringify(json.error);
+    }
+    if (Array.isArray(json.errors) && json.errors.length) {
+      return json.errors
+        .map((e) => (typeof e === "string" ? e : e.message || JSON.stringify(e)))
+        .join(" • ");
+    }
+    return JSON.stringify(json);
+  } catch {
+    return body.slice(0, 500);
   }
 }
 
