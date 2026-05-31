@@ -60,7 +60,7 @@ const radius = 38;
 const circumference = 2 * Math.PI * radius;
 
 const total = computed(() =>
-  props.segments.reduce((s, x) => s + (x.value || 0), 0)
+  props.segments.reduce((s, x) => s + (x.value || 0), 0),
 );
 
 const segmentsWithPct = computed(() =>
@@ -68,7 +68,7 @@ const segmentsWithPct = computed(() =>
     ...s,
     color: s.color || PALETTE[i % PALETTE.length],
     pct: total.value > 0 ? Math.round((s.value / total.value) * 100) : 0,
-  }))
+  })),
 );
 
 const computedSegments = computed(() => {

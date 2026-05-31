@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import paths, { getYearFolder } from "./utils/paths";
+import { hydrateConfig, hydrateDocument } from "./utils/migrations.js";
 import log from "electron-log";
 
 // ==================== Logo ====================
@@ -24,7 +25,7 @@ export async function saveLogo(sourceFilePath) {
     return paths.LOGO_PATH;
   } catch (error) {
     log.error("Failed to save logo:", error);
-    throw new Error("Impossible de sauvegarder le logo");
+    throw new Error("Impossible de sauvegarder le logo", { cause: error });
   }
 }
 
@@ -48,7 +49,7 @@ export async function deleteLogo() {
     return true;
   } catch (error) {
     log.error("Failed to delete logo:", error);
-    throw new Error("Impossible de supprimer le logo");
+    throw new Error("Impossible de supprimer le logo", { cause: error });
   }
 }
 
@@ -88,11 +89,13 @@ export async function loadConfig() {
     }
 
     const data = await fs.readFile(paths.CONFIG_PATH, "utf-8");
-    configCache = JSON.parse(data);
+    configCache = hydrateConfig(JSON.parse(data));
     return configCache;
   } catch (error) {
     log.error("Failed to load config:", error);
-    throw new Error("Impossible de charger la configuration");
+    throw new Error("Impossible de charger la configuration", {
+      cause: error,
+    });
   }
 }
 
@@ -113,17 +116,11 @@ export async function saveConfig(config) {
     return true;
   } catch (error) {
     log.error("Failed to save config:", error);
-    throw new Error("Impossible de sauvegarder la configuration");
+    throw new Error("Impossible de sauvegarder la configuration", {
+      cause: error,
+    });
   }
 }
-
-/**
- * Vide le cache de configuration (utile pour forcer un reload)
- */
-function clearConfigCache() {
-  configCache = null;
-}
-
 /**
  * Charge tous les documents d'un type donné
  * @param {string} type - 'devis' ou 'factures'
@@ -147,7 +144,7 @@ export async function loadDocuments(type, filters = {}) {
       jsonFiles.map(async (file) => {
         const filePath = path.join(yearFolder, file);
         const content = await fs.readFile(filePath, "utf-8");
-        return JSON.parse(content);
+        return hydrateDocument(type, JSON.parse(content));
       }),
     );
 
@@ -174,7 +171,7 @@ export async function loadDocuments(type, filters = {}) {
     return filtered;
   } catch (error) {
     log.error(`Failed to load ${type}:`, error);
-    throw new Error(`Impossible de charger les ${type}`);
+    throw new Error(`Impossible de charger les ${type}`, { cause: error });
   }
 }
 
@@ -193,13 +190,15 @@ export async function loadDocument(type, id) {
     const filePath = path.join(yearFolder, `${id}.json`);
 
     const content = await fs.readFile(filePath, "utf-8");
-    return JSON.parse(content);
+    return hydrateDocument(type, JSON.parse(content));
   } catch (error) {
     if (error.code === "ENOENT") {
-      throw new Error("Document introuvable");
+      throw new Error("Document introuvable", { cause: error });
     }
     log.error(`Failed to load ${type} ${id}:`, error);
-    throw new Error("Erreur lors du chargement du document");
+    throw new Error("Erreur lors du chargement du document", {
+      cause: error,
+    });
   }
 }
 
@@ -236,7 +235,9 @@ export async function saveDocument(type, document) {
     return document;
   } catch (error) {
     log.error(`Failed to save ${type}:`, error);
-    throw new Error("Erreur lors de la sauvegarde du document");
+    throw new Error("Erreur lors de la sauvegarde du document", {
+      cause: error,
+    });
   }
 }
 
@@ -259,10 +260,12 @@ export async function deleteDocument(type, id) {
     return true;
   } catch (error) {
     if (error.code === "ENOENT") {
-      throw new Error("Document introuvable");
+      throw new Error("Document introuvable", { cause: error });
     }
     log.error(`Failed to delete ${type} ${id}:`, error);
-    throw new Error("Erreur lors de la suppression du document");
+    throw new Error("Erreur lors de la suppression du document", {
+      cause: error,
+    });
   }
 }
 
@@ -281,7 +284,7 @@ export async function loadClients() {
       return [];
     }
     log.error("Failed to load clients:", error);
-    throw new Error("Impossible de charger les clients");
+    throw new Error("Impossible de charger les clients", { cause: error });
   }
 }
 
@@ -318,7 +321,9 @@ export async function saveClient(client) {
     return client;
   } catch (error) {
     log.error("Failed to save client:", error);
-    throw new Error("Erreur lors de la sauvegarde du client");
+    throw new Error("Erreur lors de la sauvegarde du client", {
+      cause: error,
+    });
   }
 }
 
@@ -328,14 +333,14 @@ export async function saveClient(client) {
  * @returns {Promise<boolean>}
  */
 export async function deleteClient(id) {
+  const clients = await loadClients();
+  const filtered = clients.filter((c) => c.id !== id);
+
+  if (filtered.length === clients.length) {
+    throw new Error("Client introuvable");
+  }
+
   try {
-    const clients = await loadClients();
-    const filtered = clients.filter((c) => c.id !== id);
-
-    if (filtered.length === clients.length) {
-      throw new Error("Client introuvable");
-    }
-
     await fs.writeFile(
       paths.CLIENTS_PATH,
       JSON.stringify(filtered, null, 2),
@@ -346,7 +351,9 @@ export async function deleteClient(id) {
     return true;
   } catch (error) {
     log.error(`Failed to delete client ${id}:`, error);
-    throw new Error("Erreur lors de la suppression du client");
+    throw new Error("Erreur lors de la suppression du client", {
+      cause: error,
+    });
   }
 }
 
@@ -365,7 +372,9 @@ export async function loadTransactions() {
       return [];
     }
     log.error("Failed to load transactions:", error);
-    throw new Error("Impossible de charger les transactions");
+    throw new Error("Impossible de charger les transactions", {
+      cause: error,
+    });
   }
 }
 
@@ -403,7 +412,9 @@ export async function saveTransaction(transaction) {
     return transaction;
   } catch (error) {
     log.error("Failed to save transaction:", error);
-    throw new Error("Erreur lors de la sauvegarde de la transaction");
+    throw new Error("Erreur lors de la sauvegarde de la transaction", {
+      cause: error,
+    });
   }
 }
 
@@ -413,14 +424,14 @@ export async function saveTransaction(transaction) {
  * @returns {Promise<boolean>}
  */
 export async function deleteTransaction(id) {
+  const transactions = await loadTransactions();
+  const filtered = transactions.filter((t) => t.id !== id);
+
+  if (filtered.length === transactions.length) {
+    throw new Error("Transaction introuvable");
+  }
+
   try {
-    const transactions = await loadTransactions();
-    const filtered = transactions.filter((t) => t.id !== id);
-
-    if (filtered.length === transactions.length) {
-      throw new Error("Transaction introuvable");
-    }
-
     await fs.writeFile(
       paths.TRANSACTIONS_PATH,
       JSON.stringify(filtered, null, 2),
@@ -431,6 +442,8 @@ export async function deleteTransaction(id) {
     return true;
   } catch (error) {
     log.error(`Failed to delete transaction ${id}:`, error);
-    throw new Error("Erreur lors de la suppression de la transaction");
+    throw new Error("Erreur lors de la suppression de la transaction", {
+      cause: error,
+    });
   }
 }

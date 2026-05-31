@@ -7,10 +7,10 @@
       </p>
       <p class="warning">{{ warning }}</p>
       <div class="modal-actions">
-        <button @click="$emit('cancel')" class="btn btn-secondary">
+        <button class="btn btn-secondary" @click="$emit('cancel')">
           Annuler
         </button>
-        <button @click="$emit('confirm')" class="btn btn-danger">
+        <button class="btn btn-danger" @click="$emit('confirm')">
           {{ confirmLabel }}
         </button>
       </div>

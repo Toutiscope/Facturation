@@ -16,30 +16,30 @@
           <tr v-for="(service, index) in localServices" :key="service.id">
             <td>
               <input
-                type="text"
                 v-model="service.description"
-                @input="updateService(index)"
+                type="text"
                 placeholder="Description de la prestation"
                 class="form-control"
                 required
+                @input="updateService(index)"
               />
             </td>
             <td>
               <input
-                type="number"
                 v-model.number="service.quantity"
-                @input="updateService(index)"
+                type="number"
                 min="0"
                 step="0.5"
                 class="form-control"
                 required
+                @input="updateService(index)"
               />
             </td>
             <td>
               <select
                 v-model="service.unit"
-                @change="updateService(index)"
                 class="form-control"
+                @change="updateService(index)"
               >
                 <option value="heure">Heure</option>
                 <option value="jour">Jour</option>
@@ -49,13 +49,13 @@
             </td>
             <td>
               <input
-                type="number"
                 v-model.number="service.unitPriceHT"
-                @input="updateService(index)"
+                type="number"
                 min="0"
                 step="0.01"
                 class="form-control"
                 required
+                @input="updateService(index)"
               />
             </td>
             <td class="total-cell">
@@ -64,10 +64,10 @@
             <td style="text-align: center">
               <button
                 type="button"
-                @click="removeLine(index)"
                 :disabled="localServices.length === 1"
                 class="btn-icon btn-danger"
                 title="Supprimer"
+                @click="removeLine(index)"
               >
                 🗑️
               </button>
@@ -77,7 +77,7 @@
       </table>
     </div>
 
-    <button type="button" @click="addLine" class="btn btn-secondary">
+    <button type="button" class="btn btn-secondary" @click="addLine">
       + Ajouter une ligne
     </button>
 
@@ -98,11 +98,15 @@
         <template v-if="props.deposit > 0">
           <div class="total-row">
             <span class="total-label">{{ props.depositLabel }} :</span>
-            <span class="total-value">- {{ formatCurrency(props.deposit) }}</span>
+            <span class="total-value"
+              >- {{ formatCurrency(props.deposit) }}</span
+            >
           </div>
           <div class="total-row total-remaining">
             <span class="total-label">Reste à payer :</span>
-            <span class="total-value">{{ formatCurrency(totals.totalTTC - props.deposit) }}</span>
+            <span class="total-value">{{
+              formatCurrency(totals.totalTTC - props.deposit)
+            }}</span>
           </div>
         </template>
       </div>
@@ -117,7 +121,6 @@ import { ref, computed, watch } from "vue";
 const props = defineProps({
   modelValue: {
     type: Array,
-    required: true,
     default: () => [],
   },
   deposit: {

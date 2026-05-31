@@ -9,7 +9,7 @@
       <p>Chargement de la configuration...</p>
     </div>
 
-    <form v-else @submit.prevent="saveConfig" class="settings-form">
+    <form v-else class="settings-form" @submit.prevent="saveConfig">
       <!-- Erreur générale -->
       <div v-if="errors.general" class="errors-list">
         <h3>Erreur</h3>
@@ -70,8 +70,8 @@
                   <button
                     type="button"
                     class="btn btn-outline btn-sm"
-                    @click="uploadLogo"
                     :disabled="uploadingLogo"
+                    @click="uploadLogo"
                   >
                     {{
                       uploadingLogo
@@ -300,6 +300,209 @@
           </div>
         </div>
 
+        <h2 class="mg-top-24">Plateforme de facturation électronique</h2>
+        <section class="card settings-card pdp-section">
+          <p class="pdp-intro">
+            Branchez votre plateforme agréée (PDP) pour envoyer vos factures au
+            format électronique conformément à la réforme 2026-2027.
+            <a
+              href="#"
+              @click.prevent="openExternal('https://www.superpdp.tech')"
+              >Créer un compte SuperPDP</a
+            >.
+          </p>
+
+          <div class="form-group">
+            <label>Plateforme</label>
+            <select
+              v-model="config.einvoicePlatform.providerName"
+              @change="onProviderChanged"
+            >
+              <option
+                v-for="opt in pdp.providerOptions.value"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.label }}
+              </option>
+            </select>
+            <small>
+              SuperPDP est la plateforme par défaut. D'autres pourront être
+              ajoutées sans modifier vos données.
+            </small>
+          </div>
+
+          <template v-if="config.einvoicePlatform.providerName">
+            <div class="form-group">
+              <label>URL de l'API</label>
+              <input
+                v-model="config.einvoicePlatform.urlApi"
+                type="text"
+                placeholder="https://api.superpdp.tech"
+              />
+              <small>
+                Laissez la valeur par défaut sauf indication contraire.
+              </small>
+            </div>
+
+            <div class="form-group form-group--inline">
+              <label class="checkbox-label">
+                <input
+                  v-model="config.einvoicePlatform.isSandbox"
+                  type="checkbox"
+                />
+                <span>Utiliser l'environnement bac à sable</span>
+              </label>
+              <small>
+                Active le mode test : aucune vraie facture n'est échangée.
+              </small>
+            </div>
+
+            <div class="pdp-credentials">
+              <div class="pdp-credentials__status">
+                <strong>Identifiants OAuth2</strong>
+                <span
+                  v-if="pdp.checkingCredentials.value"
+                  class="badge badge-grey"
+                  >Vérification…</span
+                >
+                <span
+                  v-else-if="pdp.hasCredentials.value"
+                  class="badge badge-success"
+                  >Configurés</span
+                >
+                <span v-else class="badge badge-warning">Non configurés</span>
+              </div>
+
+              <p
+                v-if="!pdp.editingCredentials.value"
+                class="pdp-credentials__hint"
+              >
+                Les identifiants sont chiffrés localement et ne sont jamais
+                affichés en clair après sauvegarde.
+              </p>
+
+              <div
+                v-if="pdp.editingCredentials.value"
+                class="pdp-credentials__form"
+              >
+                <div class="form-group">
+                  <label>client_id</label>
+                  <input
+                    v-model="pdp.credentialsDraft.value.client_id"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Identifiant fourni par la PDP"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>client_secret</label>
+                  <input
+                    v-model="pdp.credentialsDraft.value.client_secret"
+                    :type="showSecret ? 'text' : 'password'"
+                    autocomplete="off"
+                    placeholder="Secret fourni par la PDP"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline btn-sm mg-top-8"
+                    @click="showSecret = !showSecret"
+                  >
+                    {{ showSecret ? "Masquer" : "Afficher" }}
+                  </button>
+                </div>
+
+                <div v-if="credentialsError" class="error-message">
+                  {{ credentialsError }}
+                </div>
+
+                <div class="pdp-credentials__actions">
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    :disabled="pdp.savingCredentials.value"
+                    @click="cancelCredentialsEdit"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    :disabled="pdp.savingCredentials.value"
+                    @click="saveCredentials"
+                  >
+                    {{
+                      pdp.savingCredentials.value
+                        ? "Enregistrement…"
+                        : "Enregistrer les identifiants"
+                    }}
+                  </button>
+                </div>
+              </div>
+
+              <div v-else class="pdp-credentials__actions">
+                <button
+                  type="button"
+                  class="btn btn-outline btn-sm"
+                  @click="pdp.startEditingCredentials()"
+                >
+                  {{ pdp.hasCredentials.value ? "Modifier" : "Configurer" }}
+                </button>
+                <button
+                  v-if="pdp.hasCredentials.value"
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  :disabled="pdp.deletingCredentials.value"
+                  @click="onDeleteCredentials"
+                >
+                  {{
+                    pdp.deletingCredentials.value ? "Suppression…" : "Supprimer"
+                  }}
+                </button>
+              </div>
+            </div>
+
+            <div class="pdp-test">
+              <button
+                type="button"
+                class="btn btn-outline"
+                :disabled="pdp.testing.value || !pdp.hasCredentials.value"
+                @click="onTestConnection"
+              >
+                {{
+                  pdp.testing.value ? "Test en cours…" : "Tester la connexion"
+                }}
+              </button>
+
+              <div
+                v-if="pdp.testResult.value && pdp.testResult.value.ok"
+                class="pdp-test__result pdp-test__result--success"
+              >
+                Connexion OK — entreprise reconnue :
+                <strong>{{
+                  pdp.testResult.value.company?.formal_name ||
+                  pdp.testResult.value.company?.name ||
+                  "(nom indisponible)"
+                }}</strong>
+                <small v-if="pdp.testResult.value.session?.status">
+                  Statut session : {{ pdp.testResult.value.session.status }}
+                </small>
+              </div>
+
+              <div
+                v-else-if="pdp.testResult.value && !pdp.testResult.value.ok"
+                class="pdp-test__result pdp-test__result--error"
+              >
+                Échec :
+                <span>{{ pdp.testResult.value.message }}</span>
+                <small v-if="pdp.testResult.value.status">
+                  Code HTTP {{ pdp.testResult.value.status }}
+                </small>
+              </div>
+            </div>
+          </template>
+        </section>
+
         <h2 class="mg-top-24">Paramètres généraux</h2>
         <section class="card settings-card" style="width: calc(50% - 8px)">
           <div class="form-group">
@@ -334,8 +537,8 @@
               <button
                 type="button"
                 class="btn btn-outline btn-sm"
-                @click="selectPdfFolder"
                 :disabled="selectingFolder"
+                @click="selectPdfFolder"
               >
                 {{ selectingFolder ? "Chargement..." : "Parcourir" }}
               </button>
@@ -343,14 +546,13 @@
             <small>Les PDF seront enregistrés dans ce dossier par défaut</small>
           </div>
         </section>
-
       </div>
 
       <ConfirmModal
         :visible="showUnsavedModal"
         title="Modifications non sauvegardées"
         warning="Les modifications seront perdues si vous quittez cette page."
-        confirmLabel="Quitter sans sauvegarder"
+        confirm-label="Quitter sans sauvegarder"
         @cancel="showUnsavedModal = false"
         @confirm="confirmLeave"
       />
@@ -359,8 +561,8 @@
       <div class="form-actions">
         <button
           type="button"
-          @click="router.push('/')"
           class="btn btn-secondary"
+          @click="router.push('/')"
         >
           Annuler
         </button>
@@ -378,6 +580,7 @@
 import { ref, onMounted, toRaw, inject } from "vue";
 import { useRouter, onBeforeRouteLeave } from "vue-router";
 import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
+import { usePdpConfig } from "@/composables/usePdpConfig";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 
 const router = useRouter();
@@ -394,6 +597,11 @@ const selectingFolder = ref(false);
 const showUnsavedModal = ref(false);
 const pendingRoute = ref(null);
 let skipGuard = false;
+
+// ── PDP ──────────────────────────────────────────────────────
+const pdp = usePdpConfig();
+const showSecret = ref(false);
+const credentialsError = ref("");
 
 const { isDirty, setInitialState, markAsSaved } = useUnsavedChanges(config);
 
@@ -419,6 +627,11 @@ onMounted(async () => {
   try {
     config.value = await window.electronAPI.loadConfig();
     logoPreview.value = await window.electronAPI.getLogo();
+    if (config.value.einvoicePlatform?.providerName) {
+      await pdp.refreshHasCredentials(
+        config.value.einvoicePlatform.providerName,
+      );
+    }
     setInitialState();
   } catch (error) {
     console.error("Failed to load config:", error);
@@ -427,6 +640,57 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+async function onProviderChanged() {
+  pdp.clearTestResult();
+  credentialsError.value = "";
+
+  const provider = pdp.findProvider(config.value.einvoicePlatform.providerName);
+  if (provider && !config.value.einvoicePlatform.urlApi) {
+    config.value.einvoicePlatform.urlApi = provider.defaultUrlApi;
+  }
+  await pdp.refreshHasCredentials(config.value.einvoicePlatform.providerName);
+}
+
+function cancelCredentialsEdit() {
+  credentialsError.value = "";
+  showSecret.value = false;
+  pdp.cancelEditingCredentials();
+}
+
+async function saveCredentials() {
+  credentialsError.value = "";
+  try {
+    await pdp.saveCredentials(config.value.einvoicePlatform.providerName, {
+      providerName: config.value.einvoicePlatform.providerName,
+      urlApi: config.value.einvoicePlatform.urlApi,
+      isSandbox: config.value.einvoicePlatform.isSandbox,
+    });
+    showSecret.value = false;
+  } catch (err) {
+    credentialsError.value = err.message;
+  }
+}
+
+async function onDeleteCredentials() {
+  try {
+    await pdp.deleteCredentials(config.value.einvoicePlatform.providerName);
+  } catch (err) {
+    credentialsError.value = err.message;
+  }
+}
+
+async function onTestConnection() {
+  await pdp.testConnection({
+    providerName: config.value.einvoicePlatform.providerName,
+    urlApi: config.value.einvoicePlatform.urlApi,
+    isSandbox: config.value.einvoicePlatform.isSandbox,
+  });
+}
+
+function openExternal(url) {
+  window.electronAPI.openExternal(url);
+}
 
 async function uploadLogo() {
   uploadingLogo.value = true;
@@ -626,6 +890,131 @@ async function saveConfig() {
 
   .loading-spinner {
     @include spinner;
+  }
+}
+
+// ── PDP section ──────────────────────────────────────────────
+.pdp-section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.pdp-intro {
+  color: $grey-80;
+  margin: 0;
+
+  a {
+    color: $primary-color;
+    text-decoration: underline;
+  }
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+  }
+}
+
+.form-group--inline {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.pdp-credentials {
+  padding: $spacing-md;
+  border: 1px solid $grey-20;
+  border-radius: $border-radius-md;
+  background: $grey-10;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.pdp-credentials__status {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.pdp-credentials__hint {
+  color: $grey-70;
+  font-size: $font-size-sm;
+  margin: 0;
+}
+
+.pdp-credentials__form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.pdp-credentials__actions {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: $border-radius-pill;
+  font-size: $font-size-xs;
+  font-weight: 500;
+  line-height: 1.4;
+
+  &.badge-success {
+    background: rgba($success-color, 0.15);
+    color: $success-color;
+  }
+
+  &.badge-warning {
+    background: rgba($warning-color, 0.15);
+    color: $warning-color;
+  }
+
+  &.badge-grey {
+    background: $grey-20;
+    color: $grey-80;
+  }
+}
+
+.pdp-test {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.pdp-test__result {
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-sm;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  &--success {
+    background: rgba($success-color, 0.1);
+    color: $success-color;
+    border: 1px solid rgba($success-color, 0.3);
+  }
+
+  &--error {
+    background: rgba($error-color, 0.1);
+    color: $error-color;
+    border: 1px solid rgba($error-color, 0.3);
+  }
+
+  small {
+    color: inherit;
+    opacity: 0.85;
   }
 }
 </style>

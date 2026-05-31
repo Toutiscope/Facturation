@@ -17,7 +17,10 @@
       v-for="row in rows"
       :key="row.id"
       class="txn-table__row"
-      :class="{ 'txn-table__row--locked': row.source === 'facture' }"
+      :class="{
+        'txn-table__row--clickable': row.source === 'facture',
+      }"
+      @click="onRowClick(row)"
     >
       <div class="txn-table__date">{{ formatDate(row.date) }}</div>
       <div class="txn-table__label">{{ row.label }}</div>
@@ -44,14 +47,15 @@
               : 'amount amount--negative'
           "
         >
-          {{ row.signedAmount >= 0 ? "+" : "−" }} {{ formatAmount(row.amount) }} €
+          {{ row.signedAmount >= 0 ? "+" : "−" }}
+          {{ formatAmount(row.amount) }} €
         </span>
       </div>
       <div class="txn-table__actions">
         <div
           v-if="row.source === 'manuel'"
-          class="kebab"
           v-click-outside="() => closeMenu(row.id)"
+          class="kebab"
         >
           <button
             type="button"
@@ -103,7 +107,17 @@
             </button>
           </div>
         </div>
-        <span v-else class="txn-table__locked-marker" title="Issue d'une facture"> </span>
+        <span v-else class="txn-table__open-marker" title="Ouvrir la facture">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M9 6l6 6-6 6"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+            />
+          </svg>
+        </span>
       </div>
     </div>
   </div>
@@ -119,7 +133,19 @@ defineProps({
   },
 });
 
-const emit = defineEmits(["edit", "duplicate", "change-category", "delete"]);
+const emit = defineEmits([
+  "edit",
+  "duplicate",
+  "change-category",
+  "delete",
+  "open-invoice",
+]);
+
+function onRowClick(row) {
+  if (row.source === "facture" && row.invoiceId) {
+    emit("open-invoice", row.invoiceId);
+  }
+}
 
 const openMenuId = ref(null);
 const menuPlacement = ref("down");
@@ -237,8 +263,12 @@ $grid-cols: 90px 1fr 140px 120px 140px 60px;
     background: $grey-10;
   }
 
-  &--locked {
-    background: rgba($grey-10, 0.5);
+  &--clickable {
+    cursor: pointer;
+
+    &:hover .txn-table__open-marker {
+      color: $primary-color;
+    }
   }
 }
 
@@ -276,9 +306,11 @@ $grid-cols: 90px 1fr 140px 120px 140px 60px;
   position: relative;
 }
 
-.txn-table__locked-marker {
+.txn-table__open-marker {
+  display: inline-grid;
+  place-items: center;
   color: $grey-40;
-  font-size: $font-size-base;
+  transition: color 0.15s ease;
 }
 
 .amount {

@@ -16,7 +16,7 @@
       <div v-if="loading" class="loading">Chargement...</div>
       <div v-else-if="error" class="error">{{ error }}</div>
 
-      <form v-else @submit.prevent class="form flex flex-column gap-16">
+      <form v-else class="form flex flex-column gap-16" @submit.prevent>
         <div class="form__info grid grid--6-4 gap-16">
           <!-- Formulaire client -->
           <section class="card">
@@ -33,8 +33,8 @@
                   <label for="numero">Numéro</label>
                   <input
                     id="numero"
-                    type="text"
                     v-model="quote.numero"
+                    type="text"
                     placeholder="D000001"
                     class="form-control"
                   />
@@ -47,8 +47,8 @@
                   <label for="date">Date</label>
                   <input
                     id="date"
-                    type="date"
                     v-model="quote.date"
+                    type="date"
                     class="form-control"
                   />
                 </div>
@@ -57,8 +57,8 @@
                   <label for="validityDate">Date de validité</label>
                   <input
                     id="validityDate"
-                    type="date"
                     v-model="quote.validityDate"
+                    type="date"
                     class="form-control"
                   />
                 </div>
@@ -101,8 +101,8 @@
             <label for="quotePrestationDelay">Délai</label>
             <input
               id="quotePrestationDelay"
-              type="text"
               v-model="quote.prestationDelay"
+              type="text"
               placeholder="Ex : 2 semaines, 30 jours..."
               class="form-control"
             />
@@ -111,8 +111,8 @@
             <label for="quoteDepositRequested">Acompte demandé (€)</label>
             <input
               id="quoteDepositRequested"
-              type="number"
               v-model.number="quote.depositRequested"
+              type="number"
               min="0"
               step="0.01"
               placeholder="0.00"
@@ -124,22 +124,22 @@
 
         <!-- Actions -->
         <div class="actions">
-          <button type="button" @click="cancel" class="btn btn-secondary">
+          <button type="button" class="btn btn-secondary" @click="cancel">
             Annuler
           </button>
           <button
             type="button"
-            @click="saveAsDraft"
             class="btn btn-outline"
             :disabled="saving"
+            @click="saveAsDraft"
           >
             Sauvegarder
           </button>
           <button
             type="button"
-            @click="saveAndGeneratePDF"
             class="btn btn-primary"
             :disabled="saving || generatingPDF"
+            @click="saveAndGeneratePDF"
           >
             {{
               generatingPDF
@@ -154,7 +154,7 @@
         :visible="showUnsavedModal"
         title="Modifications non sauvegardées"
         warning="Les modifications seront perdues si vous quittez cette page."
-        confirmLabel="Quitter sans sauvegarder"
+        confirm-label="Quitter sans sauvegarder"
         @cancel="showUnsavedModal = false"
         @confirm="confirmLeave"
       />
@@ -371,10 +371,9 @@ async function handleGeneratePDF() {
       /^Error invoking remote method '[^']+': /,
       "",
     );
-    const msg =
-      raw.includes("EBUSY")
-        ? `Erreur : vérifiez que le devis ${quote.value.numero} n'est pas déjà ouvert sur une autre application.`
-        : raw || "Erreur lors de la génération du PDF";
+    const msg = raw.includes("EBUSY")
+      ? `Erreur : vérifiez que le devis ${quote.value.numero} n'est pas déjà ouvert sur une autre application.`
+      : raw || "Erreur lors de la génération du PDF";
     error.value = msg;
     showToast(msg, "error");
   } finally {

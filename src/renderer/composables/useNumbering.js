@@ -57,7 +57,9 @@ export function useNumbering(type) {
       // Mettre à jour seulement si le nouveau numéro est supérieur à l'actuel
       if (numericPart > config.value.billing[latestKey]) {
         config.value.billing[latestKey] = numericPart;
-        await window.electronAPI.saveConfig(JSON.parse(JSON.stringify(toRaw(config.value))));
+        await window.electronAPI.saveConfig(
+          JSON.parse(JSON.stringify(toRaw(config.value))),
+        );
       }
 
       return true;

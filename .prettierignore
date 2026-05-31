@@ -1,0 +1,8 @@
+node_modules
+dist
+dist-electron
+out
+data
+build
+*.min.js
+package-lock.json

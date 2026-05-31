@@ -43,6 +43,46 @@ vi.mock("../utils/paths", () => {
       get TRANSACTIONS_PATH() {
         return mockPaths.TRANSACTIONS_PATH;
       },
+      get EINVOICE_CREDENTIALS_PATH() {
+        return path.join(mockPaths.DATA_DIR, "credentials.enc");
+      },
+    },
+    DEFAULT_EINVOICE_PLATFORM: {
+      providerName: "",
+      urlApi: "",
+      isSandbox: false,
+      lastSyncedEventId: null,
+    },
+    DEFAULT_CONFIG: {
+      company: {
+        companyName: "",
+        ownerName: "",
+        companyId: "",
+        registeredAddress: "",
+        address: "",
+        postalCode: "",
+        city: "",
+        email: "",
+        phoneNumber: "",
+        webSite: "",
+      },
+      rib: { iban: "", bic: "", holder: "" },
+      billing: {
+        legalNotice: "",
+        paymentTerms: "Paiement à 30 jours",
+        meansOfPayment: "Virement bancaire, chèque",
+        latePenalties:
+          "En cas de retard de paiement, application de pénalités de retard au taux de 10% par an et d'une indemnité forfaitaire pour frais de recouvrement de 40€.",
+        latestQuoteNumber: 0,
+        latestInvoiceNumber: 0,
+        pdfOutputPath: "",
+      },
+      einvoicePlatform: {
+        providerName: "",
+        urlApi: "",
+        isSandbox: false,
+        lastSyncedEventId: null,
+      },
     },
     getYearFolder(type, year) {
       const baseDir =
@@ -158,9 +198,7 @@ describe("Config", () => {
     await saveConfig(updated);
 
     // Read from disk to verify
-    const raw = JSON.parse(
-      await fs.readFile(mockPaths.CONFIG_PATH, "utf-8"),
-    );
+    const raw = JSON.parse(await fs.readFile(mockPaths.CONFIG_PATH, "utf-8"));
     expect(raw.company.companyName).toBe("Updated");
   });
 });
@@ -216,8 +254,14 @@ describe("Documents", () => {
   });
 
   it("loadDocuments filters by status", async () => {
-    await saveDocument("devis", makeQuote({ numero: "D000001", status: "draft" }));
-    await saveDocument("devis", makeQuote({ numero: "D000002", status: "sent" }));
+    await saveDocument(
+      "devis",
+      makeQuote({ numero: "D000001", status: "draft" }),
+    );
+    await saveDocument(
+      "devis",
+      makeQuote({ numero: "D000002", status: "sent" }),
+    );
     const docs = await loadDocuments("devis", {
       year: new Date().getFullYear(),
       status: "draft",
@@ -480,9 +524,7 @@ describe("Transactions", () => {
   });
 
   it("saveTransaction always forces source to 'manuel' (ignores incoming source)", async () => {
-    const saved = await saveTransaction(
-      makeTransaction({ source: "facture" }),
-    );
+    const saved = await saveTransaction(makeTransaction({ source: "facture" }));
     expect(saved.source).toBe("manuel");
   });
 

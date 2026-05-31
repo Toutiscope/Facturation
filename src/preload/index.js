@@ -32,9 +32,39 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("update-not-available", () => callback()),
   onUpdateDownloaded: (callback) =>
     ipcRenderer.on("update-downloaded", (_, info) => callback(info)),
-  onUpdateError: (callback) =>
-    ipcRenderer.on("update-error", () => callback()),
+  onUpdateError: (callback) => ipcRenderer.on("update-error", () => callback()),
   installUpdate: () => ipcRenderer.invoke("install-update"),
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
   openExternal: (url) => ipcRenderer.invoke("open-external", url),
+  searchCompanies: (query) => ipcRenderer.invoke("company:search", query),
+
+  pdp: {
+    testConnection: (platform) =>
+      ipcRenderer.invoke("pdp:test-connection", platform),
+    saveCredentials: (providerName, credentials, platform) =>
+      ipcRenderer.invoke(
+        "pdp:save-credentials",
+        providerName,
+        credentials,
+        platform,
+      ),
+    deleteCredentials: (providerName) =>
+      ipcRenderer.invoke("pdp:delete-credentials", providerName),
+    hasCredentials: (providerName) =>
+      ipcRenderer.invoke("pdp:has-credentials", providerName),
+    sendInvoice: (invoiceId, options) =>
+      ipcRenderer.invoke("pdp:send-invoice", invoiceId, options),
+    validateInvoice: (file, fileName) =>
+      ipcRenderer.invoke("pdp:validate-invoice", file, fileName),
+    fetchReceived: (opts) => ipcRenderer.invoke("pdp:fetch-received", opts),
+    downloadReceivedPdf: (id, opts) =>
+      ipcRenderer.invoke("pdp:download-received-pdf", id, opts),
+    listEvents: (opts) => ipcRenderer.invoke("pdp:list-events", opts),
+    createEvent: (payload) => ipcRenderer.invoke("pdp:create-event", payload),
+    searchDirectory: (siren) =>
+      ipcRenderer.invoke("pdp:search-directory", siren),
+    resolveRecipient: (siren) =>
+      ipcRenderer.invoke("pdp:resolve-recipient", siren),
+    sync: () => ipcRenderer.invoke("pdp:sync"),
+  },
 });

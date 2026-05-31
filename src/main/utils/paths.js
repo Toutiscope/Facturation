@@ -31,7 +31,16 @@ const DEFAULT_CONFIG = {
     latestInvoiceNumber: 0,
     pdfOutputPath: "",
   },
+  einvoicePlatform: {
+    providerName: "",
+    urlApi: "",
+    isSandbox: false,
+    lastSyncedEventId: null,
+  },
 };
+
+export const DEFAULT_EINVOICE_PLATFORM = DEFAULT_CONFIG.einvoicePlatform;
+export { DEFAULT_CONFIG };
 
 // Fonctions lazy pour obtenir les chemins (évite l'accès à app avant qu'il soit ready)
 const getPaths = () => {
@@ -132,6 +141,9 @@ const paths = {
   },
   get TRANSACTIONS_PATH() {
     return getPaths().TRANSACTIONS_PATH;
+  },
+  get EINVOICE_CREDENTIALS_PATH() {
+    return path.join(getPaths().DATA_DIR, "credentials.enc");
   },
 };
 

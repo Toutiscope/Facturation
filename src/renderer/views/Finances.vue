@@ -11,36 +11,32 @@
       <div class="finances__header-actions">
         <div class="segmented" role="tablist">
           <button
-              v-for="opt in periodOptions"
-              :key="opt"
-              :aria-selected="period === opt"
-              :class="{ 'segmented__item--active': period === opt }"
-              class="segmented__item"
-              role="tab"
-              type="button"
-              @click="period = opt"
+            v-for="opt in periodOptions"
+            :key="opt"
+            :aria-selected="period === opt"
+            :class="{ 'segmented__item--active': period === opt }"
+            class="segmented__item"
+            role="tab"
+            type="button"
+            @click="period = opt"
           >
             {{ opt }}
           </button>
         </div>
         <div class="segmented">
           <button
-              v-for="opt in chartTypeOptions"
-              :key="opt.value"
-              :class="{ 'segmented__item--active': chartType === opt.value }"
-              :title="`Graphique en ${opt.label.toLowerCase()}`"
-              class="segmented__item segmented__item--compact"
-              type="button"
-              @click="chartType = opt.value"
+            v-for="opt in chartTypeOptions"
+            :key="opt.value"
+            :class="{ 'segmented__item--active': chartType === opt.value }"
+            :title="`Graphique en ${opt.label.toLowerCase()}`"
+            class="segmented__item segmented__item--compact"
+            type="button"
+            @click="chartType = opt.value"
           >
             {{ opt.label }}
           </button>
         </div>
-        <button
-            class="btn btn-primary"
-            type="button"
-            @click="openSlideOver()"
-        >
+        <button class="btn btn-primary" type="button" @click="openSlideOver()">
           + Ajouter une transaction
         </button>
       </div>
@@ -55,9 +51,7 @@
         <article class="kpi-card">
           <p class="kpi-card__label">CA mois en cours</p>
           <p class="kpi-card__value">{{ formatCurrency(kpis.caMonth) }}</p>
-          <p class="kpi-card__delta kpi-card__delta--up">
-            ▲ Mois en cours
-          </p>
+          <p class="kpi-card__delta kpi-card__delta--up">▲ Mois en cours</p>
           <p class="kpi-card__after-tax">
             <span class="kpi-card__after-tax-amount">
               ≈ {{ formatCurrency(kpis.caMonthAfterUrssaf) }}
@@ -92,9 +86,7 @@
         <article class="kpi-card">
           <p class="kpi-card__label">Total dépenses</p>
           <p class="kpi-card__value">{{ formatCurrency(kpis.expense) }}</p>
-          <p class="kpi-card__delta kpi-card__delta--down">
-            ▼ Année en cours
-          </p>
+          <p class="kpi-card__delta kpi-card__delta--down">▼ Année en cours</p>
         </article>
         <article class="kpi-card">
           <p class="kpi-card__label">Encaissé (factures)</p>
@@ -121,22 +113,22 @@
             </div>
             <div class="chart-card__legend">
               <span>
-                <i class="legend-dot legend-dot--income"/>
+                <i class="legend-dot legend-dot--income" />
                 Revenus
               </span>
               <span>
-                <i class="legend-dot legend-dot--expense"/>
+                <i class="legend-dot legend-dot--expense" />
                 Dépenses
               </span>
             </div>
           </header>
           <MonthlyChart
-              :expense="chartSeries.expense"
-              :full-labels="chartSeries.fullLabels"
-              :height="220"
-              :labels="chartSeries.labels"
-              :revenue="chartSeries.revenue"
-              :type="chartType"
+            :expense="chartSeries.expense"
+            :full-labels="chartSeries.fullLabels"
+            :height="220"
+            :labels="chartSeries.labels"
+            :revenue="chartSeries.revenue"
+            :type="chartType"
           />
         </article>
 
@@ -148,7 +140,7 @@
             </div>
           </header>
           <div class="chart-card__donut">
-            <DonutChart :segments="revenueBySource.segments" :size="170"/>
+            <DonutChart :segments="revenueBySource.segments" :size="170" />
           </div>
         </article>
       </section>
@@ -164,40 +156,41 @@
           </div>
           <div class="filter-pills">
             <button
-                v-for="opt in typeFilters"
-                :key="opt.value"
-                :class="{ 'filter-pill--active': typeFilter === opt.value }"
-                class="filter-pill"
-                type="button"
-                @click="typeFilter = opt.value"
+              v-for="opt in typeFilters"
+              :key="opt.value"
+              :class="{ 'filter-pill--active': typeFilter === opt.value }"
+              class="filter-pill"
+              type="button"
+              @click="typeFilter = opt.value"
             >
               {{ opt.label }}
             </button>
           </div>
         </header>
         <TransactionsTable
-            :rows="filteredTransactions"
-            @delete="onDeleteRequest"
-            @duplicate="onDuplicate"
-            @edit="onEdit"
-            @change-category="onChangeCategory"
+          :rows="filteredTransactions"
+          @delete="onDeleteRequest"
+          @duplicate="onDuplicate"
+          @edit="onEdit"
+          @change-category="onChangeCategory"
+          @open-invoice="onOpenInvoice"
         />
       </section>
     </template>
 
     <TransactionSlideOver
-        :transaction="editingTransaction"
-        :visible="slideOverVisible"
-        @cancel="closeSlideOver"
-        @save="onSave"
+      :transaction="editingTransaction"
+      :visible="slideOverVisible"
+      @cancel="closeSlideOver"
+      @save="onSave"
     />
 
     <ConfirmModal
-        :visible="!!pendingDelete"
-        confirm-label="Supprimer"
-        title="Supprimer la transaction"
-        @cancel="pendingDelete = null"
-        @confirm="confirmDelete"
+      :visible="!!pendingDelete"
+      confirm-label="Supprimer"
+      title="Supprimer la transaction"
+      @cancel="pendingDelete = null"
+      @confirm="confirmDelete"
     >
       Êtes-vous sûr de vouloir supprimer la transaction
       <strong>{{ pendingDelete?.label }}</strong> ?
@@ -206,9 +199,10 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from "vue";
-import {useFinances} from "@/composables/useFinances";
-import {useToast} from "@/composables/useToast";
+import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { useFinances } from "@/composables/useFinances";
+import { useToast } from "@/composables/useToast";
 import MonthlyChart from "@/components/finances/MonthlyChart.vue";
 import DonutChart from "@/components/finances/DonutChart.vue";
 import TransactionsTable from "@/components/finances/TransactionsTable.vue";
@@ -228,22 +222,27 @@ const {
   filterByPeriod,
 } = useFinances();
 
-const {showToast} = useToast();
+const { showToast } = useToast();
+const router = useRouter();
+
+function onOpenInvoice(invoiceId) {
+  router.push(`/factures/${invoiceId}`);
+}
 
 const periodOptions = ["Mois", "Trimestre", "Année"];
 const period = ref("Mois");
 
 const chartTypeOptions = [
-  {value: "line", label: "Ligne"},
-  {value: "area", label: "Aire"},
-  {value: "bar", label: "Barres"},
+  { value: "line", label: "Ligne" },
+  { value: "area", label: "Aire" },
+  { value: "bar", label: "Barres" },
 ];
 const chartType = ref("line");
 
 const typeFilters = [
-  {value: "all", label: "Toutes"},
-  {value: "revenu", label: "Revenus"},
-  {value: "depense", label: "Dépenses"},
+  { value: "all", label: "Toutes" },
+  { value: "revenu", label: "Revenus" },
+  { value: "depense", label: "Dépenses" },
 ];
 const typeFilter = ref("all");
 
@@ -304,7 +303,7 @@ const kpis = computed(() => {
 });
 
 const chartSeries = computed(() =>
-    computeChartSeries(transactions.value, period.value)
+  computeChartSeries(transactions.value, period.value),
 );
 
 const chartSubtitle = computed(() => {
@@ -314,17 +313,15 @@ const chartSubtitle = computed(() => {
 });
 
 const revenueBySource = computed(() =>
-    computeRevenueBySource(
-        filterByPeriod(transactions.value, "Année")
-    )
+  computeRevenueBySource(filterByPeriod(transactions.value, "Année")),
 );
 
 const filteredTransactions = computed(() => {
   const filteredByPeriod = filterByPeriod(transactions.value, period.value);
   const filteredByType =
-      typeFilter.value === "all"
-          ? filteredByPeriod
-          : filteredByPeriod.filter((t) => t.type === typeFilter.value);
+    typeFilter.value === "all"
+      ? filteredByPeriod
+      : filteredByPeriod.filter((t) => t.type === typeFilter.value);
   return filteredByType.slice(0, 12);
 });
 
@@ -343,8 +340,8 @@ async function onSave(transaction) {
     await saveTransaction(transaction);
     closeSlideOver();
     showToast(
-        transaction.id ? "Transaction modifiée" : "Transaction ajoutée",
-        "success"
+      transaction.id ? "Transaction modifiée" : "Transaction ajoutée",
+      "success",
     );
   } catch (err) {
     showToast(err.message || "Erreur lors de l'enregistrement", "error");
@@ -356,11 +353,11 @@ function onEdit(row) {
 }
 
 function onDuplicate(row) {
-  const dup = {...row.raw};
+  const dup = { ...row.raw };
   delete dup.id;
   delete dup.createdAt;
   delete dup.editedAt;
-  openSlideOver({raw: dup});
+  openSlideOver({ raw: dup });
 }
 
 function onChangeCategory(row) {

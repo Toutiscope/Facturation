@@ -3,7 +3,7 @@
     <div class="container">
       <div class="header">
         <h1>Devis</h1>
-        <button @click="createNew" class="btn btn-primary">
+        <button class="btn btn-primary" @click="createNew">
           + Nouveau devis
         </button>
       </div>
@@ -15,11 +15,11 @@
             <label for="search">Rechercher</label>
             <input
               id="search"
-              type="text"
               v-model="filters.search"
-              @input="applyFilters"
+              type="text"
               placeholder="Numéro ou nom du client"
               class="form-control"
+              @input="applyFilters"
             />
           </div>
 
@@ -28,8 +28,8 @@
             <select
               id="status"
               v-model="filters.status"
-              @change="applyFilters"
               class="form-control"
+              @change="applyFilters"
             >
               <option value="">Tous</option>
               <option value="draft">Brouillon</option>
@@ -44,8 +44,8 @@
             <select
               id="year"
               v-model="filters.year"
-              @change="applyFilters"
               class="form-control"
+              @change="applyFilters"
             >
               <option :value="currentYear">{{ currentYear }}</option>
               <option :value="currentYear - 1">{{ currentYear - 1 }}</option>
@@ -69,7 +69,7 @@
         @delete="deleteQuote"
       >
         <template #empty>
-          <button @click="createNew" class="btn btn-secondary">
+          <button class="btn btn-secondary" @click="createNew">
             Créer votre premier devis
           </button>
         </template>

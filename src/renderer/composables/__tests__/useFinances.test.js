@@ -228,9 +228,7 @@ describe("computeKpis", () => {
 
   it("still counts manual revenue in CA regardless of any 'paid' flag", () => {
     const { computeKpis } = useFinances();
-    const list = [
-      txn({ amount: 250, isoDate: localIso(2026, 4, 10) }),
-    ];
+    const list = [txn({ amount: 250, isoDate: localIso(2026, 4, 10) })];
     const kpis = computeKpis(list);
     expect(kpis.caMonth).toBe(250);
     expect(kpis.caYear).toBe(250);
@@ -343,7 +341,9 @@ describe("computeRevenueBySource", () => {
     ];
     const result = computeRevenueBySource(list);
     expect(result.total).toBe(700);
-    const invoiceSeg = result.segments.find((s) => s.label.includes("Factures"));
+    const invoiceSeg = result.segments.find((s) =>
+      s.label.includes("Factures"),
+    );
     expect(invoiceSeg.value).toBe(500);
   });
 });
