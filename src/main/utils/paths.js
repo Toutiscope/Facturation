@@ -40,6 +40,7 @@ const DEFAULT_CONFIG = {
 };
 
 export const DEFAULT_EINVOICE_PLATFORM = DEFAULT_CONFIG.einvoicePlatform;
+export { DEFAULT_CONFIG };
 
 // Fonctions lazy pour obtenir les chemins (évite l'accès à app avant qu'il soit ready)
 const getPaths = () => {

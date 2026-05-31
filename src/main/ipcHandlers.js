@@ -29,6 +29,7 @@ import {
   listEvents as pdpListEvents,
   createEvent as pdpCreateEvent,
   searchFrenchDirectory as pdpSearchFrenchDirectory,
+  resolveRecipient as pdpResolveRecipient,
   resetAdapterCache,
 } from "./einvoiceApi/index.js";
 import { searchCompanies as searchCompanyDirectory } from "./companyDirectory.js";
@@ -425,6 +426,14 @@ export function initializeIPC() {
       if (!siren) throw new PdpInputError("SIREN requis");
       const config = await loadConfig();
       return pdpSearchFrenchDirectory(config, siren);
+    }),
+  );
+
+  ipcMain.handle("pdp:resolve-recipient", (event, siren) =>
+    wrapPdp(async () => {
+      if (!siren) throw new PdpInputError("SIREN requis");
+      const config = await loadConfig();
+      return pdpResolveRecipient(config, siren);
     }),
   );
 

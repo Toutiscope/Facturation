@@ -64,6 +64,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     createEvent: (payload) => ipcRenderer.invoke("pdp:create-event", payload),
     searchDirectory: (siren) =>
       ipcRenderer.invoke("pdp:search-directory", siren),
+    resolveRecipient: (siren) =>
+      ipcRenderer.invoke("pdp:resolve-recipient", siren),
     sync: () => ipcRenderer.invoke("pdp:sync"),
   },
 });

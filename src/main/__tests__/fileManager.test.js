@@ -53,6 +53,37 @@ vi.mock("../utils/paths", () => {
       isSandbox: false,
       lastSyncedEventId: null,
     },
+    DEFAULT_CONFIG: {
+      company: {
+        companyName: "",
+        ownerName: "",
+        companyId: "",
+        registeredAddress: "",
+        address: "",
+        postalCode: "",
+        city: "",
+        email: "",
+        phoneNumber: "",
+        webSite: "",
+      },
+      rib: { iban: "", bic: "", holder: "" },
+      billing: {
+        legalNotice: "",
+        paymentTerms: "Paiement à 30 jours",
+        meansOfPayment: "Virement bancaire, chèque",
+        latePenalties:
+          "En cas de retard de paiement, application de pénalités de retard au taux de 10% par an et d'une indemnité forfaitaire pour frais de recouvrement de 40€.",
+        latestQuoteNumber: 0,
+        latestInvoiceNumber: 0,
+        pdfOutputPath: "",
+      },
+      einvoicePlatform: {
+        providerName: "",
+        urlApi: "",
+        isSandbox: false,
+        lastSyncedEventId: null,
+      },
+    },
     getYearFolder(type, year) {
       const baseDir =
         type === "devis" ? mockPaths.DEVIS_DIR : mockPaths.FACTURES_DIR;

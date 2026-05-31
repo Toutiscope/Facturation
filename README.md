@@ -43,7 +43,95 @@ L'application se lancera automatiquement avec:
 npm run build:win
 ```
 
-L'installeur sera généré dans `out/Facturation Setup 1.0.0.exe`
+L'installeur sera généré dans `out/Facturation-Setup-<version>.exe` (build local, **sans** publication).
+
+## 📦 Publier une mise à jour sur GitHub
+
+L'application vérifie les nouvelles versions au démarrage (puis toutes les 4 h) sur les **GitHub Releases** du dépôt `Toutiscope/Facturation`, via `electron-updater`. Pour livrer une mise à jour, il faut **incrémenter la version**, **construire l'installeur** et **publier la release** (qui doit contenir le `.exe` + le manifeste `latest.yml`).
+
+> ℹ️ L'auto-updater est **désactivé en mode développement** (`app.isPackaged === false`). Il ne fonctionne que sur une version installée.
+
+### Prérequis (une seule fois)
+
+1. Créer un **Personal Access Token** GitHub avec le scope `repo` : <https://github.com/settings/tokens>
+2. L'exposer dans le terminal **avant** de publier (PowerShell) :
+
+   ```powershell
+   $env:GH_TOKEN = "ghp_votre_token_ici"
+   ```
+
+   > Le token ne doit **jamais** être committé. Il ne sert qu'à `electron-builder` pour créer la release.
+
+### Étapes de publication
+
+#### 1. Vérifier que tout est prêt
+
+```powershell
+npm test                 # les tests passent
+git status               # rien de sensible non voulu (data/, config.json...)
+```
+
+#### 2. Incrémenter le numéro de version
+
+La version qui pilote l'auto-update est le champ `"version"` de `package.json`. `npm version` met à jour `package.json` **et** crée un commit + un tag `vX.Y.Z` :
+
+```powershell
+npm version patch        # 1.0.3 -> 1.0.4  (correctif)
+npm version minor        # 1.0.3 -> 1.1.0  (nouvelle fonctionnalité)
+npm version major        # 1.0.3 -> 2.0.0  (changement majeur)
+```
+
+#### 3. Construire ET publier en une commande
+
+```powershell
+$env:GH_TOKEN = "ghp_votre_token_ici"
+npx electron-builder --win --publish always
+```
+
+Cette commande construit le renderer, génère l'installeur `out/Facturation-Setup-X.Y.Z.exe`, produit le manifeste `latest.yml` (lu par l'auto-updater) et crée/alimente une **release GitHub** taguée `vX.Y.Z`.
+
+> `npm run build:win` construit **sans** publier. Pour publier, ajoute `--publish always`.
+
+#### 4. Finaliser la release sur GitHub
+
+Sur <https://github.com/Toutiscope/Facturation/releases>, vérifier que la release contient :
+
+- `Facturation-Setup-X.Y.Z.exe`
+- `latest.yml`
+- `Facturation-Setup-X.Y.Z.exe.blockmap`
+
+Puis **publier** la release si elle est en brouillon (l'auto-updater ne voit que les releases publiées et non marquées « pre-release ») et rédiger les notes de version.
+
+#### 5. Pousser le commit et le tag
+
+```powershell
+git push --follow-tags
+```
+
+### Vérifier que la mise à jour fonctionne
+
+1. Installer une version **antérieure** de l'app.
+2. La lancer : au bout de ~10 s elle interroge GitHub, puis une notification « Mise à jour disponible » apparaît et le téléchargement se fait en arrière-plan.
+3. Logs de l'auto-updater (`electron-log`) : `%APPDATA%\Facturation\logs\main.log`
+
+### Dépannage
+
+| Symptôme | Cause probable / solution |
+|---|---|
+| `electron-builder` ne publie pas | `GH_TOKEN` absent ou sans scope `repo`. Re-déclarer `$env:GH_TOKEN`. |
+| L'app ne voit pas la mise à jour | Release en **draft** ou marquée **pre-release** → la publier en release normale. |
+| « update-not-available » alors qu'une release existe | Version GitHub non **supérieure** à l'installée, ou `latest.yml` absent de la release. |
+| Pas de mise à jour en `npm run dev` | Normal : auto-updater désactivé hors version packagée. |
+
+### Aide-mémoire (cycle complet)
+
+```powershell
+npm test
+$env:GH_TOKEN = "ghp_xxx"
+npm version patch
+npx electron-builder --win --publish always
+git push --follow-tags
+```
 
 ## Structure du Projet
 
