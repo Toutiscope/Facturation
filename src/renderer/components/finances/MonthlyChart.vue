@@ -78,7 +78,10 @@
               :width="barWidth"
               :height="plotHeight - yRev[i]"
               class="chart__bar chart__bar--income"
-              :class="{ 'chart__bar--dimmed': hoveredIndex !== null && hoveredIndex !== i }"
+              :class="{
+                'chart__bar--dimmed':
+                  hoveredIndex !== null && hoveredIndex !== i,
+              }"
               :rx="barRadius"
             />
             <rect
@@ -87,7 +90,10 @@
               :width="barWidth"
               :height="plotHeight - yExp[i]"
               class="chart__bar chart__bar--expense"
-              :class="{ 'chart__bar--dimmed': hoveredIndex !== null && hoveredIndex !== i }"
+              :class="{
+                'chart__bar--dimmed':
+                  hoveredIndex !== null && hoveredIndex !== i,
+              }"
               :rx="barRadius"
             />
           </g>
@@ -117,7 +123,9 @@
         :style="tooltipStyle"
         role="tooltip"
       >
-        <div class="chart__tooltip-title">{{ resolvedFullLabels[hoveredIndex] }}</div>
+        <div class="chart__tooltip-title">
+          {{ resolvedFullLabels[hoveredIndex] }}
+        </div>
         <div class="chart__tooltip-row">
           <span class="chart__tooltip-dot chart__tooltip-dot--income" />
           <span class="chart__tooltip-label">Revenus</span>
@@ -152,7 +160,9 @@
       <span
         v-for="(m, i) in displayedLabels"
         :key="i"
-        :class="{ 'chart__x-axis-label--active': hoveredIndex === labelIndexes[i] }"
+        :class="{
+          'chart__x-axis-label--active': hoveredIndex === labelIndexes[i],
+        }"
       >
         {{ m }}
       </span>
@@ -191,7 +201,20 @@ const props = defineProps({
   },
 });
 
-const DEFAULT_LABELS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+const DEFAULT_LABELS = [
+  "J",
+  "F",
+  "M",
+  "A",
+  "M",
+  "J",
+  "J",
+  "A",
+  "S",
+  "O",
+  "N",
+  "D",
+];
 const DEFAULT_FULL_LABELS = [
   "Janvier",
   "Février",
@@ -241,7 +264,7 @@ const labelIndexes = computed(() => {
 });
 
 const displayedLabels = computed(() =>
-  labelIndexes.value.map((i) => resolvedLabels.value[i])
+  labelIndexes.value.map((i) => resolvedLabels.value[i]),
 );
 
 const X_AXIS_HEIGHT = 22;
@@ -284,27 +307,30 @@ const maxValue = computed(() => {
 });
 
 const slotWidth = computed(() =>
-  pointCount.value > 0 ? plotWidth.value / pointCount.value : plotWidth.value
+  pointCount.value > 0 ? plotWidth.value / pointCount.value : plotWidth.value,
 );
 
 const xs = computed(() =>
-  Array.from({ length: pointCount.value }, (_, i) => slotWidth.value * (i + 0.5))
+  Array.from(
+    { length: pointCount.value },
+    (_, i) => slotWidth.value * (i + 0.5),
+  ),
 );
 
 const yRev = computed(() =>
   props.revenue.map(
-    (v) => plotHeight.value - (v / maxValue.value) * plotHeight.value
-  )
+    (v) => plotHeight.value - (v / maxValue.value) * plotHeight.value,
+  ),
 );
 
 const yExp = computed(() =>
   props.expense.map(
-    (v) => plotHeight.value - (v / maxValue.value) * plotHeight.value
-  )
+    (v) => plotHeight.value - (v / maxValue.value) * plotHeight.value,
+  ),
 );
 
 const gridLines = computed(() =>
-  [0, 0.25, 0.5, 0.75, 1].map((r) => r * plotHeight.value)
+  [0, 0.25, 0.5, 0.75, 1].map((r) => r * plotHeight.value),
 );
 
 const barWidth = computed(() => Math.max((slotWidth.value - 8) / 2, 4));
@@ -314,7 +340,7 @@ const barRadius = 2;
 const yLabels = computed(() => {
   const max = maxValue.value;
   return [max, max * 0.75, max * 0.5, max * 0.25, 0].map(
-    (v) => `${formatShort(v)} €`
+    (v) => `${formatShort(v)} €`,
   );
 });
 
@@ -357,7 +383,10 @@ function onMouseMove(event) {
     hoveredIndex.value = null;
     return;
   }
-  const idx = Math.min(total - 1, Math.max(0, Math.floor((x / rect.width) * total)));
+  const idx = Math.min(
+    total - 1,
+    Math.max(0, Math.floor((x / rect.width) * total)),
+  );
   hoveredIndex.value = idx;
 }
 
@@ -376,10 +405,7 @@ function formatCurrency(v) {
 
 function linePath(values) {
   return values
-    .map(
-      (y, i) =>
-        `${i ? "L" : "M"}${xs.value[i].toFixed(2)} ${y.toFixed(2)}`
-    )
+    .map((y, i) => `${i ? "L" : "M"}${xs.value[i].toFixed(2)} ${y.toFixed(2)}`)
     .join(" ");
 }
 

@@ -1,5 +1,3 @@
-import log from "electron-log";
-
 /**
  * Recherche d'entreprises françaises par nom (ou SIREN/SIRET) via l'API publique
  * et gratuite « Recherche d'Entreprises » (DINUM / data.gouv.fr).
@@ -27,7 +25,9 @@ export async function searchCompanies(query, { limit = 8 } = {}) {
     `${SEARCH_BASE_URL}?q=${encodeURIComponent(q)}` +
     `&page=1&per_page=${limit}`;
 
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+  });
   if (!response.ok) {
     const body = await response.text().catch(() => "");
     const err = new Error(`Recherche entreprises: HTTP ${response.status}`);
@@ -75,7 +75,8 @@ function buildStreet(siege) {
 
   // Repli : `adresse` complète, on retire le code postal + la commune en fin.
   const full = (siege.adresse || "").trim();
-  const tail = `${siege.code_postal || ""} ${siege.libelle_commune || ""}`.trim();
+  const tail =
+    `${siege.code_postal || ""} ${siege.libelle_commune || ""}`.trim();
   if (tail && full.endsWith(tail)) return full.slice(0, -tail.length).trim();
   return full;
 }

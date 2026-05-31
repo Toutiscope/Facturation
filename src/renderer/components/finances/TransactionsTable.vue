@@ -47,14 +47,15 @@
               : 'amount amount--negative'
           "
         >
-          {{ row.signedAmount >= 0 ? "+" : "−" }} {{ formatAmount(row.amount) }} €
+          {{ row.signedAmount >= 0 ? "+" : "−" }}
+          {{ formatAmount(row.amount) }} €
         </span>
       </div>
       <div class="txn-table__actions">
         <div
           v-if="row.source === 'manuel'"
-          class="kebab"
           v-click-outside="() => closeMenu(row.id)"
+          class="kebab"
         >
           <button
             type="button"

@@ -16,7 +16,6 @@ import CustomerFields from "./CustomerFields.vue";
 defineProps({
   modelValue: {
     type: Object,
-    required: true,
     default: () => ({
       customerName: "",
       companyName: "",

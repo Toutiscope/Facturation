@@ -68,16 +68,14 @@
               required
               @blur="validateField('date')"
             />
-            <span
-              v-if="errors.date"
-              id="txn-date-error"
-              class="error-message"
-            >
+            <span v-if="errors.date" id="txn-date-error" class="error-message">
               {{ errors.date }}
             </span>
           </div>
           <div class="field">
-            <label for="txn-amount" class="field__label required">Montant</label>
+            <label for="txn-amount" class="field__label required"
+              >Montant</label
+            >
             <input
               id="txn-amount"
               v-model.number="form.amount"
@@ -116,11 +114,7 @@
             required
             @blur="validateField('label')"
           />
-          <span
-            v-if="errors.label"
-            id="txn-label-error"
-            class="error-message"
-          >
+          <span v-if="errors.label" id="txn-label-error" class="error-message">
             {{ errors.label }}
           </span>
         </div>
@@ -219,7 +213,11 @@
             Annuler
           </button>
           <button type="button" class="btn btn-primary" @click="onSubmit">
-            {{ isEdit ? "Enregistrer les modifications" : "Enregistrer la transaction" }}
+            {{
+              isEdit
+                ? "Enregistrer les modifications"
+                : "Enregistrer la transaction"
+            }}
           </button>
         </div>
       </footer>
@@ -228,7 +226,14 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import {
+  reactive,
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+} from "vue";
 
 const props = defineProps({
   visible: {
@@ -243,11 +248,7 @@ const props = defineProps({
 
 const emit = defineEmits(["save", "cancel"]);
 
-const suggestedCategories = [
-  "Fournitures",
-  "Logiciel",
-  "Loyer",
-];
+const suggestedCategories = ["Fournitures", "Logiciel", "Loyer"];
 
 const paymentMethods = ["Espèces", "Virement", "Chèque", "CB", "Autre"];
 
@@ -337,7 +338,8 @@ watch(
       const empty = emptyForm();
       Object.assign(form, {
         type: t.type || "revenu",
-        date: isoToHtmlDate(t.isoDate) || isoToHtmlDate(t.createdAt) || empty.date,
+        date:
+          isoToHtmlDate(t.isoDate) || isoToHtmlDate(t.createdAt) || empty.date,
         amount: typeof t.amount === "number" ? Math.abs(t.amount) : null,
         label: t.label || "",
         category: t.category || "",
@@ -349,7 +351,7 @@ watch(
       Object.assign(form, emptyForm());
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 function onSubmit() {

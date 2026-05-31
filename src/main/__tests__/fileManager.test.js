@@ -198,9 +198,7 @@ describe("Config", () => {
     await saveConfig(updated);
 
     // Read from disk to verify
-    const raw = JSON.parse(
-      await fs.readFile(mockPaths.CONFIG_PATH, "utf-8"),
-    );
+    const raw = JSON.parse(await fs.readFile(mockPaths.CONFIG_PATH, "utf-8"));
     expect(raw.company.companyName).toBe("Updated");
   });
 });
@@ -256,8 +254,14 @@ describe("Documents", () => {
   });
 
   it("loadDocuments filters by status", async () => {
-    await saveDocument("devis", makeQuote({ numero: "D000001", status: "draft" }));
-    await saveDocument("devis", makeQuote({ numero: "D000002", status: "sent" }));
+    await saveDocument(
+      "devis",
+      makeQuote({ numero: "D000001", status: "draft" }),
+    );
+    await saveDocument(
+      "devis",
+      makeQuote({ numero: "D000002", status: "sent" }),
+    );
     const docs = await loadDocuments("devis", {
       year: new Date().getFullYear(),
       status: "draft",
@@ -520,9 +524,7 @@ describe("Transactions", () => {
   });
 
   it("saveTransaction always forces source to 'manuel' (ignores incoming source)", async () => {
-    const saved = await saveTransaction(
-      makeTransaction({ source: "facture" }),
-    );
+    const saved = await saveTransaction(makeTransaction({ source: "facture" }));
     expect(saved.source).toBe("manuel");
   });
 

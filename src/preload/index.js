@@ -32,8 +32,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("update-not-available", () => callback()),
   onUpdateDownloaded: (callback) =>
     ipcRenderer.on("update-downloaded", (_, info) => callback(info)),
-  onUpdateError: (callback) =>
-    ipcRenderer.on("update-error", () => callback()),
+  onUpdateError: (callback) => ipcRenderer.on("update-error", () => callback()),
   installUpdate: () => ipcRenderer.invoke("install-update"),
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
   openExternal: (url) => ipcRenderer.invoke("open-external", url),

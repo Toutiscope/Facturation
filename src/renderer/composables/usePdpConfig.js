@@ -2,7 +2,11 @@ import { ref, computed } from "vue";
 
 export const PDP_PROVIDERS = [
   { value: "", label: "Aucune (désactivée)", defaultUrlApi: "" },
-  { value: "superpdp", label: "SuperPDP", defaultUrlApi: "https://api.superpdp.tech" },
+  {
+    value: "superpdp",
+    label: "SuperPDP",
+    defaultUrlApi: "https://api.superpdp.tech",
+  },
 ];
 
 /**
@@ -43,7 +47,9 @@ export function usePdpConfig() {
     checkingCredentials.value = true;
     try {
       const result = await window.electronAPI.pdp.hasCredentials(providerName);
-      hasCredentials.value = Boolean(result && result.ok && result.data?.hasCredentials);
+      hasCredentials.value = Boolean(
+        result && result.ok && result.data?.hasCredentials,
+      );
       return hasCredentials.value;
     } finally {
       checkingCredentials.value = false;
@@ -62,8 +68,12 @@ export function usePdpConfig() {
   }
 
   async function saveCredentials(providerName, platform) {
-    if (!providerName) throw new Error("Sélectionner d'abord une plateforme PDP");
-    if (!credentialsDraft.value.client_id || !credentialsDraft.value.client_secret) {
+    if (!providerName)
+      throw new Error("Sélectionner d'abord une plateforme PDP");
+    if (
+      !credentialsDraft.value.client_id ||
+      !credentialsDraft.value.client_secret
+    ) {
       throw new Error("client_id et client_secret requis");
     }
 
@@ -75,7 +85,9 @@ export function usePdpConfig() {
         platform,
       );
       if (!result.ok) {
-        throw new Error(result.error?.message || "Sauvegarde des identifiants échouée");
+        throw new Error(
+          result.error?.message || "Sauvegarde des identifiants échouée",
+        );
       }
       hasCredentials.value = true;
       editingCredentials.value = false;
@@ -89,7 +101,8 @@ export function usePdpConfig() {
     if (!providerName) return;
     deletingCredentials.value = true;
     try {
-      const result = await window.electronAPI.pdp.deleteCredentials(providerName);
+      const result =
+        await window.electronAPI.pdp.deleteCredentials(providerName);
       if (!result.ok) {
         throw new Error(result.error?.message || "Suppression échouée");
       }

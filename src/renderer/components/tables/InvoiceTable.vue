@@ -45,7 +45,7 @@
             <span v-else class="pdp-dash">—</span>
           </td>
           <td class="actions-cell">
-            <div class="dropdown" v-click-outside="() => closeMenu(invoice.id)">
+            <div v-click-outside="() => closeMenu(invoice.id)" class="dropdown">
               <button
                 class="btn-icon"
                 title="Actions"

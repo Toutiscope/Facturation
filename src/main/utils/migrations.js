@@ -11,9 +11,7 @@ import { defaultEinvoice } from "../validator.js";
  * Vrai si la valeur est un objet "plain" (ni null, ni tableau).
  */
 function isPlainObject(value) {
-  return (
-    value !== null && typeof value === "object" && !Array.isArray(value)
-  );
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 /**
@@ -70,7 +68,8 @@ export function hydrateConfig(config) {
  */
 export function hydrateDocument(type, document) {
   if (!document || type !== "factures") return document;
-  if (document.einvoice && typeof document.einvoice === "object") return document;
+  if (document.einvoice && typeof document.einvoice === "object")
+    return document;
 
   return { ...document, einvoice: defaultEinvoice() };
 }

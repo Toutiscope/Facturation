@@ -2,18 +2,24 @@
   <div class="customer-fields">
     <SegmentedControl
       v-model="localCustomer.clientType"
-      @change="handleClientTypeChange"
       class="mg-bottom-16"
+      @change="handleClientTypeChange"
     />
 
     <div class="form-row">
       <!-- Nom du client : autocomplete sur les clients enregistrés (optionnel) -->
-      <div class="form-group" :class="{ 'autocomplete-wrapper': enableClientLookup }">
+      <div
+        class="form-group"
+        :class="{ 'autocomplete-wrapper': enableClientLookup }"
+      >
         <label :for="`${idPrefix}customerName`">Nom du client</label>
         <input
           :id="`${idPrefix}customerName`"
-          type="text"
           v-model="localCustomer.customerName"
+          type="text"
+          placeholder="Nom et prénom"
+          class="form-control"
+          autocomplete="off"
           @input="onNameInput"
           @focus="onNameFocus"
           @blur="onNameBlur"
@@ -21,9 +27,6 @@
           @keydown.up.prevent="onArrowUp"
           @keydown.enter.prevent="onEnter"
           @keydown.escape="closeDropdown"
-          placeholder="Nom et prénom"
-          class="form-control"
-          autocomplete="off"
         />
         <ul
           v-if="enableClientLookup && showDropdown && suggestions.length > 0"
@@ -33,10 +36,15 @@
             v-for="(client, index) in suggestions"
             :key="client.id"
             class="autocomplete-dropdown__item"
-            :class="{ 'autocomplete-dropdown__item--highlighted': index === highlightedIndex }"
+            :class="{
+              'autocomplete-dropdown__item--highlighted':
+                index === highlightedIndex,
+            }"
             @mousedown.prevent="selectClient(client)"
           >
-            <span class="autocomplete-dropdown__name">{{ client.customerName }}</span>
+            <span class="autocomplete-dropdown__name">{{
+              client.customerName
+            }}</span>
             <span
               v-if="client.clientType === 'professionnel' && client.companyName"
               class="autocomplete-dropdown__company"
@@ -58,8 +66,11 @@
         <label :for="`${idPrefix}companyName`">Nom de l'entreprise</label>
         <input
           :id="`${idPrefix}companyName`"
-          type="text"
           v-model="localCustomer.companyName"
+          type="text"
+          placeholder="Raison sociale"
+          class="form-control"
+          autocomplete="off"
           @input="onCompanyInput"
           @focus="onCompanyFocus"
           @blur="onCompanyBlur"
@@ -67,12 +78,11 @@
           @keydown.up.prevent="onCompanyArrowUp"
           @keydown.enter.prevent="onCompanyEnter"
           @keydown.escape="closeCompanyDropdown"
-          placeholder="Raison sociale"
-          class="form-control"
-          autocomplete="off"
         />
         <ul
-          v-if="showCompanyDropdown && (companyLoading || companyResults.length > 0)"
+          v-if="
+            showCompanyDropdown && (companyLoading || companyResults.length > 0)
+          "
           class="autocomplete-dropdown"
         >
           <li v-if="companyLoading" class="autocomplete-dropdown__status">
@@ -83,20 +93,31 @@
               v-for="(company, index) in companyResults"
               :key="company.siren"
               class="autocomplete-dropdown__item"
-              :class="{ 'autocomplete-dropdown__item--highlighted': index === companyHighlightedIndex }"
+              :class="{
+                'autocomplete-dropdown__item--highlighted':
+                  index === companyHighlightedIndex,
+              }"
               @mousedown.prevent="selectCompany(company)"
             >
               <span class="autocomplete-dropdown__name">
                 {{ company.companyName }}
-                <span v-if="company.closed" class="autocomplete-dropdown__badge">
+                <span
+                  v-if="company.closed"
+                  class="autocomplete-dropdown__badge"
+                >
                   fermé
                 </span>
               </span>
-              <span v-if="company.companyId" class="autocomplete-dropdown__company">
+              <span
+                v-if="company.companyId"
+                class="autocomplete-dropdown__company"
+              >
                 SIRET {{ company.companyId }}
               </span>
               <span v-if="company.city" class="autocomplete-dropdown__city">
-                {{ [company.postalCode, company.city].filter(Boolean).join(" ") }}
+                {{
+                  [company.postalCode, company.city].filter(Boolean).join(" ")
+                }}
               </span>
             </li>
           </template>
@@ -108,16 +129,16 @@
       </div>
     </div>
 
-    <div class="form-group" v-if="localCustomer.clientType === 'professionnel'">
+    <div v-if="localCustomer.clientType === 'professionnel'" class="form-group">
       <label :for="`${idPrefix}companyId`">SIRET</label>
       <input
         :id="`${idPrefix}companyId`"
-        type="text"
         v-model="localCustomer.companyId"
-        @input="emitUpdate"
+        type="text"
         placeholder="123 456 789 00012"
         class="form-control"
         maxlength="17"
+        @input="emitUpdate"
       />
       <small class="form-text">Format: 14 chiffres (espaces optionnels)</small>
 
@@ -163,7 +184,11 @@
       </div>
 
       <button
-        v-if="recipientEndpoint && !localCustomer.electronicAddress && formattedEndpoint"
+        v-if="
+          recipientEndpoint &&
+          !localCustomer.electronicAddress &&
+          formattedEndpoint
+        "
         type="button"
         class="pdp-prefill"
         @click="useResolvedEndpoint"
@@ -172,21 +197,22 @@
       </button>
     </div>
 
-    <div class="form-group" v-if="localCustomer.clientType === 'professionnel'">
+    <div v-if="localCustomer.clientType === 'professionnel'" class="form-group">
       <label :for="`${idPrefix}electronicAddress`">
         Adresse électronique PDP (optionnel)
       </label>
       <input
         :id="`${idPrefix}electronicAddress`"
-        type="text"
         v-model="localCustomer.electronicAddress"
-        @input="emitUpdate"
+        type="text"
         placeholder="ex : 0225:315143296_8898"
         class="form-control"
+        @input="emitUpdate"
       />
       <small class="form-text">
         Adresse de routage pour la facturation électronique. Laissez vide pour
-        une résolution automatique via l'annuaire (au format scheme:valeur sinon).
+        une résolution automatique via l'annuaire (au format scheme:valeur
+        sinon).
       </small>
     </div>
 
@@ -194,11 +220,11 @@
       <label :for="`${idPrefix}address`">Adresse</label>
       <input
         :id="`${idPrefix}address`"
-        type="text"
         v-model="localCustomer.address"
-        @input="emitUpdate"
+        type="text"
         placeholder="123 Rue Example"
         class="form-control"
+        @input="emitUpdate"
       />
     </div>
 
@@ -207,13 +233,13 @@
         <label :for="`${idPrefix}postalCode`">Code postal</label>
         <input
           :id="`${idPrefix}postalCode`"
-          type="text"
           v-model="localCustomer.postalCode"
-          @input="emitUpdate"
+          type="text"
           placeholder="44000"
           class="form-control"
           pattern="\d{5}"
           maxlength="5"
+          @input="emitUpdate"
         />
       </div>
 
@@ -221,11 +247,11 @@
         <label :for="`${idPrefix}city`">Ville</label>
         <input
           :id="`${idPrefix}city`"
-          type="text"
           v-model="localCustomer.city"
-          @input="emitUpdate"
+          type="text"
           placeholder="Nantes"
           class="form-control"
+          @input="emitUpdate"
         />
       </div>
     </div>
@@ -235,11 +261,11 @@
         <label :for="`${idPrefix}email`">Email</label>
         <input
           :id="`${idPrefix}email`"
-          type="email"
           v-model="localCustomer.email"
-          @input="emitUpdate"
+          type="email"
           placeholder="client@exemple.fr"
           class="form-control"
+          @input="emitUpdate"
         />
       </div>
 
@@ -247,12 +273,12 @@
         <label :for="`${idPrefix}phoneNumber`">Téléphone</label>
         <input
           :id="`${idPrefix}phoneNumber`"
+          v-model="localCustomer.phoneNumber"
           type="tel"
           maxlength="10"
-          v-model="localCustomer.phoneNumber"
-          @input="emitUpdate"
           placeholder="06 12 34 56 78"
           class="form-control"
+          @input="emitUpdate"
         />
       </div>
     </div>
@@ -363,7 +389,8 @@ function onNameBlur() {
 
 function onArrowDown() {
   if (!showDropdown.value || suggestions.value.length === 0) return;
-  highlightedIndex.value = (highlightedIndex.value + 1) % suggestions.value.length;
+  highlightedIndex.value =
+    (highlightedIndex.value + 1) % suggestions.value.length;
 }
 
 function onArrowUp() {
@@ -465,7 +492,8 @@ function selectCompany(company) {
   // On ne remplit que les champs entreprise + adresse ; le nom du contact
   // (customerName) reste saisi par l'utilisateur.
   localCustomer.value.companyName = company.companyName || "";
-  localCustomer.value.companyId = company.companyId || localCustomer.value.companyId;
+  localCustomer.value.companyId =
+    company.companyId || localCustomer.value.companyId;
   localCustomer.value.address = company.address || localCustomer.value.address;
   localCustomer.value.postalCode =
     company.postalCode || localCustomer.value.postalCode;

@@ -123,9 +123,9 @@ describe("Validation — règles métier", () => {
     doc.customer.companyId = "";
     const result = validateDocument("devis", doc);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.path === "customer.companyId"),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.path === "customer.companyId")).toBe(
+      true,
+    );
   });
 
   it("client particulier sans SIRET passe", () => {
@@ -143,9 +143,9 @@ describe("Validation — règles métier", () => {
     doc.totals.totalTTC = 999;
     const result = validateDocument("devis", doc);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.path === "services.0.totalHT"),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.path === "services.0.totalHT")).toBe(
+      true,
+    );
   });
 
   it("incohérence totalHT global (somme services ≠ totals.totalHT) → erreur", () => {
@@ -154,9 +154,7 @@ describe("Validation — règles métier", () => {
     doc.totals.totalTTC = 1000;
     const result = validateDocument("devis", doc);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.path === "totals.totalHT"),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.path === "totals.totalHT")).toBe(true);
   });
 
   it("incohérence TTC (HT + TVA ≠ TTC) → erreur", () => {
@@ -165,9 +163,7 @@ describe("Validation — règles métier", () => {
     doc.totals.totalTTC = 600; // Should be 600 + 120 = 720
     const result = validateDocument("devis", doc);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.path === "totals.totalTTC"),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.path === "totals.totalTTC")).toBe(true);
   });
 });
 
@@ -206,9 +202,8 @@ describe("Validation — format numéro", () => {
 //  Bloc e-invoice (Phase 2 — intégration PDP)
 // ──────────────────────────────────────────────────────────────
 
-const { defaultEinvoice, einvoiceSchema, EINVOICE_STATUSES } = await import(
-  "../validator.js"
-);
+const { defaultEinvoice, einvoiceSchema, EINVOICE_STATUSES } =
+  await import("../validator.js");
 
 describe("Validation — bloc einvoice", () => {
   it("une facture sans bloc einvoice reste valide (optional)", () => {

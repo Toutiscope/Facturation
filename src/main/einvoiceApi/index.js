@@ -43,7 +43,10 @@ export function getAdapter(config) {
  * de l'adapter au prochain appel.
  */
 export function resetAdapterCache() {
-  if (cachedAdapter && typeof cachedAdapter.invalidateTokenCache === "function") {
+  if (
+    cachedAdapter &&
+    typeof cachedAdapter.invalidateTokenCache === "function"
+  ) {
     cachedAdapter.invalidateTokenCache();
   }
   cachedAdapter = null;
@@ -160,7 +163,10 @@ export async function downloadInvoice(config, id, opts) {
  * @param {Object} opts - { limit, startingAfterId }
  * @returns {Promise<{ rows: Array, hasAfter: boolean, count: number }>}
  */
-export async function fetchReceivedInvoices(config, { limit = 20, startingAfterId } = {}) {
+export async function fetchReceivedInvoices(
+  config,
+  { limit = 20, startingAfterId } = {},
+) {
   const adapter = getAdapter(config);
   const list = await adapter.fetchInvoices({
     direction: "in",

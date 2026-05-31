@@ -35,7 +35,7 @@
             </span>
           </td>
           <td class="actions-cell">
-            <div class="dropdown" v-click-outside="() => closeMenu(quote.id)">
+            <div v-click-outside="() => closeMenu(quote.id)" class="dropdown">
               <button
                 class="btn-icon"
                 title="Actions"

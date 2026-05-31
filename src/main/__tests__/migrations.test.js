@@ -7,10 +7,10 @@ vi.mock("electron", () => ({
   app: { getPath: () => "C:/tmp/facturation-test" },
 }));
 
-const { hydrateConfig, hydrateDocument } = await import("../utils/migrations.js");
-const { DEFAULT_EINVOICE_PLATFORM, DEFAULT_CONFIG } = await import(
-  "../utils/paths.js"
-);
+const { hydrateConfig, hydrateDocument } =
+  await import("../utils/migrations.js");
+const { DEFAULT_EINVOICE_PLATFORM, DEFAULT_CONFIG } =
+  await import("../utils/paths.js");
 
 describe("hydrateConfig", () => {
   it("ajoute einvoicePlatform si absent", () => {

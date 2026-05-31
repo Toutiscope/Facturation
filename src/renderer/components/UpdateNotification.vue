@@ -59,10 +59,16 @@ onMounted(() => {
           <span class="update-banner__spinner"></span>
           Recherche de mises à jour...
         </span>
-        <span v-else-if="status === 'up-to-date'" class="update-banner__message">
+        <span
+          v-else-if="status === 'up-to-date'"
+          class="update-banner__message"
+        >
           L'application est à jour.
         </span>
-        <span v-else-if="status === 'downloading'" class="update-banner__message">
+        <span
+          v-else-if="status === 'downloading'"
+          class="update-banner__message"
+        >
           <span class="update-banner__spinner"></span>
           Mise à jour v{{ version }} en cours de téléchargement...
         </span>
@@ -86,7 +92,7 @@ onMounted(() => {
           </div>
         </template>
       </div>
-      <button class="update-banner__close" @click="dismiss" aria-label="Fermer">
+      <button class="update-banner__close" aria-label="Fermer" @click="dismiss">
         &times;
       </button>
     </div>

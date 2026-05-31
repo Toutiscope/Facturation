@@ -31,6 +31,7 @@ npm run dev
 ```
 
 L'application se lancera automatiquement avec:
+
 - Hot Module Replacement (HMR) pour Vue.js
 - DevTools activés
 - Rechargement automatique du renderer
@@ -116,12 +117,12 @@ git push --follow-tags
 
 ### Dépannage
 
-| Symptôme | Cause probable / solution |
-|---|---|
-| `electron-builder` ne publie pas | `GH_TOKEN` absent ou sans scope `repo`. Re-déclarer `$env:GH_TOKEN`. |
-| L'app ne voit pas la mise à jour | Release en **draft** ou marquée **pre-release** → la publier en release normale. |
+| Symptôme                                             | Cause probable / solution                                                              |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `electron-builder` ne publie pas                     | `GH_TOKEN` absent ou sans scope `repo`. Re-déclarer `$env:GH_TOKEN`.                   |
+| L'app ne voit pas la mise à jour                     | Release en **draft** ou marquée **pre-release** → la publier en release normale.       |
 | « update-not-available » alors qu'une release existe | Version GitHub non **supérieure** à l'installée, ou `latest.yml` absent de la release. |
-| Pas de mise à jour en `npm run dev` | Normal : auto-updater désactivé hors version packagée. |
+| Pas de mise à jour en `npm run dev`                  | Normal : auto-updater désactivé hors version packagée.                                 |
 
 ### Aide-mémoire (cycle complet)
 
@@ -163,6 +164,7 @@ facturation/
 ## Fonctionnalités par Phase
 
 ### ✅ Phase 1 : Structure de base (Terminée)
+
 - [x] Setup Electron + Vue 3 + SCSS
 - [x] Structure de dossiers
 - [x] IPC de base
@@ -170,6 +172,7 @@ facturation/
 - [x] Page Configuration fonctionnelle
 
 ### 🔄 Phase 2 : Gestion documents (En cours)
+
 - [ ] Création/édition devis
 - [ ] Création/édition factures
 - [ ] Stockage JSON
@@ -178,10 +181,12 @@ facturation/
 - [ ] Validation mentions obligatoires
 
 ### ⏳ Phase 3 : Export PDF
+
 - [ ] Génération PDF design professionnel
 - [ ] Export au format e-invoicing (Factur-X / UBL selon la PDP cible)
 
 ### ✅ Phase 4 : Branchement avec une plateforme de facturation agréée (PDP)
+
 - [x] Couche d'abstraction `einvoiceApi/` (adaptateur par fournisseur — SuperPDP)
 - [x] Configuration de la PDP dans les paramètres (OAuth2, bac à sable, test de connexion)
 - [x] Génération UBL EN16931 (validée schematron) + envoi de factures à la PDP
@@ -190,6 +195,7 @@ facturation/
 - [x] Synchronisation des statuts du cycle de vie
 
 ### 🔄 Phase 5 : Finitions
+
 - [x] Auto-update
 - [x] Documentation utilisateur (voir ci-dessous)
 - [ ] Tests utilisateur de bout en bout
@@ -200,6 +206,7 @@ facturation/
 Au premier lancement, l'application copie `config.template.json` vers `data/config.json`.
 
 Configurez votre application via l'interface (page Configuration):
+
 - Informations entreprise (SIRET, adresse, contact)
 - Coordonnées bancaires (RIB)
 - Paramètres de la plateforme de facturation agréée (URL d'API, credentials, format)

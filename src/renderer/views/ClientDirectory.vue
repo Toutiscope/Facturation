@@ -9,12 +9,12 @@
       <div class="client-list-panel">
         <div class="client-list-panel__header">
           <input
-            type="text"
             v-model="searchQuery"
+            type="text"
             placeholder="Rechercher un client..."
             class="form-control search-input"
           />
-          <button @click="createNewClient" class="btn btn-primary btn-sm">
+          <button class="btn btn-primary btn-sm" @click="createNewClient">
             + Nouveau
           </button>
         </div>
@@ -39,7 +39,10 @@
             </span>
           </div>
 
-          <div v-if="filteredClients.length === 0" class="client-list-panel__empty">
+          <div
+            v-if="filteredClients.length === 0"
+            class="client-list-panel__empty"
+          >
             <template v-if="searchQuery">Aucun résultat</template>
             <template v-else>Aucun client enregistré</template>
           </div>
@@ -56,16 +59,16 @@
           <div class="form-actions">
             <button
               v-if="!isNew"
-              @click="confirmDelete"
               class="btn btn-danger btn-sm"
+              @click="confirmDelete"
             >
               Supprimer
             </button>
             <div class="form-actions__right">
-              <button @click="cancelEdit" class="btn btn-secondary">
+              <button class="btn btn-secondary" @click="cancelEdit">
                 Annuler
               </button>
-              <button @click="saveCurrentClient" class="btn btn-primary">
+              <button class="btn btn-primary" @click="saveCurrentClient">
                 Enregistrer
               </button>
             </div>
@@ -109,7 +112,7 @@
       :visible="showUnsavedModal"
       title="Modifications non sauvegardées"
       warning="Les modifications seront perdues si vous quittez cette page."
-      confirmLabel="Quitter sans sauvegarder"
+      confirm-label="Quitter sans sauvegarder"
       @cancel="showUnsavedModal = false"
       @confirm="confirmLeave"
     />
@@ -134,7 +137,8 @@ const showUnsavedModal = ref(false);
 const pendingRoute = ref(null);
 let skipGuard = false;
 
-const { isDirty, setInitialState, markAsSaved } = useUnsavedChanges(editingClient);
+const { isDirty, setInitialState, markAsSaved } =
+  useUnsavedChanges(editingClient);
 
 onBeforeRouteLeave((to) => {
   if (skipGuard) {

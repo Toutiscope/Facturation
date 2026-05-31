@@ -3,21 +3,21 @@
     <label class="control">
       <span>Professionnel</span>
       <input
-        @change="handleClick('professionnel')"
         value="professionnel"
         :checked="newValue === 'professionnel'"
         name="segmentedControl"
         type="radio"
+        @change="handleClick('professionnel')"
       />
     </label>
     <label class="control">
       <span>Particulier</span>
       <input
-        @change="handleClick('particulier')"
         value="particulier"
         :checked="newValue === 'particulier'"
         name="segmentedControl"
         type="radio"
+        @change="handleClick('particulier')"
       />
     </label>
   </fieldset>

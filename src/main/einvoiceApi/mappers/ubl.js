@@ -59,9 +59,7 @@ export function buildUbl(invoice, config, opts = {}) {
   xml.push(el("cbc:DocumentCurrencyCode", CURRENCY));
 
   if (invoice.associatedQuote) {
-    xml.push(
-      tag("cac:OrderReference", el("cbc:ID", invoice.associatedQuote)),
-    );
+    xml.push(tag("cac:OrderReference", el("cbc:ID", invoice.associatedQuote)));
   }
 
   // ── Vendeur ──
@@ -78,7 +76,10 @@ export function buildUbl(invoice, config, opts = {}) {
         postalCode: config.company.postalCode,
         city: config.company.city,
         email: config.company.email,
-        endpoint: normalizeEndpoint(opts.sellerEndpoint, siren(config.company.companyId)),
+        endpoint: normalizeEndpoint(
+          opts.sellerEndpoint,
+          siren(config.company.companyId),
+        ),
       }),
     ),
   );
@@ -293,7 +294,8 @@ function buildNotes(invoice, config) {
     "#PMT#L’indemnité forfaitaire légale pour frais de recouvrement est de 40 €.",
   );
   notes.push(
-    "#AAB#" + (billing.discountTerms || "Aucun escompte pour paiement anticipé."),
+    "#AAB#" +
+      (billing.discountTerms || "Aucun escompte pour paiement anticipé."),
   );
 
   if (billing.legalNotice) notes.push(billing.legalNotice);
@@ -376,7 +378,10 @@ function siren(companyId) {
  */
 function normalizeEndpoint(endpoint, fallbackValue) {
   if (endpoint && typeof endpoint === "object" && endpoint.value) {
-    return { value: endpoint.value, scheme: endpoint.scheme || SCHEME_ENDPOINT };
+    return {
+      value: endpoint.value,
+      scheme: endpoint.scheme || SCHEME_ENDPOINT,
+    };
   }
   if (typeof endpoint === "string" && endpoint) {
     const idx = endpoint.indexOf(":");

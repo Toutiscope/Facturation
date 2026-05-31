@@ -593,7 +593,9 @@ function extractErrorDetails(body) {
     }
     if (Array.isArray(json.errors) && json.errors.length) {
       return json.errors
-        .map((e) => (typeof e === "string" ? e : e.message || JSON.stringify(e)))
+        .map((e) =>
+          typeof e === "string" ? e : e.message || JSON.stringify(e),
+        )
         .join(" • ");
     }
     return JSON.stringify(json);
@@ -601,4 +603,3 @@ function extractErrorDetails(body) {
     return body.slice(0, 500);
   }
 }
-

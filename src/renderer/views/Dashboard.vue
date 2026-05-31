@@ -63,7 +63,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDocuments } from "@/composables/useDocuments";
 import QuoteTable from "@/components/tables/QuoteTable.vue";

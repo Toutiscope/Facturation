@@ -37,7 +37,9 @@ export function createTokenCache(fetchToken) {
         const { accessToken, expiresInSeconds } = await fetchToken(key);
         const expiresAt = Date.now() + expiresInSeconds * 1000;
         cache.set(key, { accessToken, expiresAt });
-        log.debug(`OAuth2 token refreshed for key=${key} (expires in ${expiresInSeconds}s)`);
+        log.debug(
+          `OAuth2 token refreshed for key=${key} (expires in ${expiresInSeconds}s)`,
+        );
         return accessToken;
       } finally {
         pending.delete(key);

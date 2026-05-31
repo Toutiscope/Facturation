@@ -9,7 +9,7 @@
       <p>Chargement de la configuration...</p>
     </div>
 
-    <form v-else @submit.prevent="saveConfig" class="settings-form">
+    <form v-else class="settings-form" @submit.prevent="saveConfig">
       <!-- Erreur générale -->
       <div v-if="errors.general" class="errors-list">
         <h3>Erreur</h3>
@@ -70,8 +70,8 @@
                   <button
                     type="button"
                     class="btn btn-outline btn-sm"
-                    @click="uploadLogo"
                     :disabled="uploadingLogo"
+                    @click="uploadLogo"
                   >
                     {{
                       uploadingLogo
@@ -303,12 +303,13 @@
         <h2 class="mg-top-24">Plateforme de facturation électronique</h2>
         <section class="card settings-card pdp-section">
           <p class="pdp-intro">
-            Branchez votre plateforme agréée (PDP) pour envoyer vos factures
-            au format électronique conformément à la réforme 2026-2027.
+            Branchez votre plateforme agréée (PDP) pour envoyer vos factures au
+            format électronique conformément à la réforme 2026-2027.
             <a
               href="#"
               @click.prevent="openExternal('https://www.superpdp.tech')"
-            >Créer un compte SuperPDP</a>.
+              >Créer un compte SuperPDP</a
+            >.
           </p>
 
           <div class="form-group">
@@ -347,8 +348,8 @@
             <div class="form-group form-group--inline">
               <label class="checkbox-label">
                 <input
-                  type="checkbox"
                   v-model="config.einvoicePlatform.isSandbox"
+                  type="checkbox"
                 />
                 <span>Utiliser l'environnement bac à sable</span>
               </label>
@@ -363,11 +364,13 @@
                 <span
                   v-if="pdp.checkingCredentials.value"
                   class="badge badge-grey"
-                >Vérification…</span>
+                  >Vérification…</span
+                >
                 <span
                   v-else-if="pdp.hasCredentials.value"
                   class="badge badge-success"
-                >Configurés</span>
+                  >Configurés</span
+                >
                 <span v-else class="badge badge-warning">Non configurés</span>
               </div>
 
@@ -417,16 +420,16 @@
                   <button
                     type="button"
                     class="btn btn-secondary btn-sm"
-                    @click="cancelCredentialsEdit"
                     :disabled="pdp.savingCredentials.value"
+                    @click="cancelCredentialsEdit"
                   >
                     Annuler
                   </button>
                   <button
                     type="button"
                     class="btn btn-primary btn-sm"
-                    @click="saveCredentials"
                     :disabled="pdp.savingCredentials.value"
+                    @click="saveCredentials"
                   >
                     {{
                       pdp.savingCredentials.value
@@ -437,10 +440,7 @@
                 </div>
               </div>
 
-              <div
-                v-else
-                class="pdp-credentials__actions"
-              >
+              <div v-else class="pdp-credentials__actions">
                 <button
                   type="button"
                   class="btn btn-outline btn-sm"
@@ -452,13 +452,11 @@
                   v-if="pdp.hasCredentials.value"
                   type="button"
                   class="btn btn-danger btn-sm"
-                  @click="onDeleteCredentials"
                   :disabled="pdp.deletingCredentials.value"
+                  @click="onDeleteCredentials"
                 >
                   {{
-                    pdp.deletingCredentials.value
-                      ? "Suppression…"
-                      : "Supprimer"
+                    pdp.deletingCredentials.value ? "Suppression…" : "Supprimer"
                   }}
                 </button>
               </div>
@@ -468,13 +466,11 @@
               <button
                 type="button"
                 class="btn btn-outline"
-                @click="onTestConnection"
                 :disabled="pdp.testing.value || !pdp.hasCredentials.value"
+                @click="onTestConnection"
               >
                 {{
-                  pdp.testing.value
-                    ? "Test en cours…"
-                    : "Tester la connexion"
+                  pdp.testing.value ? "Test en cours…" : "Tester la connexion"
                 }}
               </button>
 
@@ -541,8 +537,8 @@
               <button
                 type="button"
                 class="btn btn-outline btn-sm"
-                @click="selectPdfFolder"
                 :disabled="selectingFolder"
+                @click="selectPdfFolder"
               >
                 {{ selectingFolder ? "Chargement..." : "Parcourir" }}
               </button>
@@ -550,14 +546,13 @@
             <small>Les PDF seront enregistrés dans ce dossier par défaut</small>
           </div>
         </section>
-
       </div>
 
       <ConfirmModal
         :visible="showUnsavedModal"
         title="Modifications non sauvegardées"
         warning="Les modifications seront perdues si vous quittez cette page."
-        confirmLabel="Quitter sans sauvegarder"
+        confirm-label="Quitter sans sauvegarder"
         @cancel="showUnsavedModal = false"
         @confirm="confirmLeave"
       />
@@ -566,8 +561,8 @@
       <div class="form-actions">
         <button
           type="button"
-          @click="router.push('/')"
           class="btn btn-secondary"
+          @click="router.push('/')"
         >
           Annuler
         </button>
@@ -633,7 +628,9 @@ onMounted(async () => {
     config.value = await window.electronAPI.loadConfig();
     logoPreview.value = await window.electronAPI.getLogo();
     if (config.value.einvoicePlatform?.providerName) {
-      await pdp.refreshHasCredentials(config.value.einvoicePlatform.providerName);
+      await pdp.refreshHasCredentials(
+        config.value.einvoicePlatform.providerName,
+      );
     }
     setInitialState();
   } catch (error) {

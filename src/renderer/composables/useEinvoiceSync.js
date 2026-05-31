@@ -13,7 +13,8 @@ export function useEinvoiceSync() {
    * @returns {Promise<{ ok: boolean, data?: object, error?: object }>}
    */
   async function sync() {
-    if (syncing.value) return { ok: false, error: { message: "Déjà en cours" } };
+    if (syncing.value)
+      return { ok: false, error: { message: "Déjà en cours" } };
     syncing.value = true;
     try {
       const result = await window.electronAPI.pdp.sync();

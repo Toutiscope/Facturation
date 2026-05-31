@@ -5,9 +5,9 @@
         <h1>Factures reçues</h1>
         <button
           v-if="pdpEnabled"
-          @click="reload"
           class="btn btn-outline"
           :disabled="loading"
+          @click="reload"
         >
           {{ loading ? "Chargement…" : "Rafraîchir" }}
         </button>
@@ -15,9 +15,7 @@
 
       <!-- PDP non configurée -->
       <div v-if="!pdpEnabled" class="empty-state card">
-        <p>
-          Aucune plateforme de facturation électronique n'est configurée.
-        </p>
+        <p>Aucune plateforme de facturation électronique n'est configurée.</p>
         <router-link to="/configuration" class="btn btn-primary">
           Configurer une plateforme
         </router-link>
@@ -52,7 +50,9 @@
                 <td class="emitter">{{ row.emitter || "—" }}</td>
                 <td class="numero">{{ row.number || "—" }}</td>
                 <td class="amount">
-                  {{ row.amountTTC != null ? formatCurrency(row.amountTTC) : "—" }}
+                  {{
+                    row.amountTTC != null ? formatCurrency(row.amountTTC) : "—"
+                  }}
                 </td>
                 <td>
                   <span v-if="row.statusLabel" class="status-badge status-sent">
@@ -63,8 +63,8 @@
                 <td>
                   <button
                     class="btn btn-outline btn-sm"
-                    @click="download(row)"
                     :disabled="downloadingId === row.id || row.error"
+                    @click="download(row)"
                   >
                     {{ downloadingId === row.id ? "…" : "Télécharger PDF" }}
                   </button>
@@ -74,7 +74,11 @@
           </table>
 
           <div v-if="hasAfter" class="load-more">
-            <button class="btn btn-secondary" @click="loadMore" :disabled="loading">
+            <button
+              class="btn btn-secondary"
+              :disabled="loading"
+              @click="loadMore"
+            >
               {{ loading ? "Chargement…" : "Charger plus" }}
             </button>
           </div>
@@ -115,7 +119,8 @@ async function reload() {
   try {
     const result = await window.electronAPI.pdp.fetchReceived({ limit: 20 });
     if (!result.ok) {
-      error.value = result.error?.message || "Impossible de charger les factures reçues";
+      error.value =
+        result.error?.message || "Impossible de charger les factures reçues";
       return;
     }
     rows.value = result.data.rows;

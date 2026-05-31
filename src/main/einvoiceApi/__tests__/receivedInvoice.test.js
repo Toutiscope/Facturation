@@ -20,7 +20,11 @@ describe("normalizeReceived", () => {
       },
       events: [
         { id: 1, status_code: "api:uploaded", status_text: "Téléversée" },
-        { id: 3, status_code: "fr:202", status_text: "Reçue par la plateforme" },
+        {
+          id: 3,
+          status_code: "fr:202",
+          status_text: "Reçue par la plateforme",
+        },
         { id: 2, status_code: "fr:200", status_text: "Déposée" },
       ],
       ...overrides,
@@ -56,7 +60,10 @@ describe("normalizeReceived", () => {
   });
 
   it("gère une facture sans en_invoice ni events", () => {
-    const row = normalizeReceived({ id: 1, created_at: "2026-01-01T00:00:00Z" });
+    const row = normalizeReceived({
+      id: 1,
+      created_at: "2026-01-01T00:00:00Z",
+    });
     expect(row.emitter).toBe("—");
     expect(row.number).toBeNull();
     expect(row.amountTTC).toBeNull();

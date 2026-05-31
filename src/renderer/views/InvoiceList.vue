@@ -6,13 +6,13 @@
         <div class="header-actions flex gap-8">
           <button
             v-if="pdpEnabled"
-            @click="onSync"
             class="btn btn-outline"
             :disabled="syncing"
+            @click="onSync"
           >
             {{ syncing ? "Synchronisation…" : "Synchroniser les statuts" }}
           </button>
-          <button @click="createNew" class="btn btn-primary">
+          <button class="btn btn-primary" @click="createNew">
             + Nouvelle facture
           </button>
         </div>
@@ -25,11 +25,11 @@
             <label for="search">Rechercher</label>
             <input
               id="search"
-              type="text"
               v-model="filters.search"
-              @input="applyFilters"
+              type="text"
               placeholder="Numéro ou nom du client"
               class="form-control"
+              @input="applyFilters"
             />
           </div>
 
@@ -38,8 +38,8 @@
             <select
               id="status"
               v-model="filters.status"
-              @change="applyFilters"
               class="form-control"
+              @change="applyFilters"
             >
               <option value="">Tous</option>
               <option value="draft">Brouillon</option>
@@ -54,8 +54,8 @@
             <select
               id="year"
               v-model="filters.year"
-              @change="applyFilters"
               class="form-control"
+              @change="applyFilters"
             >
               <option :value="currentYear">{{ currentYear }}</option>
               <option :value="currentYear - 1">{{ currentYear - 1 }}</option>
@@ -78,7 +78,7 @@
         @delete="deleteInvoice"
       >
         <template #empty>
-          <button @click="createNew" class="btn btn-secondary">
+          <button class="btn btn-secondary" @click="createNew">
             Créer votre première facture
           </button>
         </template>
@@ -131,9 +131,7 @@ async function onSync() {
     await applyFilters();
   } else {
     showToast(
-      processedEvents > 0
-        ? "Statuts déjà à jour"
-        : "Aucun nouvel événement",
+      processedEvents > 0 ? "Statuts déjà à jour" : "Aucun nouvel événement",
     );
   }
 }

@@ -24,7 +24,9 @@
           <strong>Mentions obligatoires manquantes :</strong>
           <ul>
             <li v-for="(err, i) in localValidation.errors" :key="i">
-              <strong v-if="fieldLabel(err.path)">{{ fieldLabel(err.path) }} : </strong>{{ err.message }}
+              <strong v-if="fieldLabel(err.path)"
+                >{{ fieldLabel(err.path) }} : </strong
+              >{{ err.message }}
             </li>
           </ul>
           <p class="pdp-send__hint">
@@ -32,10 +34,7 @@
           </p>
         </div>
 
-        <div
-          v-else
-          class="pdp-send__block pdp-send__block--ok"
-        >
+        <div v-else class="pdp-send__block pdp-send__block--ok">
           Les mentions obligatoires sont présentes. La plateforme effectuera une
           ultime validation à la réception.
         </div>
@@ -93,15 +92,15 @@
         <template v-else>
           <button
             class="btn btn-secondary"
-            @click="onClose"
             :disabled="phase === 'sending'"
+            @click="onClose"
           >
             Annuler
           </button>
           <button
             class="btn btn-primary"
-            @click="send"
             :disabled="phase !== 'review' || !canSend"
+            @click="send"
           >
             Envoyer à la plateforme
           </button>
@@ -193,7 +192,9 @@ async function prepare() {
     );
     phase.value = "review";
   } catch (err) {
-    errorInfo.value = { message: err.message || "Impossible de charger la facture" };
+    errorInfo.value = {
+      message: err.message || "Impossible de charger la facture",
+    };
     phase.value = "error";
   }
 }

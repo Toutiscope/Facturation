@@ -16,7 +16,10 @@ const BACKOFF_INITIAL_MS = 500;
  * @returns {Object} adapter conforme au contrat einvoiceApi
  */
 export function createSuperPdpAdapter(platformConfig = {}) {
-  const baseUrl = (platformConfig.urlApi || DEFAULT_BASE_URL).replace(/\/$/, "");
+  const baseUrl = (platformConfig.urlApi || DEFAULT_BASE_URL).replace(
+    /\/$/,
+    "",
+  );
 
   async function fetchTokenForKey() {
     const creds = await getProviderCredentials(PROVIDER_NAME);
@@ -83,13 +86,18 @@ export function createSuperPdpAdapter(platformConfig = {}) {
       }
 
       if (response.status === 401 && attempt === 0) {
-        log.warn(`SuperPDP 401 on ${pathname}, invalidating token and retrying`);
+        log.warn(
+          `SuperPDP 401 on ${pathname}, invalidating token and retrying`,
+        );
         tokenCache.invalidate(tokenKey);
         attempt += 1;
         continue;
       }
 
-      if (response.status === 429 || (response.status >= 500 && response.status < 600)) {
+      if (
+        response.status === 429 ||
+        (response.status >= 500 && response.status < 600)
+      ) {
         const delay = BACKOFF_INITIAL_MS * 2 ** attempt;
         log.warn(
           `SuperPDP ${response.status} on ${pathname}, retry ${attempt + 1}/${MAX_RETRIES_5XX} in ${delay}ms`,
@@ -103,7 +111,10 @@ export function createSuperPdpAdapter(platformConfig = {}) {
       return response;
     }
 
-    throw lastError || new Error(`SuperPDP request failed after ${MAX_RETRIES_5XX} retries`);
+    throw (
+      lastError ||
+      new Error(`SuperPDP request failed after ${MAX_RETRIES_5XX} retries`)
+    );
   }
 
   async function requestJson(pathname, options) {
@@ -125,7 +136,9 @@ export function createSuperPdpAdapter(platformConfig = {}) {
     /** Vérifie connexion + récupère l'entreprise courante. */
     async testConnection() {
       const company = await requestJson("/companies/me");
-      const session = await requestJson("/oauth2_sessions/me").catch(() => null);
+      const session = await requestJson("/oauth2_sessions/me").catch(
+        () => null,
+      );
       return { company, session };
     },
 
@@ -141,8 +154,12 @@ export function createSuperPdpAdapter(platformConfig = {}) {
      * @param {Object} opts - { from, to, contentType }
      * @returns {Promise<string|Buffer>} XML (string) ou PDF (Buffer) selon `to`
      */
-    async convertInvoice(payload, { from, to, contentType = "application/xml" } = {}) {
-      if (!from || !to) throw new Error("convertInvoice: 'from' et 'to' requis");
+    async convertInvoice(
+      payload,
+      { from, to, contentType = "application/xml" } = {},
+    ) {
+      if (!from || !to)
+        throw new Error("convertInvoice: 'from' et 'to' requis");
       const qs = new URLSearchParams({ from, to }).toString();
       const response = await request(`/invoices/convert?${qs}`, {
         method: "POST",
@@ -160,7 +177,10 @@ export function createSuperPdpAdapter(platformConfig = {}) {
     },
 
     /** Envoie une facture (corps brut UBL/CII XML ou Factur-X PDF). */
-    async sendInvoice(payload, { contentType = "application/xml", disablePreCheck = false } = {}) {
+    async sendInvoice(
+      payload,
+      { contentType = "application/xml", disablePreCheck = false } = {},
+    ) {
       const query = disablePreCheck ? "?disable_pre_check=true" : "";
       return requestJson(`/invoices${query}`, {
         method: "POST",
@@ -170,11 +190,17 @@ export function createSuperPdpAdapter(platformConfig = {}) {
     },
 
     /** Liste les factures (envoyées et reçues) avec pagination cursor-based. */
-    async fetchInvoices({ order = "desc", startingAfterId, limit, direction } = {}) {
+    async fetchInvoices({
+      order = "desc",
+      startingAfterId,
+      limit,
+      direction,
+    } = {}) {
       const qs = new URLSearchParams();
       if (order) qs.set("order", order);
       if (direction) qs.set("direction", direction);
-      if (startingAfterId != null) qs.set("starting_after_id", String(startingAfterId));
+      if (startingAfterId != null)
+        qs.set("starting_after_id", String(startingAfterId));
       if (limit != null) qs.set("limit", String(limit));
       const query = qs.toString();
       return requestJson(`/invoices${query ? `?${query}` : ""}`);
@@ -203,8 +229,11 @@ export function createSuperPdpAdapter(platformConfig = {}) {
       const buffer = Buffer.from(await response.arrayBuffer());
       return {
         buffer,
-        contentType: response.headers.get("content-type") || "application/octet-stream",
-        filename: parseContentDispositionFilename(response.headers.get("content-disposition")),
+        contentType:
+          response.headers.get("content-type") || "application/octet-stream",
+        filename: parseContentDispositionFilename(
+          response.headers.get("content-disposition"),
+        ),
       };
     },
 
@@ -215,10 +244,13 @@ export function createSuperPdpAdapter(platformConfig = {}) {
       form.append("file", blob, fileName);
 
       // /validation_reports n'exige pas l'authentification mais on l'ajoute par cohérence
-      const response = await fetch(`${baseUrl}/${API_VERSION}/validation_reports`, {
-        method: "POST",
-        body: form,
-      });
+      const response = await fetch(
+        `${baseUrl}/${API_VERSION}/validation_reports`,
+        {
+          method: "POST",
+          body: form,
+        },
+      );
       if (!response.ok) {
         const body = await safeReadText(response);
         throw httpError(response.status, "Validation failed", body);
@@ -228,7 +260,8 @@ export function createSuperPdpAdapter(platformConfig = {}) {
 
     async listEvents({ startingAfterId, limit } = {}) {
       const qs = new URLSearchParams();
-      if (startingAfterId != null) qs.set("starting_after_id", String(startingAfterId));
+      if (startingAfterId != null)
+        qs.set("starting_after_id", String(startingAfterId));
       if (limit != null) qs.set("limit", String(limit));
       const query = qs.toString();
       return requestJson(`/invoice_events${query ? `?${query}` : ""}`);
@@ -271,7 +304,9 @@ export function createSuperPdpAdapter(platformConfig = {}) {
      */
     async resolveRecipient(siren) {
       const qs = new URLSearchParams({ number: String(siren) });
-      const res = await requestJson(`/french_directory/entries?${qs.toString()}`);
+      const res = await requestJson(
+        `/french_directory/entries?${qs.toString()}`,
+      );
       const entries = res.data || [];
       if (entries.length === 0) {
         return { found: false, isActive: false, endpoint: null };
