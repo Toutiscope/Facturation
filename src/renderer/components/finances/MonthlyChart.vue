@@ -9,8 +9,10 @@
     <div
       ref="plotRef"
       class="chart__plot"
+      :class="{ 'chart__plot--clickable': clickable }"
       @mousemove="onMouseMove"
       @mouseleave="hoveredIndex = null"
+      @click="onClick"
     >
       <svg
         :viewBox="`0 0 ${plotWidth} ${plotHeight}`"
@@ -199,7 +201,13 @@ const props = defineProps({
     type: Number,
     default: 220,
   },
+  clickable: {
+    type: Boolean,
+    default: false,
+  },
 });
+
+const emit = defineEmits(["point-click"]);
 
 const DEFAULT_LABELS = [
   "J",
@@ -370,24 +378,25 @@ const tooltipStyle = computed(() => {
   };
 });
 
-function onMouseMove(event) {
-  if (!plotRef.value) return;
+// Convertit la position horizontale d'un évènement souris en index de point.
+function indexFromEvent(event) {
+  if (!plotRef.value) return null;
   const total = pointCount.value;
-  if (total === 0) {
-    hoveredIndex.value = null;
-    return;
-  }
+  if (total === 0) return null;
   const rect = plotRef.value.getBoundingClientRect();
   const x = event.clientX - rect.left;
-  if (x < 0 || x > rect.width) {
-    hoveredIndex.value = null;
-    return;
-  }
-  const idx = Math.min(
-    total - 1,
-    Math.max(0, Math.floor((x / rect.width) * total)),
-  );
-  hoveredIndex.value = idx;
+  if (x < 0 || x > rect.width) return null;
+  return Math.min(total - 1, Math.max(0, Math.floor((x / rect.width) * total)));
+}
+
+function onMouseMove(event) {
+  hoveredIndex.value = indexFromEvent(event);
+}
+
+function onClick(event) {
+  if (!props.clickable) return;
+  const idx = indexFromEvent(event);
+  if (idx !== null) emit("point-click", idx);
 }
 
 function formatShort(v) {
@@ -448,6 +457,10 @@ function areaPath(values) {
   right: 8px;
   top: 0;
   bottom: 22px;
+
+  &--clickable {
+    cursor: pointer;
+  }
 }
 
 .chart__svg {

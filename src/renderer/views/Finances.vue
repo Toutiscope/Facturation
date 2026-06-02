@@ -106,7 +106,15 @@
           <p class="kpi-card__value">{{ formatCurrency(kpis.paid) }}</p>
           <p class="kpi-card__delta">{{ kpis.paidRatio }}% du CA</p>
         </article>
-        <article class="kpi-card">
+        <article
+          class="kpi-card kpi-card--clickable"
+          role="button"
+          tabindex="0"
+          title="Voir les factures en attente"
+          @click="goToPendingInvoices"
+          @keydown.enter="goToPendingInvoices"
+          @keydown.space.prevent="goToPendingInvoices"
+        >
           <p class="kpi-card__label">En attente</p>
           <p class="kpi-card__value">{{ formatCurrency(kpis.pending) }}</p>
           <p class="kpi-card__delta">
@@ -136,12 +144,14 @@
             </div>
           </header>
           <MonthlyChart
+            :clickable="period === 'Année'"
             :expense="chartSeries.expense"
             :full-labels="chartSeries.fullLabels"
             :height="220"
             :labels="chartSeries.labels"
             :revenue="chartSeries.revenue"
             :type="chartType"
+            @point-click="onChartMonthClick"
           />
         </article>
 
@@ -149,7 +159,7 @@
           <header class="chart-card__header">
             <div>
               <h2>Répartition des revenus</h2>
-              <p class="chart-card__sub">Par source</p>
+              <p class="chart-card__sub">Par type de client</p>
             </div>
           </header>
           <div class="chart-card__donut">
@@ -242,6 +252,11 @@ function onOpenInvoice(invoiceId) {
   router.push(`/factures/${invoiceId}`);
 }
 
+// "En attente" = factures envoyées non encore réglées → liste filtrée sur ce statut.
+function goToPendingInvoices() {
+  router.push({ path: "/factures", query: { status: "sent" } });
+}
+
 const periodOptions = ["Mois", "Année"];
 const period = ref("Mois");
 
@@ -275,6 +290,15 @@ function openMonthPicker(e) {
       // showPicker peut lever hors d'un geste utilisateur — sans gravité.
     }
   }
+}
+
+// Clic sur un mois du graphique annuel → bascule en vue mensuelle de ce mois.
+// L'index reçu (0-11) correspond au mois de l'année en cours.
+function onChartMonthClick(index) {
+  if (period.value !== "Année") return;
+  const year = new Date().getFullYear();
+  selectedMonth.value = `${year}-${String(index + 1).padStart(2, "0")}`;
+  period.value = "Mois";
 }
 
 const chartTypeOptions = [
@@ -556,6 +580,21 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   padding: $spacing-md;
+
+  &--clickable {
+    cursor: pointer;
+    transition: $transition-base;
+
+    &:hover {
+      border-color: $grey-40;
+      box-shadow: $shadow-md;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $primary-color;
+      outline-offset: 2px;
+    }
+  }
 }
 
 .kpi-card__label {

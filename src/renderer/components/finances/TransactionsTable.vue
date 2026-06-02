@@ -46,7 +46,7 @@
               : 'client-badge--particulier'
           "
         >
-          {{ row.clientType === "professionnel" ? "Pro" : "Particulier" }}
+          {{ row.clientType === "professionnel" ? "Pro" : "Part" }}
         </span>
       </div>
       <div class="txn-table__amount">

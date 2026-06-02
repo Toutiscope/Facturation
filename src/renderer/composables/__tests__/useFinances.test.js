@@ -297,22 +297,40 @@ describe("computeMonthlySeries", () => {
 // ──────────────────────────────────────────────────────────────
 
 describe("computeRevenueBySource", () => {
-  it("splits revenue between 'facture' and manual sources", () => {
+  it("splits revenue between professionnels and particuliers (factures + manuels)", () => {
     const { computeRevenueBySource } = useFinances();
     const list = [
-      invoiceTxn({ amount: 700, isoDate: localIso(2026, 4, 1) }),
-      txn({ amount: 300, isoDate: localIso(2026, 4, 1) }),
+      invoiceTxn({
+        amount: 700,
+        clientType: "professionnel",
+        isoDate: localIso(2026, 4, 1),
+      }),
+      txn({
+        amount: 100,
+        clientType: "professionnel",
+        isoDate: localIso(2026, 4, 1),
+      }),
+      invoiceTxn({
+        amount: 400,
+        clientType: "particulier",
+        isoDate: localIso(2026, 4, 1),
+      }),
+      txn({
+        amount: 300,
+        clientType: "particulier",
+        isoDate: localIso(2026, 4, 1),
+      }),
     ];
     const result = computeRevenueBySource(list);
-    expect(result.total).toBe(1000);
-    const invoiceSegment = result.segments.find((s) =>
-      s.label.includes("Factures"),
+    expect(result.total).toBe(1500);
+    const proSegment = result.segments.find((s) =>
+      s.label.includes("Professionnels"),
     );
-    const manualSegment = result.segments.find((s) =>
+    const particulierSegment = result.segments.find((s) =>
       s.label.includes("Particuliers"),
     );
-    expect(invoiceSegment.value).toBe(700);
-    expect(manualSegment.value).toBe(300);
+    expect(proSegment.value).toBe(800);
+    expect(particulierSegment.value).toBe(700);
   });
 
   it("ignores expenses (only counts revenues)", () => {
@@ -335,16 +353,30 @@ describe("computeRevenueBySource", () => {
   it("excludes pending invoices from the breakdown", () => {
     const { computeRevenueBySource } = useFinances();
     const list = [
-      invoiceTxn({ amount: 500, paid: true, isoDate: localIso(2026, 4, 1) }),
-      invoiceTxn({ amount: 800, paid: false, isoDate: localIso(2026, 4, 10) }),
-      txn({ amount: 200, isoDate: localIso(2026, 4, 15) }),
+      invoiceTxn({
+        amount: 500,
+        paid: true,
+        clientType: "professionnel",
+        isoDate: localIso(2026, 4, 1),
+      }),
+      invoiceTxn({
+        amount: 800,
+        paid: false,
+        clientType: "professionnel",
+        isoDate: localIso(2026, 4, 10),
+      }),
+      txn({
+        amount: 200,
+        clientType: "particulier",
+        isoDate: localIso(2026, 4, 15),
+      }),
     ];
     const result = computeRevenueBySource(list);
     expect(result.total).toBe(700);
-    const invoiceSeg = result.segments.find((s) =>
-      s.label.includes("Factures"),
+    const proSeg = result.segments.find((s) =>
+      s.label.includes("Professionnels"),
     );
-    expect(invoiceSeg.value).toBe(500);
+    expect(proSeg.value).toBe(500);
   });
 });
 

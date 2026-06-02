@@ -50,17 +50,15 @@
           </div>
 
           <div class="filter-group">
-            <label for="year">Année</label>
-            <select
-              id="year"
-              v-model="filters.year"
+            <label for="month">Mois</label>
+            <input
+              id="month"
+              v-model="filters.month"
+              type="month"
               class="form-control"
               @change="applyFilters"
-            >
-              <option :value="currentYear">{{ currentYear }}</option>
-              <option :value="currentYear - 1">{{ currentYear - 1 }}</option>
-              <option :value="currentYear - 2">{{ currentYear - 2 }}</option>
-            </select>
+              @click="openMonthPicker"
+            />
           </div>
         </div>
       </div>
@@ -89,24 +87,48 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useDocuments } from "@/composables/useDocuments";
 import { useEinvoiceSync } from "@/composables/useEinvoiceSync";
 import { useToast } from "@/composables/useToast";
 import InvoiceTable from "@/components/tables/InvoiceTable.vue";
 
 const router = useRouter();
+const route = useRoute();
 const { documents, loading, error, loadAll, save, remove } =
   useDocuments("factures");
 const { syncing, sync } = useEinvoiceSync();
 const { showToast } = useToast();
 
-const currentYear = new Date().getFullYear();
+// Mois courant au format "YYYY-MM" pour l'input type="month".
+function currentMonthValue() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+// Ouvre le calendrier natif au clic n'importe où sur l'input (pas seulement
+// sur l'icône). showPicker() peut ne pas exister sur tous les moteurs.
+function openMonthPicker(e) {
+  const el = e.currentTarget;
+  if (typeof el.showPicker === "function") {
+    try {
+      el.showPicker();
+    } catch {
+      // showPicker peut lever hors d'un geste utilisateur — sans gravité.
+    }
+  }
+}
+
 const pdpEnabled = ref(false);
+// Statut passé en query (ex : depuis le KPI "En attente" des Finances).
+// Dans ce cas on affiche toute l'année (mois vidé) pour rester cohérent avec
+// le total annuel affiché sur la carte.
+const initialStatus =
+  typeof route.query.status === "string" ? route.query.status : "";
 const filters = ref({
   search: "",
-  status: "",
-  year: currentYear,
+  status: initialStatus,
+  month: initialStatus ? "" : currentMonthValue(),
 });
 
 onMounted(async () => {
@@ -137,8 +159,11 @@ async function onSync() {
 }
 
 async function applyFilters() {
+  // filters.month est au format "YYYY-MM" (ou vide si l'utilisateur l'efface).
+  const [year, month] = (filters.value.month || "").split("-");
   await loadAll({
-    year: filters.value.year,
+    year: year ? Number(year) : new Date().getFullYear(),
+    month: month ? Number(month) : undefined,
     status: filters.value.status || undefined,
     search: filters.value.search || undefined,
   });

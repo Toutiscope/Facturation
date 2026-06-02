@@ -40,17 +40,15 @@
           </div>
 
           <div class="filter-group">
-            <label for="year">Année</label>
-            <select
-              id="year"
-              v-model="filters.year"
+            <label for="month">Mois</label>
+            <input
+              id="month"
+              v-model="filters.month"
+              type="month"
               class="form-control"
               @change="applyFilters"
-            >
-              <option :value="currentYear">{{ currentYear }}</option>
-              <option :value="currentYear - 1">{{ currentYear - 1 }}</option>
-              <option :value="currentYear - 2">{{ currentYear - 2 }}</option>
-            </select>
+              @click="openMonthPicker"
+            />
           </div>
         </div>
       </div>
@@ -88,20 +86,41 @@ const router = useRouter();
 const { documents, loading, error, loadAll, save, remove } =
   useDocuments("devis");
 
-const currentYear = new Date().getFullYear();
+// Mois courant au format "YYYY-MM" pour l'input type="month".
+function currentMonthValue() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
 const filters = ref({
   search: "",
   status: "",
-  year: currentYear,
+  month: currentMonthValue(),
 });
 
 onMounted(async () => {
   await applyFilters();
 });
 
+// Ouvre le calendrier natif au clic n'importe où sur l'input (pas seulement
+// sur l'icône). showPicker() peut ne pas exister sur tous les moteurs.
+function openMonthPicker(e) {
+  const el = e.currentTarget;
+  if (typeof el.showPicker === "function") {
+    try {
+      el.showPicker();
+    } catch {
+      // showPicker peut lever hors d'un geste utilisateur — sans gravité.
+    }
+  }
+}
+
 async function applyFilters() {
+  // filters.month est au format "YYYY-MM" (ou vide si l'utilisateur l'efface).
+  const [year, month] = (filters.value.month || "").split("-");
   await loadAll({
-    year: filters.value.year,
+    year: year ? Number(year) : new Date().getFullYear(),
+    month: month ? Number(month) : undefined,
     status: filters.value.status || undefined,
     search: filters.value.search || undefined,
   });

@@ -124,12 +124,12 @@ export async function saveConfig(config) {
 /**
  * Charge tous les documents d'un type donné
  * @param {string} type - 'devis' ou 'factures'
- * @param {Object} filters - Filtres { year, status, search }
+ * @param {Object} filters - Filtres { year, month, status, search }
  * @returns {Promise<Array>} Liste des documents
  */
 export async function loadDocuments(type, filters = {}) {
   try {
-    const { year, status, search } = filters;
+    const { year, month, status, search } = filters;
     const targetYear = year || new Date().getFullYear();
     const yearFolder = getYearFolder(type, targetYear);
 
@@ -148,8 +148,16 @@ export async function loadDocuments(type, filters = {}) {
       }),
     );
 
-    // Filtrer selon status et search
+    // Filtrer selon month, status et search
     let filtered = documents;
+
+    if (month) {
+      // Le champ date est au format "DD/MM/YYYY"
+      filtered = filtered.filter((doc) => {
+        const docMonth = Number(doc.date?.split("/")[1]);
+        return docMonth === Number(month);
+      });
+    }
 
     if (status) {
       filtered = filtered.filter((doc) => doc.status === status);

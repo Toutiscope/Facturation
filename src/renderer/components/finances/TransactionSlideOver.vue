@@ -59,38 +59,6 @@
           </div>
         </div>
 
-        <!-- Catégorie de client -->
-        <div class="field">
-          <label class="field__label">Catégorie</label>
-          <div class="type-toggle">
-            <button
-              type="button"
-              class="type-toggle__item type-toggle__item--client"
-              :class="{
-                'type-toggle__item--active': form.clientType === 'particulier',
-              }"
-              :aria-pressed="form.clientType === 'particulier'"
-              @click="form.clientType = 'particulier'"
-            >
-              <span class="type-toggle__radio" />
-              Particulier
-            </button>
-            <button
-              type="button"
-              class="type-toggle__item type-toggle__item--client"
-              :class="{
-                'type-toggle__item--active':
-                  form.clientType === 'professionnel',
-              }"
-              :aria-pressed="form.clientType === 'professionnel'"
-              @click="form.clientType = 'professionnel'"
-            >
-              <span class="type-toggle__radio" />
-              Professionnel
-            </button>
-          </div>
-        </div>
-
         <div class="field-grid field-grid--2">
           <div class="field">
             <label for="txn-date" class="field__label required">Date</label>
@@ -154,6 +122,23 @@
           <span v-if="errors.label" id="txn-label-error" class="error-message">
             {{ errors.label }}
           </span>
+        </div>
+
+        <div class="field field--inline">
+          <label class="field__label mg-right-auto">Client</label>
+          <div class="chip-row">
+            <button
+              v-for="opt in clientTypes"
+              :key="opt.value"
+              type="button"
+              class="chip chip--dark"
+              :class="{ 'chip--dark-active': form.clientType === opt.value }"
+              :aria-pressed="form.clientType === opt.value"
+              @click="form.clientType = opt.value"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
         </div>
 
         <div class="field">
@@ -284,7 +269,17 @@ const props = defineProps({
 
 const emit = defineEmits(["save", "cancel"]);
 
-const suggestedCategories = ["Fournitures", "Logiciel", "Loyer"];
+const suggestedCategories = [
+  "Fournitures",
+  "Matière première",
+  "Frais de livraison",
+  "Loyer",
+];
+
+const clientTypes = [
+  { value: "particulier", label: "Particulier" },
+  { value: "professionnel", label: "Professionnel" },
+];
 
 const paymentMethods = ["Espèces", "Virement", "Chèque", "CB", "Autre"];
 
@@ -554,6 +549,20 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 .field {
   display: flex;
   flex-direction: column;
+
+  &--inline {
+    flex-direction: row;
+    align-items: center;
+    gap: $spacing-md;
+
+    .field__label {
+      margin-bottom: 0;
+    }
+
+    .chip-row {
+      margin-top: 0;
+    }
+  }
 }
 
 .field__label {
@@ -662,18 +671,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
     }
   }
 
-  &--client.type-toggle__item--active {
-    border-color: $primary-color;
-    background: rgba($primary-color, 0.08);
-    color: $primary-color;
-
-    .type-toggle__radio {
-      border-color: $primary-color;
-      &::after {
-        background: $primary-color;
-      }
-    }
-  }
 }
 
 .type-toggle__radio {

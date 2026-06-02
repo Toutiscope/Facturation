@@ -368,19 +368,19 @@ export function useFinances() {
    * Les factures en attente ne sont pas comptabilisées.
    */
   function computeRevenueBySource(list) {
-    let invoiceTotal = 0;
-    let manualTotal = 0;
+    let proTotal = 0;
+    let particulierTotal = 0;
     for (const t of list) {
       if (!isEarnedRevenue(t)) continue;
-      if (t.source === "facture") invoiceTotal += t.amount;
-      else manualTotal += t.amount;
+      if (t.clientType === "professionnel") proTotal += t.amount;
+      else particulierTotal += t.amount;
     }
-    const total = invoiceTotal + manualTotal;
+    const total = proTotal + particulierTotal;
     return {
       total,
       segments: [
-        { label: "Factures pro", value: invoiceTotal },
-        { label: "Particuliers / manuels", value: manualTotal },
+        { label: "Professionnels", value: proTotal },
+        { label: "Particuliers", value: particulierTotal },
       ],
     };
   }
