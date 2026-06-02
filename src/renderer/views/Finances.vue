@@ -62,12 +62,12 @@
       <!-- KPI strip -->
       <section class="kpi-strip">
         <article class="kpi-card">
-          <p class="kpi-card__label">CA mois en cours</p>
-          <p class="kpi-card__value">{{ formatCurrency(kpis.caMonth) }}</p>
-          <p class="kpi-card__delta kpi-card__delta--up">▲ Mois en cours</p>
+          <p class="kpi-card__label">{{ caCardTitle }}</p>
+          <p class="kpi-card__value">{{ formatCurrency(kpis.caCard) }}</p>
+          <p class="kpi-card__delta kpi-card__delta--up">▲ {{ caCardDelta }}</p>
           <p class="kpi-card__after-tax">
             <span class="kpi-card__after-tax-amount">
-              ≈ {{ formatCurrency(kpis.caMonthAfterUrssaf) }}
+              ≈ {{ formatCurrency(kpis.caCardAfterUrssaf) }}
             </span>
             après impôts
           </p>
@@ -84,14 +84,14 @@
           </p>
         </article>
         <article class="kpi-card">
-          <p class="kpi-card__label">Bénéfice net</p>
-          <p class="kpi-card__value">{{ formatCurrency(kpis.benefit) }}</p>
+          <p class="kpi-card__label">{{ benefitCardTitle }}</p>
+          <p class="kpi-card__value">{{ formatCurrency(kpis.benefitCard) }}</p>
           <p class="kpi-card__delta kpi-card__delta--up">
-            Marge {{ kpis.margin }}%
+            Marge {{ kpis.marginCard }}%
           </p>
           <p class="kpi-card__after-tax">
             <span class="kpi-card__after-tax-amount">
-              ≈ {{ formatCurrency(kpis.benefitAfterUrssaf) }}
+              ≈ {{ formatCurrency(kpis.benefitCardAfterUrssaf) }}
             </span>
             après impôts
           </p>
@@ -163,8 +163,8 @@
                 <h2>{{ urssafTitle }}</h2>
                 <p class="chart-card__sub">{{ urssafSubtitle }}</p>
               </div>
-              <div class="urssaf-field">
-                <div class="urssaf-field__input-row">
+              <div class="flex flex-column flex-end">
+                <div class="flex flex-vertical-center gap-4">
                   <input
                       :disabled="period === 'Année'"
                       :title="
@@ -181,19 +181,17 @@
                       type="number"
                       @change="onUrssafChange"
                   />
-                  <span class="urssaf-field__currency">€</span>
+                  <span>€</span>
                 </div>
                 <p
-                    :class="{ 'urssaf-source--manual': urssafIsManual }"
-                    class="urssaf-source"
+                    :class="urssafIsManual ? 'urssaf-source--manual' : 'urssaf-source--auto'"
+                    class="form-text"
                 >
-                  <span aria-hidden="true" class="urssaf-source__icon">
-                    {{ urssafIsManual ? "✎" : "↻" }}
-                  </span>
+                  <span aria-hidden="true">{{ urssafIsManual ? "✎" : "↻" }}</span>
                   {{ urssafSourceLabel }}
                   <button
                       v-if="urssafIsManual && period === 'Mois'"
-                      class="urssaf-source__reset"
+                      class="urssaf-reset"
                       title="Revenir au calcul automatique"
                       type="button"
                       @click="resetUrssafOverride"
@@ -275,11 +273,7 @@
 <script setup>
 import {computed, onMounted, ref} from "vue";
 import {useRouter} from "vue-router";
-import {
-  useFinances,
-  computeUrssaf,
-  effectiveUrssafForMonth,
-} from "@/composables/useFinances";
+import {computeUrssaf, effectiveUrssafForMonth, previousMonthUrssaf, useFinances,} from "@/composables/useFinances";
 import {useToast} from "@/composables/useToast";
 import MonthlyChart from "@/components/finances/MonthlyChart.vue";
 import DonutChart from "@/components/finances/DonutChart.vue";
@@ -421,13 +415,52 @@ const transactionsTitle = computed(() => {
 //  - CA annuel / bénéfice → moins le total URSSAF de l'année
 const kpis = computed(() => {
   const k = computeKpis(transactions.value);
+  const isYear = period.value === "Année";
+
+  // Cartes "CA" et "Bénéfice net" : figures mensuelles (mois de référence) en
+  // vue "Mois", figures globales (mois courant / annuel) en vue "Année".
+  const caCard = isYear ? k.caMonth : caRefMonth.value;
+  const benefitCard = isYear ? k.benefit : benefitRefMonth.value;
+  const marginCard = isYear
+      ? k.margin
+      : caRefMonth.value > 0
+          ? Math.round((benefitRefMonth.value / caRefMonth.value) * 100)
+          : 0;
+
   return {
     ...k,
-    caMonthAfterUrssaf: k.caMonth - urssafCurrentMonth.value,
+    caCard,
+    benefitCard,
+    marginCard,
+    // « Après impôts » : on retranche l'URSSAF effectivement prélevée. Pour une
+    // figure mensuelle, c'est celle du mois précédent (prélèvement décalé d'un
+    // mois) ; pour une figure annuelle, le total URSSAF de l'année.
+    caCardAfterUrssaf: caCard - urssafPreviousMonth.value,
     caYearAfterUrssaf: k.caYear - urssafYearTotal.value,
-    benefitAfterUrssaf: k.benefit - urssafYearTotal.value,
+    benefitCardAfterUrssaf: isYear
+        ? k.benefit - urssafYearTotal.value
+        : benefitCard - urssafPreviousMonth.value,
   };
 });
+
+// Titres des cartes mensuelles : précisent le mois sélectionné en vue "Mois".
+const caCardTitle = computed(() =>
+    period.value === "Année"
+        ? "CA mois en cours"
+        : `CA de ${capitalize(MONTH_NAMES[effectiveRefDate.value.getMonth()])}`,
+);
+
+const benefitCardTitle = computed(() =>
+    period.value === "Année"
+        ? "Bénéfice net"
+        : `Bénéfice net ${capitalize(MONTH_NAMES[effectiveRefDate.value.getMonth()])}`,
+);
+
+const caCardDelta = computed(() =>
+    period.value === "Année"
+        ? "Mois en cours"
+        : capitalize(MONTH_NAMES[effectiveRefDate.value.getMonth()]),
+);
 
 // ==================== URSSAF ====================
 
@@ -443,11 +476,13 @@ function round2(value) {
 // plus recalculé automatiquement.
 const urssafOverrides = computed(() => config.value?.billing?.urssafOverrides || {});
 
-// CA encaissé par mois sur l'année courante (12 valeurs). Sert de base au
-// calcul automatique : cotisations URSSAF assises sur le CA.
-const monthlyRevenue = computed(
-    () => computeMonthlySeries(transactions.value).revenue,
-);
+// Séries mensuelles (revenus + dépenses) de l'année courante, 12 valeurs.
+const monthlySeries = computed(() => computeMonthlySeries(transactions.value));
+
+// CA encaissé par mois. Sert de base au calcul automatique URSSAF (cotisations
+// assises sur le CA) et à la valeur des cartes mensuelles.
+const monthlyRevenue = computed(() => monthlySeries.value.revenue);
+const monthlyExpense = computed(() => monthlySeries.value.expense);
 
 // Synthèse URSSAF de l'année courante (montant par mois, total, nombre de mois
 // figés), à partir du CA encaissé et des montants saisis manuellement.
@@ -465,11 +500,33 @@ const urssafYearTotal = computed(() => urssafYear.value.yearTotal);
 // Nombre de mois de l'année courante dont le montant a été figé manuellement.
 const overriddenMonthsCount = computed(() => urssafYear.value.overriddenCount);
 
-// Montant URSSAF du mois calendaire en cours. Sert aux KPIs dont la sémantique
-// est figée sur le mois courant, indépendamment du mois sélectionné.
-const urssafCurrentMonth = computed(
-    () => urssafYear.value.byMonth[new Date().getMonth()],
-);
+// URSSAF effectivement prélevée sur la trésorerie du mois de référence : celle
+// du mois précédent (l'URSSAF d'un mois est prélevée le mois suivant).
+const urssafPreviousMonth = computed(() => {
+  const d = effectiveRefDate.value;
+  return previousMonthUrssaf(
+      monthlyRevenue.value,
+      urssafOverrides.value,
+      new Date().getFullYear(),
+      d.getFullYear(),
+      d.getMonth(),
+  );
+});
+
+// CA et bénéfice du mois de référence (mois sélectionné en vue "Mois", mois
+// courant en vue "Année"). Nuls si le mois sort de l'année chargée.
+const caRefMonth = computed(() => {
+  const d = effectiveRefDate.value;
+  if (d.getFullYear() !== new Date().getFullYear()) return 0;
+  return monthlyRevenue.value[d.getMonth()] || 0;
+});
+
+const benefitRefMonth = computed(() => {
+  const d = effectiveRefDate.value;
+  if (d.getFullYear() !== new Date().getFullYear()) return 0;
+  const m = d.getMonth();
+  return (monthlyRevenue.value[m] || 0) - (monthlyExpense.value[m] || 0);
+});
 
 // Montant affiché dans le champ :
 //  - vue "Mois"  : montant du mois sélectionné (figé ou calculé)
@@ -891,83 +948,39 @@ onMounted(() => {
   margin-top: $spacing-md;
 }
 
-.urssaf-field {
-  align-items: flex-end;
-  display: inline-flex;
-  flex-direction: column;
-  gap: math.div($spacing-xs, 2);
-}
-
-.urssaf-field__input-row {
-  align-items: center;
-  display: inline-flex;
-  gap: $spacing-xs;
+.urssaf-input {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  padding: $spacing-xs $spacing-sm;
+  text-align: right;
+  width: 120px;
 }
 
 .urssaf-source {
-  align-items: center;
-  color: $grey-60;
-  display: inline-flex;
-  font-size: $font-size-xxs;
-  gap: math.div($spacing-xs, 2);
-  line-height: normal;
-  margin: 0;
+  &--auto {
+    font-size: $font-size-xxs;
+  }
 
   &--manual {
     color: $primary-color;
+    font-size: $font-size-xxs;
   }
 }
 
-.urssaf-source__icon {
-  font-size: $font-size-sm;
-  line-height: 1;
-}
-
-.urssaf-source__reset {
+// Lien de réinitialisation (bouton stylé en lien).
+.urssaf-reset {
   background: none;
   border: none;
   color: $primary-color;
   cursor: pointer;
   font: inherit;
   font-weight: 600;
-  margin-left: math.div($spacing-xs, 2);
   padding: 0;
   text-decoration: underline;
 
   &:hover {
     color: $grey-100;
   }
-}
-
-.urssaf-input {
-  background: $white;
-  border: 1px solid $grey-20;
-  border-radius: $border-radius-md;
-  color: $grey-100;
-  font: inherit;
-  font-size: $font-size-base;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  padding: $spacing-xxs $spacing-sm;
-  text-align: right;
-  width: 110px;
-
-  &:focus {
-    border-color: $primary-color;
-    outline: none;
-  }
-
-  &:disabled {
-    background: $grey-10;
-    color: $grey-50;
-    cursor: not-allowed;
-  }
-}
-
-.urssaf-field__currency {
-  color: $grey-60;
-  font-size: $font-size-base;
-  font-weight: 600;
 }
 
 .legend-dot {

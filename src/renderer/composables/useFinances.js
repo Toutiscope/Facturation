@@ -147,6 +147,36 @@ export function computeUrssaf(monthlyRevenue, overrides = {}, year) {
   return { byMonth, yearTotal, overriddenCount };
 }
 
+/**
+ * Montant URSSAF effectivement prélevé sur la trésorerie d'un mois de
+ * référence : c'est l'URSSAF du mois *précédent* (le prélèvement est décalé
+ * d'un mois). La base de CA n'étant connue que pour `dataYear`, un mois
+ * précédent tombant sur une autre année a un CA nul — seul un montant figé
+ * éventuel pour ce mois s'applique (cas de janvier → décembre N-1).
+ * @param {number[]} monthlyRevenue - CA encaissé par mois de `dataYear`
+ * @param {Object} overrides - montants figés "YYYY-MM"
+ * @param {number} dataYear - année des données chargées en mémoire
+ * @param {number} refYear - année du mois de référence
+ * @param {number} refMonth - mois de référence (0-11)
+ * @returns {number}
+ */
+export function previousMonthUrssaf(
+  monthlyRevenue,
+  overrides,
+  dataYear,
+  refYear,
+  refMonth,
+) {
+  let year = refYear;
+  let month = refMonth - 1;
+  if (month < 0) {
+    month = 11;
+    year -= 1;
+  }
+  const revenue = year === dataYear ? monthlyRevenue : new Array(12).fill(0);
+  return effectiveUrssafForMonth(revenue, overrides, year, month);
+}
+
 export function useFinances() {
   const invoices = ref([]);
   const manualTransactions = ref([]);

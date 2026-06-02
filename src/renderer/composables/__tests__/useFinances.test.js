@@ -3,6 +3,7 @@ import {
   useFinances,
   computeUrssaf,
   effectiveUrssafForMonth,
+  previousMonthUrssaf,
   urssafMonthKey,
   URSSAF_RATE,
 } from "../useFinances.js";
@@ -593,8 +594,58 @@ describe("computeUrssaf", () => {
   it("defaults overrides to an empty object when omitted", () => {
     const revenue = Array(12).fill(0);
     revenue[4] = 1000;
-    const { yearTotal, overriddenCount } = computeUrssaf(revenue, undefined, 2026);
+    const { yearTotal, overriddenCount } = computeUrssaf(
+      revenue,
+      undefined,
+      2026,
+    );
     expect(yearTotal).toBeCloseTo(1000 * URSSAF_RATE);
     expect(overriddenCount).toBe(0);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+//  URSSAF — previousMonthUrssaf
+// ──────────────────────────────────────────────────────────────
+
+describe("previousMonthUrssaf", () => {
+  // CA : 1000 en février (idx 1), 2000 en mai (idx 4)
+  const revenue = Array(12).fill(0);
+  revenue[1] = 1000;
+  revenue[4] = 2000;
+
+  it("returns the URSSAF of the month before the reference month", () => {
+    // référence = mai (4) → mois précédent = avril (3), CA nul ici
+    expect(previousMonthUrssaf(revenue, {}, 2026, 2026, 4)).toBe(0);
+    // référence = mars (2) → mois précédent = février (1)
+    expect(previousMonthUrssaf(revenue, {}, 2026, 2026, 2)).toBeCloseTo(
+      1000 * URSSAF_RATE,
+    );
+  });
+
+  it("uses a manual override of the previous month when present", () => {
+    const overrides = { "2026-02": 333 };
+    // référence = mars (2) → mois précédent = février → override
+    expect(previousMonthUrssaf(revenue, overrides, 2026, 2026, 2)).toBe(333);
+  });
+
+  it("rolls back to December of the previous year for January", () => {
+    // référence = janvier (0) → mois précédent = décembre N-1.
+    // Hors année chargée : CA nul, aucun override → 0.
+    expect(previousMonthUrssaf(revenue, {}, 2026, 2026, 0)).toBe(0);
+  });
+
+  it("still honors an override on December of the previous year", () => {
+    const overrides = { "2025-12": 120 };
+    // référence = janvier 2026 → décembre 2025 figé manuellement
+    expect(previousMonthUrssaf(revenue, overrides, 2026, 2026, 0)).toBe(120);
+  });
+
+  it("ignores the current-year revenue base when the previous month is in another year", () => {
+    // Même si revenue[11] (déc.) valait quelque chose, déc. N-1 n'utilise pas
+    // la base de l'année chargée.
+    const withDecember = Array(12).fill(0);
+    withDecember[11] = 5000;
+    expect(previousMonthUrssaf(withDecember, {}, 2026, 2026, 0)).toBe(0);
   });
 });
