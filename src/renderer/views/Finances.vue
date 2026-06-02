@@ -42,7 +42,7 @@
             :key="opt.value"
             :class="{ 'segmented__item--active': chartType === opt.value }"
             :title="`Graphique en ${opt.label.toLowerCase()}`"
-            class="segmented__item segmented__item--compact"
+            class="segmented__item"
             type="button"
             @click="chartType = opt.value"
           >
@@ -550,13 +550,6 @@ onMounted(() => {
   &--active:hover {
     background: $grey-100;
     color: $white;
-  }
-
-  &--compact {
-    color: $grey-60;
-    font-size: $font-size-xs;
-    font-weight: 600;
-    padding: $spacing-xs $spacing-sm;
   }
 }
 
