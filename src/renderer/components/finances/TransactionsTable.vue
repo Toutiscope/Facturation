@@ -27,7 +27,7 @@
       <div>
         <span v-if="row.category" class="category-tag">{{ row.category }}</span>
       </div>
-      <div>
+      <div class="txn-table__source">
         <span
           class="source-badge"
           :class="
@@ -37,6 +37,16 @@
           "
         >
           {{ row.source === "facture" ? "Facture" : "Manuel" }}
+        </span>
+        <span
+          class="client-badge"
+          :class="
+            row.clientType === 'professionnel'
+              ? 'client-badge--pro'
+              : 'client-badge--particulier'
+          "
+        >
+          {{ row.clientType === "professionnel" ? "Pro" : "Particulier" }}
         </span>
       </div>
       <div class="txn-table__amount">
@@ -358,6 +368,33 @@ $grid-cols: 90px 1fr 140px 120px 140px 60px;
 
 .source-badge__lock {
   font-size: 9px;
+}
+
+.txn-table__source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.client-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: $border-radius-pill;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+
+  &--pro {
+    background: rgba($primary-color, 0.1);
+    color: $primary-color;
+  }
+
+  &--particulier {
+    background: $grey-10;
+    color: $grey-70;
+  }
 }
 
 .kebab {

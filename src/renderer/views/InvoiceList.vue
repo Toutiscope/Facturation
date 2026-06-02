@@ -79,7 +79,7 @@
       >
         <template #empty>
           <button class="btn btn-secondary" @click="createNew">
-            Créer votre première facture
+            Créez votre première facture
           </button>
         </template>
       </InvoiceTable>

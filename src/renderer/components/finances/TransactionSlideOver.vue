@@ -1,6 +1,11 @@
 <template>
-  <div v-if="visible" class="slideover-backdrop" @click="$emit('cancel')">
-    <aside class="slideover" @click.stop>
+  <div
+    v-if="visible"
+    class="slideover-backdrop"
+    @mousedown="onBackdropMousedown"
+    @mouseup="onBackdropMouseup"
+  >
+    <aside class="slideover">
       <header class="slideover__header">
         <div>
           <p class="slideover__eyebrow">
@@ -50,6 +55,38 @@
             >
               <span class="type-toggle__radio" />
               Dépense
+            </button>
+          </div>
+        </div>
+
+        <!-- Catégorie de client -->
+        <div class="field">
+          <label class="field__label">Catégorie</label>
+          <div class="type-toggle">
+            <button
+              type="button"
+              class="type-toggle__item type-toggle__item--client"
+              :class="{
+                'type-toggle__item--active': form.clientType === 'particulier',
+              }"
+              :aria-pressed="form.clientType === 'particulier'"
+              @click="form.clientType = 'particulier'"
+            >
+              <span class="type-toggle__radio" />
+              Particulier
+            </button>
+            <button
+              type="button"
+              class="type-toggle__item type-toggle__item--client"
+              :class="{
+                'type-toggle__item--active':
+                  form.clientType === 'professionnel',
+              }"
+              :aria-pressed="form.clientType === 'professionnel'"
+              @click="form.clientType = 'professionnel'"
+            >
+              <span class="type-toggle__radio" />
+              Professionnel
             </button>
           </div>
         </div>
@@ -203,7 +240,6 @@
       </form>
 
       <footer class="slideover__footer">
-        <span class="slideover__hint">⌘ + Entrée pour enregistrer</span>
         <div class="slideover__actions">
           <button
             type="button"
@@ -260,6 +296,7 @@ function emptyForm() {
   const mm = String(today.getMonth() + 1).padStart(2, "0");
   return {
     type: "revenu",
+    clientType: "particulier",
     date: `${today.getFullYear()}-${mm}-${dd}`,
     amount: null,
     label: "",
@@ -338,6 +375,7 @@ watch(
       const empty = emptyForm();
       Object.assign(form, {
         type: t.type || "revenu",
+        clientType: t.clientType || "particulier",
         date:
           isoToHtmlDate(t.isoDate) || isoToHtmlDate(t.createdAt) || empty.date,
         amount: typeof t.amount === "number" ? Math.abs(t.amount) : null,
@@ -360,6 +398,7 @@ function onSubmit() {
     ...(props.transaction?.raw || {}),
     id: props.transaction?.raw?.id || props.transaction?.id || null,
     type: form.type,
+    clientType: form.clientType,
     date: htmlDateToFr(form.date),
     isoDate: htmlDateToIso(form.date),
     amount: Number(form.amount),
@@ -374,12 +413,26 @@ function onSubmit() {
   emit("save", payload);
 }
 
+// Ne ferme le volet que si le clic a réellement commencé ET fini sur le
+// backdrop. Évite la fermeture intempestive quand une sélection de texte
+// démarre dans le volet et se termine en dehors (mouseup hors volet).
+const pressStartedOnBackdrop = ref(false);
+
+function onBackdropMousedown(e) {
+  pressStartedOnBackdrop.value = e.target === e.currentTarget;
+}
+
+function onBackdropMouseup(e) {
+  if (pressStartedOnBackdrop.value && e.target === e.currentTarget) {
+    emit("cancel");
+  }
+  pressStartedOnBackdrop.value = false;
+}
+
 function onKeydown(e) {
   if (!props.visible) return;
   if (e.key === "Escape") {
     emit("cancel");
-  } else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-    onSubmit();
   }
 }
 
@@ -605,6 +658,19 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
       border-color: $error-color;
       &::after {
         background: $error-color;
+      }
+    }
+  }
+
+  &--client.type-toggle__item--active {
+    border-color: $primary-color;
+    background: rgba($primary-color, 0.08);
+    color: $primary-color;
+
+    .type-toggle__radio {
+      border-color: $primary-color;
+      &::after {
+        background: $primary-color;
       }
     }
   }

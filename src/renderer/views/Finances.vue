@@ -23,6 +23,19 @@
             {{ opt }}
           </button>
         </div>
+        <input
+          v-model="selectedMonth"
+          type="month"
+          class="finances__month-picker"
+          :disabled="period !== 'Mois'"
+          :title="
+            period === 'Mois'
+              ? 'Choisir le mois affiché'
+              : 'Disponible en vue Mois'
+          "
+          aria-label="Mois affiché"
+          @click="openMonthPicker"
+        />
         <div class="segmented">
           <button
             v-for="opt in chartTypeOptions"
@@ -229,8 +242,40 @@ function onOpenInvoice(invoiceId) {
   router.push(`/factures/${invoiceId}`);
 }
 
-const periodOptions = ["Mois", "Trimestre", "Année"];
+const periodOptions = ["Mois", "Année"];
 const period = ref("Mois");
+
+// Mois ciblé pour la vue "Mois" (format "YYYY-MM"), initialisé au mois courant.
+function currentMonthValue() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+const selectedMonth = ref(currentMonthValue());
+
+// Date de référence dérivée du mois sélectionné (1er du mois).
+const monthRefDate = computed(() => {
+  const [y, m] = selectedMonth.value.split("-").map(Number);
+  if (!y || !m) return new Date();
+  return new Date(y, m - 1, 1);
+});
+
+// Date de référence effective : le mois choisi en vue "Mois", aujourd'hui sinon.
+const effectiveRefDate = computed(() =>
+  period.value === "Mois" ? monthRefDate.value : new Date(),
+);
+
+// Ouvre le calendrier natif au clic n'importe où sur l'input (pas seulement
+// sur l'icône). showPicker() peut ne pas exister sur tous les moteurs.
+function openMonthPicker(e) {
+  const el = e.currentTarget;
+  if (typeof el.showPicker === "function") {
+    try {
+      el.showPicker();
+    } catch {
+      // showPicker peut lever hors d'un geste utilisateur — sans gravité.
+    }
+  }
+}
 
 const chartTypeOptions = [
   { value: "line", label: "Ligne" },
@@ -266,24 +311,23 @@ const MONTH_NAMES = [
 ];
 
 const periodLabel = computed(() => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const ref = effectiveRefDate.value;
+  const year = ref.getFullYear();
+  const month = ref.getMonth();
   if (period.value === "Mois") {
     return `${MONTH_NAMES[month]} ${year}`;
   }
-  if (period.value === "Trimestre") {
-    const q = Math.floor(month / 3);
-    const startMonth = MONTH_NAMES[q * 3];
-    const endMonth = MONTH_NAMES[q * 3 + 2];
-    return `T${q + 1} ${year} · ${startMonth} – ${endMonth}`;
-  }
-  return `Année ${year}`;
+  return `Année ${new Date().getFullYear()}`;
 });
 
 const transactionsTitle = computed(() => {
-  if (period.value === "Mois") return "Transactions du mois";
-  if (period.value === "Trimestre") return "Transactions du trimestre";
+  if (period.value === "Mois") {
+    const ref = effectiveRefDate.value;
+    const monthName = MONTH_NAMES[ref.getMonth()];
+    // Élision devant voyelle : "d'avril" vs "de janvier"
+    const prefix = /^[aeiouéè]/.test(monthName) ? "d'" : "de ";
+    return `Transactions ${prefix}${monthName} ${ref.getFullYear()}`;
+  }
   return "Transactions de l'année";
 });
 
@@ -303,13 +347,15 @@ const kpis = computed(() => {
 });
 
 const chartSeries = computed(() =>
-  computeChartSeries(transactions.value, period.value),
+  computeChartSeries(transactions.value, period.value, effectiveRefDate.value),
 );
 
 const chartSubtitle = computed(() => {
-  if (period.value === "Mois") return "Évolution jour par jour";
-  if (period.value === "Trimestre") return "Évolution mois par mois";
-  return "Évolution sur 12 mois";
+  if (period.value === "Mois") {
+    const ref = effectiveRefDate.value;
+    return `Évolution jour par jour · ${MONTH_NAMES[ref.getMonth()]} ${ref.getFullYear()}`;
+  }
+  return `Évolution sur 12 mois · ${new Date().getFullYear()}`;
 });
 
 const revenueBySource = computed(() =>
@@ -317,7 +363,11 @@ const revenueBySource = computed(() =>
 );
 
 const filteredTransactions = computed(() => {
-  const filteredByPeriod = filterByPeriod(transactions.value, period.value);
+  const filteredByPeriod = filterByPeriod(
+    transactions.value,
+    period.value,
+    effectiveRefDate.value,
+  );
   const filteredByType =
     typeFilter.value === "all"
       ? filteredByPeriod
@@ -436,6 +486,24 @@ onMounted(() => {
   border-radius: $border-radius-md;
   display: inline-flex;
   padding: math.div($spacing-xs, 2);
+}
+
+.finances__month-picker {
+  background: $white;
+  border: 1px solid $grey-20;
+  border-radius: $border-radius-md;
+  color: $grey-90;
+  cursor: pointer;
+  font: inherit;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  padding: $spacing-xs $spacing-sm;
+
+  &:disabled {
+    background: $grey-10;
+    color: $grey-50;
+    cursor: not-allowed;
+  }
 }
 
 .segmented__item {

@@ -70,7 +70,7 @@
       >
         <template #empty>
           <button class="btn btn-secondary" @click="createNew">
-            Créer votre premier devis
+            Créez votre premier devis
           </button>
         </template>
       </QuoteTable>

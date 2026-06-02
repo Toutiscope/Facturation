@@ -19,6 +19,10 @@ function invoiceToTransaction(invoice) {
     amount,
     signedAmount: amount,
     paymentMethod: null,
+    clientType:
+      invoice.customer?.clientType === "professionnel"
+        ? "professionnel"
+        : "particulier",
     party:
       invoice.customer?.customerName || invoice.customer?.companyName || "",
     note: invoice.object || "",
@@ -45,6 +49,7 @@ function manualToTransaction(t) {
     amount,
     signedAmount: sign * amount,
     paymentMethod: t.paymentMethod || null,
+    clientType: t.clientType || "particulier",
     party: t.party || "",
     note: t.note || "",
     raw: t,
@@ -127,10 +132,12 @@ export function useFinances() {
   });
 
   /**
-   * Filtre par période (Mois courant, Trimestre, Année)
+   * Filtre par période (Mois, Trimestre, Année).
+   * `refDate` permet de cibler une période autre que la période courante
+   * (ex : un mois précis sélectionné dans l'UI). Par défaut : aujourd'hui.
    */
-  function filterByPeriod(list, period) {
-    const now = new Date();
+  function filterByPeriod(list, period, refDate = new Date()) {
+    const now = refDate;
     return list.filter((t) => {
       if (!t.isoDate) return false;
       const d = new Date(t.isoDate);
@@ -238,8 +245,8 @@ export function useFinances() {
    *  - `labels`     : labels courts (axe X)
    *  - `fullLabels` : labels longs (tooltip)
    */
-  function computeChartSeries(list, period) {
-    const now = new Date();
+  function computeChartSeries(list, period, refDate = new Date()) {
+    const now = refDate;
     const year = now.getFullYear();
 
     if (period === "Mois") {
