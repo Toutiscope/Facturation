@@ -89,6 +89,26 @@
               </div>
 
               <div class="form-group">
+                <label
+                    :class="{ required: invoice.status === 'paid' }"
+                    for="paymentDate"
+                >Payé le</label
+                >
+                <input
+                    id="paymentDate"
+                    v-model="invoice.paymentDate"
+                    :disabled="invoice.status !== 'paid'"
+                    class="form-control"
+                    type="date"
+                />
+                <small class="form-text">
+                  Date d'encaissement (utilisée pour les statistiques).
+                </small>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
                 <label for="associatedQuote">Devis associé (optionnel)</label>
                 <input
                     id="associatedQuote"
@@ -223,6 +243,18 @@
           @close="showSendToPdpModal = false"
           @sent="onPdpSent"
       />
+
+      <ConfirmModal
+          :visible="showClearPaymentModal"
+          :warning="`Cela retirera le paiement enregistré du ${formatDateToFrench(paymentDateBeforeChange)}.`"
+          confirm-label="Continuer"
+          title="Retirer le paiement enregistré ?"
+          @cancel="cancelClearPayment"
+          @confirm="confirmClearPayment"
+      >
+        Vous changez le statut de la facture alors qu'une date de paiement est
+        enregistrée.
+      </ConfirmModal>
     </div>
   </div>
 </template>
@@ -256,6 +288,7 @@ const invoice = ref({
   date: new Date().toISOString().split("T")[0],
   dueDate: getDueDate(),
   status: "draft",
+  paymentDate: "",
   customer: {
     customerName: "",
     companyName: "",
@@ -291,6 +324,14 @@ const error = ref(null);
 const showUnsavedModal = ref(false);
 const pendingRoute = ref(null);
 let skipGuard = false;
+
+// ── Paiement ─────────────────────────────────────────────────
+// `formReady` empêche le watch de statut de se déclencher pendant le
+// chargement initial de la facture (sinon une facture payée legacy se verrait
+// attribuer la date du jour à l'ouverture).
+const formReady = ref(false);
+const showClearPaymentModal = ref(false);
+const paymentDateBeforeChange = ref("");
 
 // ── PDP ──────────────────────────────────────────────────────
 const pdp = usePdpConfig();
@@ -349,6 +390,7 @@ onMounted(async () => {
         ...existingInvoice,
         date: formatDateToISO(existingInvoice.date),
         dueDate: formatDateToISO(existingInvoice.dueDate),
+        paymentDate: formatDateToISO(existingInvoice.paymentDate),
       };
     } else {
       // Mode création : vérifier si conversion depuis devis
@@ -367,8 +409,44 @@ onMounted(async () => {
     error.value = err.message || "Erreur lors du chargement";
   } finally {
     loading.value = false;
+    formReady.value = true;
   }
 });
+
+// Le `<select>` pilote, la date suit :
+//  - arriver sur « Payé » sans date → pré-remplissage à aujourd'hui (éditable)
+//  - quitter « Payé » avec une date enregistrée → confirmation avant vidage
+watch(
+    () => invoice.value.status,
+    (newStatus, oldStatus) => {
+      if (!formReady.value) return;
+
+      if (newStatus === "paid") {
+        if (!invoice.value.paymentDate) {
+          invoice.value.paymentDate = new Date().toISOString().split("T")[0];
+        }
+        return;
+      }
+
+      if (oldStatus === "paid" && invoice.value.paymentDate) {
+        paymentDateBeforeChange.value = invoice.value.paymentDate;
+        showClearPaymentModal.value = true;
+      }
+    },
+);
+
+function confirmClearPayment() {
+  invoice.value.paymentDate = "";
+  showClearPaymentModal.value = false;
+  paymentDateBeforeChange.value = "";
+}
+
+function cancelClearPayment() {
+  // Annulation : on rétablit le statut « Payé » et la date est conservée.
+  invoice.value.status = "paid";
+  showClearPaymentModal.value = false;
+  paymentDateBeforeChange.value = "";
+}
 
 function getDueDate(from) {
   const date = from ? new Date(from) : new Date();
@@ -404,7 +482,9 @@ function convertQuoteToInvoice(quote) {
 }
 
 async function saveAsDraft() {
-  invoice.value.status = "draft";
+  // Le statut choisi dans le `<select>` est respecté (on n'écrase plus par
+  // « brouillon »), faute de quoi il serait impossible d'enregistrer une
+  // facture payée.
   await saveInvoice();
   showToast(`Facture ${invoice.value.numero} enregistrée`);
   router.push("/factures");
@@ -416,7 +496,51 @@ async function saveAndGeneratePDF() {
   router.push("/factures");
 }
 
+/**
+ * Garde-fous sur la date de paiement (dates au format ISO yyyy-mm-dd, donc
+ * comparables lexicographiquement).
+ *  - antérieure à l'émission → bloquant
+ *  - dans le futur → autorisée, avertissement
+ *  - « Payé » sans date → autorisé, avertissement
+ */
+function validatePaymentBeforeSave() {
+  if (invoice.value.status !== "paid") return { ok: true };
+
+  const pay = invoice.value.paymentDate;
+
+  if (!pay) {
+    showToast(
+        "Facture marquée « Payé » sans date de paiement renseignée.",
+        "warning",
+    );
+    return { ok: true };
+  }
+
+  if (invoice.value.date && pay < invoice.value.date) {
+    return {
+      ok: false,
+      message:
+          "La date de paiement ne peut pas être antérieure à la date d'émission.",
+    };
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  if (pay > today) {
+    showToast("La date de paiement est dans le futur.", "warning");
+  }
+
+  return { ok: true };
+}
+
 async function saveInvoice() {
+  // Garde-fou bloquant : la date de paiement ne peut pas précéder l'émission.
+  const paymentCheck = validatePaymentBeforeSave();
+  if (!paymentCheck.ok) {
+    error.value = paymentCheck.message;
+    showToast(paymentCheck.message, "error");
+    throw new Error(paymentCheck.message);
+  }
+
   saving.value = true;
 
   try {
@@ -429,6 +553,11 @@ async function saveInvoice() {
     const raw = JSON.parse(JSON.stringify(toRaw(invoice.value)));
     raw.date = formatDateToFrench(invoice.value.date);
     raw.dueDate = formatDateToFrench(invoice.value.dueDate);
+    // La date de paiement n'a de sens que pour une facture payée.
+    raw.paymentDate =
+      invoice.value.status === "paid"
+        ? formatDateToFrench(invoice.value.paymentDate)
+        : null;
 
     // Sauvegarder
     await save(raw);

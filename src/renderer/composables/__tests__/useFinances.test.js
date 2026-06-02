@@ -381,6 +381,68 @@ describe("computeRevenueBySource", () => {
 });
 
 // ──────────────────────────────────────────────────────────────
+//  invoiceToTransaction — ventilation par date d'encaissement
+// ──────────────────────────────────────────────────────────────
+
+describe("invoiceToTransaction (ventilation)", () => {
+  function invoiceFromFields(fields) {
+    return {
+      id: "F1",
+      numero: "F000001",
+      type: "facture",
+      customer: { clientType: "professionnel" },
+      totals: { totalTTC: 100 },
+      ...fields,
+    };
+  }
+
+  // Renvoie la date sur laquelle la facture est ventilée (via `transactions`).
+  function ventilationDate(fields) {
+    const f = useFinances();
+    f.invoices.value = [invoiceFromFields(fields)];
+    const tx = f.transactions.value.find((t) => t.source === "facture");
+    return new Date(tx.isoDate);
+  }
+
+  it("ventile une facture payée sur sa paymentDate (émise mars, payée avril)", () => {
+    const d = ventilationDate({
+      status: "paid",
+      date: "15/03/2026",
+      dueDate: "15/04/2026",
+      paymentDate: "12/04/2026",
+    });
+    expect(d.getMonth()).toBe(3); // avril
+    expect(d.getFullYear()).toBe(2026);
+  });
+
+  it("retombe sur dueDate quand une facture payée n'a pas de paymentDate (legacy)", () => {
+    const d = ventilationDate({
+      status: "paid",
+      date: "15/03/2026",
+      dueDate: "20/04/2026",
+    });
+    expect(d.getMonth()).toBe(3); // avril (échéance)
+  });
+
+  it("retombe sur la date d'émission quand payée sans paymentDate ni dueDate", () => {
+    const d = ventilationDate({
+      status: "paid",
+      date: "15/03/2026",
+    });
+    expect(d.getMonth()).toBe(2); // mars
+  });
+
+  it("ventile une facture non payée sur son émission, même si paymentDate existe", () => {
+    const d = ventilationDate({
+      status: "sent",
+      date: "15/03/2026",
+      paymentDate: "12/04/2026",
+    });
+    expect(d.getMonth()).toBe(2); // mars (émission)
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
 //  Date utility (isoToFr)
 // ──────────────────────────────────────────────────────────────
 

@@ -133,10 +133,12 @@ async function deleteQuote(id) {
 
 // --- Statut facture ---
 
-async function updateInvoiceStatus(invoice, status) {
+async function updateInvoiceStatus(invoice, status, paymentDate = null) {
   try {
     const raw = JSON.parse(JSON.stringify(invoice));
     raw.status = status;
+    // `paid` enregistre la date d'encaissement ; tout autre statut la vide.
+    raw.paymentDate = status === "paid" ? paymentDate : null;
     await saveInvoice(raw);
   } catch (err) {
     console.error("Failed to update invoice status:", err);

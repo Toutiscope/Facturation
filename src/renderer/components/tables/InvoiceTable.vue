@@ -115,11 +115,33 @@
     Êtes-vous sûr de vouloir supprimer la facture
     <strong>{{ invoiceToDelete?.numero }}</strong> ?
   </ConfirmModal>
+
+  <PaymentDateModal
+    :visible="showPaymentModal"
+    :numero="paymentModalInvoice?.numero"
+    :emission-date="paymentModalInvoice?.date"
+    @cancel="cancelPayment"
+    @confirm="confirmPayment"
+  />
+
+  <ConfirmModal
+    :visible="showClearModal"
+    title="Retirer le paiement enregistré ?"
+    confirm-label="Continuer"
+    :warning="`Cela retirera le paiement enregistré du ${clearPaymentInvoice?.paymentDate}.`"
+    @cancel="cancelClearPayment"
+    @confirm="confirmClearPayment"
+  >
+    Vous changez le statut de la facture
+    <strong>{{ clearPaymentInvoice?.numero }}</strong> alors qu'une date de
+    paiement est enregistrée.
+  </ConfirmModal>
 </template>
 
 <script setup>
 import { ref, toRaw } from "vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
+import PaymentDateModal from "@/components/common/PaymentDateModal.vue";
 import { statusLabel, einvoiceStatusLabel } from "@/utils/statusLabels";
 
 defineProps({
@@ -139,6 +161,15 @@ const openMenuId = ref(null);
 const showDeleteModal = ref(false);
 const invoiceToDelete = ref(null);
 
+// Marquer comme payé → saisie de la date d'encaissement
+const showPaymentModal = ref(false);
+const paymentModalInvoice = ref(null);
+
+// Changement de statut hors « payé » alors qu'une date de paiement existe
+const showClearModal = ref(false);
+const clearPaymentInvoice = ref(null);
+const clearPaymentStatus = ref(null);
+
 function toggleMenu(id) {
   openMenuId.value = openMenuId.value === id ? null : id;
 }
@@ -150,8 +181,54 @@ function closeMenu(id) {
 }
 
 function changeStatus(invoice, status) {
-  emit("status-change", invoice, status);
   openMenuId.value = null;
+
+  if (status === "paid") {
+    // Une facture payée est réputée émise : on demande la date d'encaissement.
+    paymentModalInvoice.value = invoice;
+    showPaymentModal.value = true;
+    return;
+  }
+
+  // Passer hors « payé » alors qu'un paiement est enregistré → confirmation
+  // avant de vider la date, pour éviter une date résiduelle.
+  if (invoice.paymentDate) {
+    clearPaymentInvoice.value = invoice;
+    clearPaymentStatus.value = status;
+    showClearModal.value = true;
+    return;
+  }
+
+  emit("status-change", invoice, status, null);
+}
+
+function confirmPayment(paymentDate) {
+  emit("status-change", paymentModalInvoice.value, "paid", paymentDate);
+  showPaymentModal.value = false;
+  paymentModalInvoice.value = null;
+}
+
+function cancelPayment() {
+  showPaymentModal.value = false;
+  paymentModalInvoice.value = null;
+}
+
+function confirmClearPayment() {
+  emit(
+    "status-change",
+    clearPaymentInvoice.value,
+    clearPaymentStatus.value,
+    null,
+  );
+  showClearModal.value = false;
+  clearPaymentInvoice.value = null;
+  clearPaymentStatus.value = null;
+}
+
+function cancelClearPayment() {
+  showClearModal.value = false;
+  clearPaymentInvoice.value = null;
+  clearPaymentStatus.value = null;
 }
 
 async function handleGeneratePDF(invoice) {

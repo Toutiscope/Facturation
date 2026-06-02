@@ -40,12 +40,36 @@
           </div>
 
           <div class="filter-group">
+            <label>Période</label>
+            <div class="segmented" role="tablist">
+              <button
+                v-for="opt in periodOptions"
+                :key="opt"
+                :aria-selected="period === opt"
+                :class="{ 'segmented__item--active': period === opt }"
+                class="segmented__item"
+                role="tab"
+                type="button"
+                @click="setPeriod(opt)"
+              >
+                {{ opt }}
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-group">
             <label for="month">Mois</label>
             <input
               id="month"
               v-model="filters.month"
               type="month"
               class="form-control"
+              :disabled="period !== 'Mois'"
+              :title="
+                period === 'Mois'
+                  ? 'Choisir le mois affiché'
+                  : 'Disponible en vue Mois'
+              "
               @change="applyFilters"
               @click="openMonthPicker"
             />
@@ -67,7 +91,14 @@
         @delete="deleteQuote"
       >
         <template #empty>
-          <button class="btn btn-secondary" @click="createNew">
+          <button
+            v-if="period === 'Mois'"
+            class="btn btn-secondary"
+            @click="viewCurrentYear"
+          >
+            Voir les devis de l'année en cours
+          </button>
+          <button v-else class="btn btn-secondary" @click="createNew">
             Créez votre premier devis
           </button>
         </template>
@@ -92,11 +123,27 @@ function currentMonthValue() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
+// Sélecteur de période, identique aux pages Finances et Factures : la vue
+// "Mois" filtre sur le mois choisi, la vue "Année" sur l'année entière
+// (l'input mois est alors désactivé mais sa valeur sert à déterminer l'année).
+const periodOptions = ["Mois", "Année"];
+const period = ref("Mois");
 const filters = ref({
   search: "",
   status: "",
   month: currentMonthValue(),
 });
+
+function setPeriod(opt) {
+  period.value = opt;
+  applyFilters();
+}
+
+// Depuis l'état vide d'une vue mensuelle : revenir à l'année en cours.
+function viewCurrentYear() {
+  filters.value.month = currentMonthValue();
+  setPeriod("Année");
+}
 
 onMounted(async () => {
   await applyFilters();
@@ -120,7 +167,8 @@ async function applyFilters() {
   const [year, month] = (filters.value.month || "").split("-");
   await loadAll({
     year: year ? Number(year) : new Date().getFullYear(),
-    month: month ? Number(month) : undefined,
+    // En vue "Année" on ignore le mois pour charger l'année complète.
+    month: period.value === "Mois" && month ? Number(month) : undefined,
     status: filters.value.status || undefined,
     search: filters.value.search || undefined,
   });
@@ -160,6 +208,7 @@ async function deleteQuote(id) {
 </script>
 
 <style scoped lang="scss">
+@use "sass:math";
 @use "@/styles/colors" as *;
 @use "@/styles/variables" as *;
 @use "@/styles/mixins" as *;
@@ -174,7 +223,7 @@ async function deleteQuote(id) {
   .filters {
     .filter-row {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-columns: 2fr 1fr auto 1fr;
       gap: $spacing-md;
 
       @media (max-width: 768px) {
@@ -187,6 +236,39 @@ async function deleteQuote(id) {
         font-size: $font-size-sm;
       }
     }
+  }
+}
+
+// Sélecteur de période — identique à la page Finances.
+.segmented {
+  align-self: start;
+  background: $white;
+  border: 1px solid $grey-20;
+  border-radius: $border-radius-md;
+  display: inline-flex;
+  padding: math.div($spacing-xs, 2);
+}
+
+.segmented__item {
+  background: transparent;
+  border: none;
+  border-radius: $border-radius-sm;
+  color: $grey-90;
+  cursor: pointer;
+  font: inherit;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  padding: $spacing-xs $spacing-md;
+  transition: $transition-base;
+
+  &:hover {
+    color: $grey-100;
+  }
+
+  &--active,
+  &--active:hover {
+    background: $grey-100;
+    color: $white;
   }
 }
 </style>

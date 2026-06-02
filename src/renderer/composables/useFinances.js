@@ -6,13 +6,25 @@ import { ref, computed } from "vue";
 function invoiceToTransaction(invoice) {
   const amount = invoice.totals?.totalTTC ?? 0;
   const status = invoice.status || "draft";
+  // Une facture payée est ventilée sur sa date d'encaissement réelle. À défaut
+  // de `paymentDate` (factures legacy), on retombe sur l'échéance puis sur
+  // l'émission. Les factures non payées restent ventilées sur leur émission.
+  const isoDate =
+    status === "paid"
+      ? parseFrDate(invoice.paymentDate) ||
+        parseFrDate(invoice.dueDate) ||
+        parseFrDate(invoice.date) ||
+        invoice.createdAt ||
+        ""
+      : parseFrDate(invoice.date) || invoice.createdAt || "";
   return {
     id: `invoice-${invoice.id}`,
     invoiceId: invoice.id,
     source: "facture",
     type: "revenu",
     date: invoice.date || "",
-    isoDate: parseFrDate(invoice.date) || invoice.createdAt || "",
+    paymentDate: invoice.paymentDate || null,
+    isoDate,
     label:
       `Facture ${invoice.numero} — ${invoice.customer?.customerName || invoice.customer?.companyName || ""}`.trim(),
     category: "Prestation",

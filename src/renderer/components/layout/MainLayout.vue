@@ -391,7 +391,7 @@ $sidebar-width: 330px;
   &__item {
     align-items: center;
     border-radius: $border-radius-sm;
-    color: $grey_30;
+    color: $grey_20;
     display: flex;
     font-size: $font-size-base;
     font-weight: 500;
@@ -402,7 +402,7 @@ $sidebar-width: 330px;
     transition: all 0.15s ease;
 
     svg {
-      color: $grey_80;
+      color: $grey_70;
       flex-shrink: 0;
       height: 20px;
       width: 20px;
@@ -418,7 +418,7 @@ $sidebar-width: 330px;
       color: $white;
 
       svg {
-        color: $grey-100;
+        color: $tertiary-color;
       }
     }
   }

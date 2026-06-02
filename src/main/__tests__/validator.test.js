@@ -104,6 +104,30 @@ describe("Validation — champs manquants", () => {
     expect(result.errors.some((e) => e.path === "dueDate")).toBe(true);
   });
 
+  it("accepte les statuts propres aux factures (paid, overdue)", () => {
+    for (const status of ["draft", "sent", "paid", "overdue"]) {
+      const result = validateDocument("factures", validInvoice({ status }));
+      expect(result.valid).toBe(true);
+    }
+  });
+
+  it("refuse un statut de devis (accepted) sur une facture", () => {
+    const result = validateDocument(
+      "factures",
+      validInvoice({ status: "accepted" }),
+    );
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.path === "status")).toBe(true);
+  });
+
+  it("accepte une date de paiement sur une facture payée", () => {
+    const result = validateDocument(
+      "factures",
+      validInvoice({ status: "paid", paymentDate: "20/02/2027" }),
+    );
+    expect(result.valid).toBe(true);
+  });
+
   it("aucun service retourne une erreur", () => {
     const doc = validQuote({ services: [] });
     const result = validateDocument("devis", doc);

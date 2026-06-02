@@ -50,12 +50,36 @@
           </div>
 
           <div class="filter-group">
+            <label>Période</label>
+            <div class="segmented" role="tablist">
+              <button
+                v-for="opt in periodOptions"
+                :key="opt"
+                :aria-selected="period === opt"
+                :class="{ 'segmented__item--active': period === opt }"
+                class="segmented__item"
+                role="tab"
+                type="button"
+                @click="setPeriod(opt)"
+              >
+                {{ opt }}
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-group">
             <label for="month">Mois</label>
             <input
               id="month"
               v-model="filters.month"
               type="month"
               class="form-control"
+              :disabled="period !== 'Mois'"
+              :title="
+                period === 'Mois'
+                  ? 'Choisir le mois affiché'
+                  : 'Disponible en vue Mois'
+              "
               @change="applyFilters"
               @click="openMonthPicker"
             />
@@ -76,7 +100,14 @@
         @delete="deleteInvoice"
       >
         <template #empty>
-          <button class="btn btn-secondary" @click="createNew">
+          <button
+            v-if="period === 'Mois'"
+            class="btn btn-secondary"
+            @click="viewCurrentYear"
+          >
+            Voir les factures de l'année en cours
+          </button>
+          <button v-else class="btn btn-secondary" @click="createNew">
             Créez votre première facture
           </button>
         </template>
@@ -120,16 +151,34 @@ function openMonthPicker(e) {
 }
 
 const pdpEnabled = ref(false);
+
+// Sélecteur de période, identique à la page Finances : la vue "Mois" filtre
+// sur le mois choisi, la vue "Année" sur l'année entière (l'input mois est
+// alors désactivé mais sa valeur sert toujours à déterminer l'année).
+const periodOptions = ["Mois", "Année"];
+
 // Statut passé en query (ex : depuis le KPI "En attente" des Finances).
-// Dans ce cas on affiche toute l'année (mois vidé) pour rester cohérent avec
-// le total annuel affiché sur la carte.
+// Dans ce cas on bascule en vue "Année" pour rester cohérent avec le total
+// annuel affiché sur la carte.
 const initialStatus =
   typeof route.query.status === "string" ? route.query.status : "";
+const period = ref(initialStatus ? "Année" : "Mois");
 const filters = ref({
   search: "",
   status: initialStatus,
-  month: initialStatus ? "" : currentMonthValue(),
+  month: currentMonthValue(),
 });
+
+function setPeriod(opt) {
+  period.value = opt;
+  applyFilters();
+}
+
+// Depuis l'état vide d'une vue mensuelle : revenir à l'année en cours.
+function viewCurrentYear() {
+  filters.value.month = currentMonthValue();
+  setPeriod("Année");
+}
 
 onMounted(async () => {
   await applyFilters();
@@ -163,7 +212,8 @@ async function applyFilters() {
   const [year, month] = (filters.value.month || "").split("-");
   await loadAll({
     year: year ? Number(year) : new Date().getFullYear(),
-    month: month ? Number(month) : undefined,
+    // En vue "Année" on ignore le mois pour charger l'année complète.
+    month: period.value === "Mois" && month ? Number(month) : undefined,
     status: filters.value.status || undefined,
     search: filters.value.search || undefined,
   });
@@ -177,10 +227,12 @@ function edit(id) {
   router.push(`/factures/${id}`);
 }
 
-async function updateStatus(invoice, status) {
+async function updateStatus(invoice, status, paymentDate = null) {
   try {
     const raw = JSON.parse(JSON.stringify(invoice));
     raw.status = status;
+    // `paid` enregistre la date d'encaissement ; tout autre statut la vide.
+    raw.paymentDate = status === "paid" ? paymentDate : null;
     await save(raw);
   } catch (err) {
     console.error("Failed to update invoice status:", err);
@@ -197,6 +249,7 @@ async function deleteInvoice(id) {
 </script>
 
 <style scoped lang="scss">
+@use "sass:math";
 @use "@/styles/colors" as *;
 @use "@/styles/variables" as *;
 @use "@/styles/mixins" as *;
@@ -211,7 +264,7 @@ async function deleteInvoice(id) {
   .filters {
     .filter-row {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-columns: 2fr 1fr auto 1fr;
       gap: $spacing-md;
 
       @media (max-width: 768px) {
@@ -224,6 +277,39 @@ async function deleteInvoice(id) {
         font-size: $font-size-sm;
       }
     }
+  }
+}
+
+// Sélecteur de période — identique à la page Finances.
+.segmented {
+  align-self: start;
+  background: $white;
+  border: 1px solid $grey-20;
+  border-radius: $border-radius-md;
+  display: inline-flex;
+  padding: math.div($spacing-xs, 2);
+}
+
+.segmented__item {
+  background: transparent;
+  border: none;
+  border-radius: $border-radius-sm;
+  color: $grey-90;
+  cursor: pointer;
+  font: inherit;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  padding: $spacing-xs $spacing-md;
+  transition: $transition-base;
+
+  &:hover {
+    color: $grey-100;
+  }
+
+  &--active,
+  &--active:hover {
+    background: $grey-100;
+    color: $white;
   }
 }
 </style>

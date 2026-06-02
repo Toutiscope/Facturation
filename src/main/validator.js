@@ -115,9 +115,16 @@ export const invoiceSchema = quoteSchema.extend({
   numero: z
     .string()
     .regex(/^F\d{6}$/, "Le numéro de facture doit être au format F000001"),
+  // Les factures ont leur propre cycle de vie (pas le même que les devis).
+  status: z.enum(["draft", "sent", "paid", "overdue"], {
+    errorMap: () => ({ message: "Statut invalide" }),
+  }),
   // Une facture n'a pas de date de validité (champ propre aux devis)
   validityDate: z.string().optional(),
   dueDate: z.string().min(1, "La date d'échéance est requise"),
+  // Date d'encaissement réelle (format FR DD/MM/YYYY). Absente/null tant que
+  // la facture n'est pas payée.
+  paymentDate: z.string().nullable().optional(),
   associatedQuote: z.string().optional(),
   einvoice: einvoiceSchema.optional(),
 });

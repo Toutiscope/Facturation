@@ -48,6 +48,10 @@ const { toast, dismissToast } = useToast();
     background-color: $error-color;
   }
 
+  &--warning {
+    background-color: $warning-color;
+  }
+
   &__message {
     flex: 1;
     font-weight: 500;
