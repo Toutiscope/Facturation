@@ -88,6 +88,65 @@ function isoToFr(iso) {
   return `${dd}/${mm}/${d.getFullYear()}`;
 }
 
+// ──────────────────────────────────────────────────────────────
+//  URSSAF
+// ──────────────────────────────────────────────────────────────
+
+// Taux URSSAF auto-entrepreneur prestation de services (BNC libéral) :
+// cotisations sociales + CFP. Les cotisations sont assises sur le CA encaissé,
+// pas sur le bénéfice — on applique donc le taux sur le CA pour l'estimation.
+export const URSSAF_RATE = 0.232;
+
+/**
+ * Clé d'un montant URSSAF figé, au format "YYYY-MM".
+ */
+export function urssafMonthKey(year, monthIndex) {
+  return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
+/**
+ * Montant URSSAF effectif d'un mois : valeur figée manuellement si présente
+ * dans `overrides`, sinon estimation automatique (CA encaissé du mois × taux).
+ * @param {number[]} monthlyRevenue - CA encaissé par mois (12 valeurs)
+ * @param {Object} overrides - montants figés indexés "YYYY-MM"
+ * @param {number} year
+ * @param {number} monthIndex - 0-11
+ * @returns {number}
+ */
+export function effectiveUrssafForMonth(
+  monthlyRevenue,
+  overrides,
+  year,
+  monthIndex,
+) {
+  const override = overrides?.[urssafMonthKey(year, monthIndex)];
+  if (override != null) return override;
+  return (monthlyRevenue[monthIndex] || 0) * URSSAF_RATE;
+}
+
+/**
+ * Synthèse URSSAF d'une année à partir du CA encaissé mensuel et des montants
+ * figés manuellement. Un mois figé (présent dans `overrides`, y compris à 0)
+ * n'est plus recalculé.
+ * @param {number[]} monthlyRevenue - CA encaissé par mois (12 valeurs)
+ * @param {Object} overrides - montants figés indexés "YYYY-MM"
+ * @param {number} year
+ * @returns {{ byMonth: number[], yearTotal: number, overriddenCount: number }}
+ */
+export function computeUrssaf(monthlyRevenue, overrides = {}, year) {
+  const byMonth = [];
+  let yearTotal = 0;
+  let overriddenCount = 0;
+  for (let m = 0; m < 12; m++) {
+    const isOverride = overrides[urssafMonthKey(year, m)] != null;
+    const amount = effectiveUrssafForMonth(monthlyRevenue, overrides, year, m);
+    byMonth.push(amount);
+    yearTotal += amount;
+    if (isOverride) overriddenCount++;
+  }
+  return { byMonth, yearTotal, overriddenCount };
+}
+
 export function useFinances() {
   const invoices = ref([]);
   const manualTransactions = ref([]);

@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { useFinances } from "../useFinances.js";
+import {
+  useFinances,
+  computeUrssaf,
+  effectiveUrssafForMonth,
+  urssafMonthKey,
+  URSSAF_RATE,
+} from "../useFinances.js";
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -459,5 +465,136 @@ describe("isoToFr", () => {
     expect(isoToFr("")).toBe("");
     expect(isoToFr(null)).toBe("");
     expect(isoToFr("not-a-date")).toBe("");
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+//  URSSAF — urssafMonthKey
+// ──────────────────────────────────────────────────────────────
+
+describe("urssafMonthKey", () => {
+  it("formats year + zero-padded month as 'YYYY-MM'", () => {
+    expect(urssafMonthKey(2026, 0)).toBe("2026-01");
+    expect(urssafMonthKey(2026, 8)).toBe("2026-09");
+    expect(urssafMonthKey(2026, 11)).toBe("2026-12");
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+//  URSSAF — effectiveUrssafForMonth
+// ──────────────────────────────────────────────────────────────
+
+describe("effectiveUrssafForMonth", () => {
+  const revenue = Array(12).fill(0);
+  revenue[4] = 1000; // mai
+
+  it("estimates from monthly revenue × rate when no override", () => {
+    expect(effectiveUrssafForMonth(revenue, {}, 2026, 4)).toBeCloseTo(
+      1000 * URSSAF_RATE,
+    );
+  });
+
+  it("returns 0 for a month without revenue and without override", () => {
+    expect(effectiveUrssafForMonth(revenue, {}, 2026, 0)).toBe(0);
+  });
+
+  it("returns the override when one is set for that month", () => {
+    const overrides = { "2026-05": 150 };
+    expect(effectiveUrssafForMonth(revenue, overrides, 2026, 4)).toBe(150);
+  });
+
+  it("treats an override of 0 as a value (not as 'no override')", () => {
+    const overrides = { "2026-05": 0 };
+    expect(effectiveUrssafForMonth(revenue, overrides, 2026, 4)).toBe(0);
+  });
+
+  it("ignores an override keyed on a different year", () => {
+    const overrides = { "2025-05": 999 };
+    expect(effectiveUrssafForMonth(revenue, overrides, 2026, 4)).toBeCloseTo(
+      1000 * URSSAF_RATE,
+    );
+  });
+
+  it("tolerates a missing overrides object", () => {
+    expect(effectiveUrssafForMonth(revenue, undefined, 2026, 4)).toBeCloseTo(
+      1000 * URSSAF_RATE,
+    );
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+//  URSSAF — computeUrssaf
+// ──────────────────────────────────────────────────────────────
+
+describe("computeUrssaf", () => {
+  it("returns a 12-slot byMonth array", () => {
+    const { byMonth } = computeUrssaf(Array(12).fill(0), {}, 2026);
+    expect(byMonth).toHaveLength(12);
+    expect(byMonth.every((v) => v === 0)).toBe(true);
+  });
+
+  it("sums the auto-estimated amounts when no override is set", () => {
+    const revenue = Array(12).fill(0);
+    revenue[0] = 1000;
+    revenue[4] = 2000;
+    const { yearTotal, overriddenCount } = computeUrssaf(revenue, {}, 2026);
+    expect(yearTotal).toBeCloseTo(3000 * URSSAF_RATE);
+    expect(overriddenCount).toBe(0);
+  });
+
+  it("uses overrides for the flagged months and auto for the rest", () => {
+    const revenue = Array(12).fill(0);
+    revenue[0] = 1000; // janvier → auto
+    revenue[4] = 2000; // mai → figé
+    const overrides = { "2026-05": 500 };
+    const { byMonth, yearTotal, overriddenCount } = computeUrssaf(
+      revenue,
+      overrides,
+      2026,
+    );
+    expect(byMonth[0]).toBeCloseTo(1000 * URSSAF_RATE);
+    expect(byMonth[4]).toBe(500);
+    expect(yearTotal).toBeCloseTo(1000 * URSSAF_RATE + 500);
+    expect(overriddenCount).toBe(1);
+  });
+
+  it("counts an override of 0 as a frozen month", () => {
+    const revenue = Array(12).fill(0);
+    revenue[4] = 2000;
+    const { byMonth, overriddenCount } = computeUrssaf(
+      revenue,
+      { "2026-05": 0 },
+      2026,
+    );
+    expect(byMonth[4]).toBe(0);
+    expect(overriddenCount).toBe(1);
+  });
+
+  it("ignores overrides keyed on another year", () => {
+    const revenue = Array(12).fill(0);
+    revenue[4] = 2000;
+    const { overriddenCount, yearTotal } = computeUrssaf(
+      revenue,
+      { "2025-05": 999 },
+      2026,
+    );
+    expect(overriddenCount).toBe(0);
+    expect(yearTotal).toBeCloseTo(2000 * URSSAF_RATE);
+  });
+
+  it("keeps yearTotal equal to the sum of byMonth", () => {
+    const revenue = Array(12).fill(100);
+    const overrides = { "2026-03": 42, "2026-07": 7 };
+    const { byMonth, yearTotal } = computeUrssaf(revenue, overrides, 2026);
+    const sum = byMonth.reduce((s, v) => s + v, 0);
+    expect(yearTotal).toBeCloseTo(sum);
+  });
+
+  it("defaults overrides to an empty object when omitted", () => {
+    const revenue = Array(12).fill(0);
+    revenue[4] = 1000;
+    const { yearTotal, overriddenCount } = computeUrssaf(revenue, undefined, 2026);
+    expect(yearTotal).toBeCloseTo(1000 * URSSAF_RATE);
+    expect(overriddenCount).toBe(0);
   });
 });

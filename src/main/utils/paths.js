@@ -30,6 +30,10 @@ const DEFAULT_CONFIG = {
     latestQuoteNumber: 0,
     latestInvoiceNumber: 0,
     pdfOutputPath: "",
+    // Montants URSSAF saisis manuellement, indexés par mois "YYYY-MM".
+    // Un mois présent ici fige sa valeur (le calcul automatique ne s'applique
+    // plus pour ce mois).
+    urssafOverrides: {},
   },
   einvoicePlatform: {
     providerName: "",

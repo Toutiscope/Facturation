@@ -71,6 +71,8 @@ describe("hydrateConfig", () => {
     expect(result.billing.pdfOutputPath).toBe(
       DEFAULT_CONFIG.billing.pdfOutputPath,
     );
+    // Champ ajouté pour les montants URSSAF figés manuellement
+    expect(result.billing.urssafOverrides).toEqual({});
 
     // Bloc entièrement absent ajouté
     expect(result.rib).toEqual(DEFAULT_CONFIG.rib);

@@ -11,40 +11,40 @@
       <div class="finances__header-actions">
         <div class="segmented" role="tablist">
           <button
-            v-for="opt in periodOptions"
-            :key="opt"
-            :aria-selected="period === opt"
-            :class="{ 'segmented__item--active': period === opt }"
-            class="segmented__item"
-            role="tab"
-            type="button"
-            @click="period = opt"
+              v-for="opt in periodOptions"
+              :key="opt"
+              :aria-selected="period === opt"
+              :class="{ 'segmented__item--active': period === opt }"
+              class="segmented__item"
+              role="tab"
+              type="button"
+              @click="period = opt"
           >
             {{ opt }}
           </button>
         </div>
         <input
-          v-model="selectedMonth"
-          type="month"
-          class="finances__month-picker"
-          :disabled="period !== 'Mois'"
-          :title="
+            v-model="selectedMonth"
+            :disabled="period !== 'Mois'"
+            :title="
             period === 'Mois'
               ? 'Choisir le mois affiché'
               : 'Disponible en vue Mois'
           "
-          aria-label="Mois affiché"
-          @click="openMonthPicker"
+            aria-label="Mois affiché"
+            class="finances__month-picker"
+            type="month"
+            @click="openMonthPicker"
         />
         <div class="segmented">
           <button
-            v-for="opt in chartTypeOptions"
-            :key="opt.value"
-            :class="{ 'segmented__item--active': chartType === opt.value }"
-            :title="`Graphique en ${opt.label.toLowerCase()}`"
-            class="segmented__item"
-            type="button"
-            @click="chartType = opt.value"
+              v-for="opt in chartTypeOptions"
+              :key="opt.value"
+              :class="{ 'segmented__item--active': chartType === opt.value }"
+              :title="`Graphique en ${opt.label.toLowerCase()}`"
+              class="segmented__item"
+              type="button"
+              @click="chartType = opt.value"
           >
             {{ opt.label }}
           </button>
@@ -107,13 +107,13 @@
           <p class="kpi-card__delta">{{ kpis.paidRatio }}% du CA</p>
         </article>
         <article
-          class="kpi-card kpi-card--clickable"
-          role="button"
-          tabindex="0"
-          title="Voir les factures en attente"
-          @click="goToPendingInvoices"
-          @keydown.enter="goToPendingInvoices"
-          @keydown.space.prevent="goToPendingInvoices"
+            class="kpi-card kpi-card--clickable"
+            role="button"
+            tabindex="0"
+            title="Voir les factures en attente"
+            @click="goToPendingInvoices"
+            @keydown.enter="goToPendingInvoices"
+            @keydown.space.prevent="goToPendingInvoices"
         >
           <p class="kpi-card__label">En attente</p>
           <p class="kpi-card__value">{{ formatCurrency(kpis.pending) }}</p>
@@ -134,38 +134,89 @@
             </div>
             <div class="chart-card__legend">
               <span>
-                <i class="legend-dot legend-dot--income" />
+                <i class="legend-dot legend-dot--income"/>
                 Revenus
               </span>
               <span>
-                <i class="legend-dot legend-dot--expense" />
+                <i class="legend-dot legend-dot--expense"/>
                 Dépenses
               </span>
             </div>
           </header>
           <MonthlyChart
-            :clickable="period === 'Année'"
-            :expense="chartSeries.expense"
-            :full-labels="chartSeries.fullLabels"
-            :height="220"
-            :labels="chartSeries.labels"
-            :revenue="chartSeries.revenue"
-            :type="chartType"
-            @point-click="onChartMonthClick"
+              :clickable="period === 'Année'"
+              :expense="chartSeries.expense"
+              :full-labels="chartSeries.fullLabels"
+              :height="220"
+              :labels="chartSeries.labels"
+              :revenue="chartSeries.revenue"
+              :type="chartType"
+              class="mg-top-24"
+              @point-click="onChartMonthClick"
           />
         </article>
 
-        <article class="chart-card">
-          <header class="chart-card__header">
-            <div>
-              <h2>Répartition des revenus</h2>
-              <p class="chart-card__sub">Par type de client</p>
+        <section class="flex flex-column gap-8">
+          <article class="chart-card">
+            <div class="flex flex-space-between flex-vertical-center">
+              <div>
+                <h2>{{ urssafTitle }}</h2>
+                <p class="chart-card__sub">{{ urssafSubtitle }}</p>
+              </div>
+              <div class="urssaf-field">
+                <div class="urssaf-field__input-row">
+                  <input
+                      :disabled="period === 'Année'"
+                      :title="
+                      period === 'Année'
+                        ? 'Somme des montants URSSAF de l\'année'
+                        : 'Montant URSSAF estimé, modifiable'
+                    "
+                      :value="urssafFieldValue"
+                      aria-label="Montant URSSAF"
+                      class="urssaf-input"
+                      inputmode="decimal"
+                      min="0"
+                      step="0.01"
+                      type="number"
+                      @change="onUrssafChange"
+                  />
+                  <span class="urssaf-field__currency">€</span>
+                </div>
+                <p
+                    :class="{ 'urssaf-source--manual': urssafIsManual }"
+                    class="urssaf-source"
+                >
+                  <span aria-hidden="true" class="urssaf-source__icon">
+                    {{ urssafIsManual ? "✎" : "↻" }}
+                  </span>
+                  {{ urssafSourceLabel }}
+                  <button
+                      v-if="urssafIsManual && period === 'Mois'"
+                      class="urssaf-source__reset"
+                      title="Revenir au calcul automatique"
+                      type="button"
+                      @click="resetUrssafOverride"
+                  >
+                    Réinitialiser
+                  </button>
+                </p>
+              </div>
             </div>
-          </header>
-          <div class="chart-card__donut">
-            <DonutChart :segments="revenueBySource.segments" :size="170" />
-          </div>
-        </article>
+          </article>
+
+          <article class="chart-card">
+            <header class="chart-card__header">
+              <div>
+                <h2>Répartition des revenus</h2>
+                <p class="chart-card__sub">Par type de client</p>
+              </div>
+            </header>
+            <div class="chart-card__donut">
+              <DonutChart :segments="revenueBySource.segments" :size="150"/>
+            </div>
+          </article>
+        </section>
       </section>
 
       <!-- Transactions table -->
@@ -179,41 +230,41 @@
           </div>
           <div class="filter-pills">
             <button
-              v-for="opt in typeFilters"
-              :key="opt.value"
-              :class="{ 'filter-pill--active': typeFilter === opt.value }"
-              class="filter-pill"
-              type="button"
-              @click="typeFilter = opt.value"
+                v-for="opt in typeFilters"
+                :key="opt.value"
+                :class="{ 'filter-pill--active': typeFilter === opt.value }"
+                class="filter-pill"
+                type="button"
+                @click="typeFilter = opt.value"
             >
               {{ opt.label }}
             </button>
           </div>
         </header>
         <TransactionsTable
-          :rows="filteredTransactions"
-          @delete="onDeleteRequest"
-          @duplicate="onDuplicate"
-          @edit="onEdit"
-          @change-category="onChangeCategory"
-          @open-invoice="onOpenInvoice"
+            :rows="filteredTransactions"
+            @delete="onDeleteRequest"
+            @duplicate="onDuplicate"
+            @edit="onEdit"
+            @change-category="onChangeCategory"
+            @open-invoice="onOpenInvoice"
         />
       </section>
     </template>
 
     <TransactionSlideOver
-      :transaction="editingTransaction"
-      :visible="slideOverVisible"
-      @cancel="closeSlideOver"
-      @save="onSave"
+        :transaction="editingTransaction"
+        :visible="slideOverVisible"
+        @cancel="closeSlideOver"
+        @save="onSave"
     />
 
     <ConfirmModal
-      :visible="!!pendingDelete"
-      confirm-label="Supprimer"
-      title="Supprimer la transaction"
-      @cancel="pendingDelete = null"
-      @confirm="confirmDelete"
+        :visible="!!pendingDelete"
+        confirm-label="Supprimer"
+        title="Supprimer la transaction"
+        @cancel="pendingDelete = null"
+        @confirm="confirmDelete"
     >
       Êtes-vous sûr de vouloir supprimer la transaction
       <strong>{{ pendingDelete?.label }}</strong> ?
@@ -222,10 +273,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
-import { useFinances } from "@/composables/useFinances";
-import { useToast } from "@/composables/useToast";
+import {computed, onMounted, ref} from "vue";
+import {useRouter} from "vue-router";
+import {
+  useFinances,
+  computeUrssaf,
+  effectiveUrssafForMonth,
+} from "@/composables/useFinances";
+import {useToast} from "@/composables/useToast";
 import MonthlyChart from "@/components/finances/MonthlyChart.vue";
 import DonutChart from "@/components/finances/DonutChart.vue";
 import TransactionsTable from "@/components/finances/TransactionsTable.vue";
@@ -241,11 +296,12 @@ const {
   removeTransaction,
   computeKpis,
   computeChartSeries,
+  computeMonthlySeries,
   computeRevenueBySource,
   filterByPeriod,
 } = useFinances();
 
-const { showToast } = useToast();
+const {showToast} = useToast();
 const router = useRouter();
 
 function onOpenInvoice(invoiceId) {
@@ -254,7 +310,7 @@ function onOpenInvoice(invoiceId) {
 
 // "En attente" = factures envoyées non encore réglées → liste filtrée sur ce statut.
 function goToPendingInvoices() {
-  router.push({ path: "/factures", query: { status: "sent" } });
+  router.push({path: "/factures", query: {status: "sent"}});
 }
 
 const periodOptions = ["Mois", "Année"];
@@ -265,6 +321,7 @@ function currentMonthValue() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
+
 const selectedMonth = ref(currentMonthValue());
 
 // Date de référence dérivée du mois sélectionné (1er du mois).
@@ -276,7 +333,7 @@ const monthRefDate = computed(() => {
 
 // Date de référence effective : le mois choisi en vue "Mois", aujourd'hui sinon.
 const effectiveRefDate = computed(() =>
-  period.value === "Mois" ? monthRefDate.value : new Date(),
+    period.value === "Mois" ? monthRefDate.value : new Date(),
 );
 
 // Ouvre le calendrier natif au clic n'importe où sur l'input (pas seulement
@@ -302,22 +359,25 @@ function onChartMonthClick(index) {
 }
 
 const chartTypeOptions = [
-  { value: "line", label: "Ligne" },
-  { value: "area", label: "Aire" },
-  { value: "bar", label: "Barres" },
+  {value: "line", label: "Ligne"},
+  {value: "area", label: "Aire"},
+  {value: "bar", label: "Barres"},
 ];
 const chartType = ref("line");
 
 const typeFilters = [
-  { value: "all", label: "Toutes" },
-  { value: "revenu", label: "Revenus" },
-  { value: "depense", label: "Dépenses" },
+  {value: "all", label: "Toutes"},
+  {value: "revenu", label: "Revenus"},
+  {value: "depense", label: "Dépenses"},
 ];
 const typeFilter = ref("all");
 
 const slideOverVisible = ref(false);
 const editingTransaction = ref(null);
 const pendingDelete = ref(null);
+
+// Configuration utilisateur (contient les montants URSSAF figés manuellement).
+const config = ref(null);
 
 const MONTH_NAMES = [
   "janvier",
@@ -355,23 +415,152 @@ const transactionsTitle = computed(() => {
   return "Transactions de l'année";
 });
 
-// Taux URSSAF auto-entrepreneur prestation de services (BNC libéral) :
-// cotisations sociales + CFP. Les cotisations URSSAF sont assises sur le CA,
-// pas sur le bénéfice — on applique donc le taux sur le CA pour estimer le net.
-const URSSAF_RATE = 0.232;
-
+// Les montants « après impôts » se basent sur le montant URSSAF effectif
+// (éventuellement figé manuellement dans le champ), pas sur le seul taux :
+//  - CA mois en cours → moins l'URSSAF du mois calendaire courant
+//  - CA annuel / bénéfice → moins le total URSSAF de l'année
 const kpis = computed(() => {
   const k = computeKpis(transactions.value);
   return {
     ...k,
-    caMonthAfterUrssaf: k.caMonth * (1 - URSSAF_RATE),
-    caYearAfterUrssaf: k.caYear * (1 - URSSAF_RATE),
-    benefitAfterUrssaf: k.benefit - k.caYear * URSSAF_RATE,
+    caMonthAfterUrssaf: k.caMonth - urssafCurrentMonth.value,
+    caYearAfterUrssaf: k.caYear - urssafYearTotal.value,
+    benefitAfterUrssaf: k.benefit - urssafYearTotal.value,
   };
 });
 
+// ==================== URSSAF ====================
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function round2(value) {
+  return Math.round((Number(value) || 0) * 100) / 100;
+}
+
+// Montants figés par mois ("YYYY-MM" → montant). Un mois présent ici n'est
+// plus recalculé automatiquement.
+const urssafOverrides = computed(() => config.value?.billing?.urssafOverrides || {});
+
+// CA encaissé par mois sur l'année courante (12 valeurs). Sert de base au
+// calcul automatique : cotisations URSSAF assises sur le CA.
+const monthlyRevenue = computed(
+    () => computeMonthlySeries(transactions.value).revenue,
+);
+
+// Synthèse URSSAF de l'année courante (montant par mois, total, nombre de mois
+// figés), à partir du CA encaissé et des montants saisis manuellement.
+const urssafYear = computed(() =>
+    computeUrssaf(
+        monthlyRevenue.value,
+        urssafOverrides.value,
+        new Date().getFullYear(),
+    ),
+);
+
+// Total URSSAF de l'année courante (figé sinon calculé pour chaque mois).
+const urssafYearTotal = computed(() => urssafYear.value.yearTotal);
+
+// Nombre de mois de l'année courante dont le montant a été figé manuellement.
+const overriddenMonthsCount = computed(() => urssafYear.value.overriddenCount);
+
+// Montant URSSAF du mois calendaire en cours. Sert aux KPIs dont la sémantique
+// est figée sur le mois courant, indépendamment du mois sélectionné.
+const urssafCurrentMonth = computed(
+    () => urssafYear.value.byMonth[new Date().getMonth()],
+);
+
+// Montant affiché dans le champ :
+//  - vue "Mois"  : montant du mois sélectionné (figé ou calculé)
+//  - vue "Année" : somme des 12 mois de l'année courante
+const urssafAmount = computed(() => {
+  if (period.value === "Année") return urssafYearTotal.value;
+  const d = monthRefDate.value;
+  return effectiveUrssafForMonth(
+      monthlyRevenue.value,
+      urssafOverrides.value,
+      d.getFullYear(),
+      d.getMonth(),
+  );
+});
+
+const urssafFieldValue = computed(() => round2(urssafAmount.value));
+
+const urssafTitle = computed(() => {
+  if (period.value === "Année") return `URSSAF ${new Date().getFullYear()}`;
+  return `URSSAF de ${capitalize(MONTH_NAMES[effectiveRefDate.value.getMonth()])}`;
+});
+
+const urssafSubtitle = computed(() => {
+  if (period.value === "Année") return "Total des 12 mois";
+  const d = effectiveRefDate.value;
+  const next = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+  return `Sera prélevé en ${capitalize(MONTH_NAMES[next.getMonth()])}`;
+});
+
+// Le montant affiché provient-il d'une saisie manuelle ?
+//  - vue "Mois"  : le mois sélectionné est figé
+//  - vue "Année" : au moins un mois est figé
+const urssafIsManual = computed(() => {
+  if (period.value === "Année") return overriddenMonthsCount.value > 0;
+  return urssafOverrides.value[selectedMonth.value] != null;
+});
+
+// Mention indiquant l'origine du montant (calcul auto vs saisie manuelle).
+const urssafSourceLabel = computed(() => {
+  if (period.value === "Année") {
+    const n = overriddenMonthsCount.value;
+    if (n === 0) return "Calculé automatiquement";
+    return `Inclut ${n} mois ajusté${n > 1 ? "s" : ""}`;
+  }
+  return urssafIsManual.value
+      ? "Montant saisi manuellement"
+      : "Calculé automatiquement";
+});
+
+// Réinitialise le mois sélectionné au calcul automatique (vue "Mois" seulement).
+async function resetUrssafOverride() {
+  if (period.value === "Année" || !config.value) return;
+  const overrides = config.value.billing?.urssafOverrides;
+  if (!overrides || overrides[selectedMonth.value] == null) return;
+  delete overrides[selectedMonth.value];
+  try {
+    await window.electronAPI.saveConfig(
+        JSON.parse(JSON.stringify(config.value)),
+    );
+  } catch (err) {
+    showToast(
+        err.message || "Erreur lors de la réinitialisation du montant URSSAF",
+        "error",
+    );
+  }
+}
+
+// Fige le montant du mois sélectionné et persiste dans config.json. Le champ
+// est désactivé en vue "Année", donc ce handler ne s'y déclenche pas.
+async function onUrssafChange(event) {
+  if (period.value === "Année" || !config.value) return;
+  const value = round2(event.target.value);
+  if (!config.value.billing) config.value.billing = {};
+  if (!config.value.billing.urssafOverrides) {
+    config.value.billing.urssafOverrides = {};
+  }
+  config.value.billing.urssafOverrides[selectedMonth.value] = value;
+  try {
+    await window.electronAPI.saveConfig(
+        JSON.parse(JSON.stringify(config.value)),
+    );
+  } catch (err) {
+    showToast(
+        err.message || "Erreur lors de l'enregistrement du montant URSSAF",
+        "error",
+    );
+  }
+}
+
 const chartSeries = computed(() =>
-  computeChartSeries(transactions.value, period.value, effectiveRefDate.value),
+    computeChartSeries(transactions.value, period.value, effectiveRefDate.value),
 );
 
 const chartSubtitle = computed(() => {
@@ -383,19 +572,19 @@ const chartSubtitle = computed(() => {
 });
 
 const revenueBySource = computed(() =>
-  computeRevenueBySource(filterByPeriod(transactions.value, "Année")),
+    computeRevenueBySource(filterByPeriod(transactions.value, "Année")),
 );
 
 const filteredTransactions = computed(() => {
   const filteredByPeriod = filterByPeriod(
-    transactions.value,
-    period.value,
-    effectiveRefDate.value,
+      transactions.value,
+      period.value,
+      effectiveRefDate.value,
   );
   const filteredByType =
-    typeFilter.value === "all"
-      ? filteredByPeriod
-      : filteredByPeriod.filter((t) => t.type === typeFilter.value);
+      typeFilter.value === "all"
+          ? filteredByPeriod
+          : filteredByPeriod.filter((t) => t.type === typeFilter.value);
   return filteredByType.slice(0, 12);
 });
 
@@ -414,8 +603,8 @@ async function onSave(transaction) {
     await saveTransaction(transaction);
     closeSlideOver();
     showToast(
-      transaction.id ? "Transaction modifiée" : "Transaction ajoutée",
-      "success",
+        transaction.id ? "Transaction modifiée" : "Transaction ajoutée",
+        "success",
     );
   } catch (err) {
     showToast(err.message || "Erreur lors de l'enregistrement", "error");
@@ -427,11 +616,11 @@ function onEdit(row) {
 }
 
 function onDuplicate(row) {
-  const dup = { ...row.raw };
+  const dup = {...row.raw};
   delete dup.id;
   delete dup.createdAt;
   delete dup.editedAt;
-  openSlideOver({ raw: dup });
+  openSlideOver({raw: dup});
 }
 
 function onChangeCategory(row) {
@@ -462,8 +651,18 @@ function formatCurrency(v) {
   }).format(v || 0);
 }
 
+async function loadConfigData() {
+  try {
+    config.value = await window.electronAPI.loadConfig();
+  } catch (err) {
+    // Non bloquant : sans config, le champ URSSAF reste en calcul automatique.
+    console.error("Failed to load config in Finances:", err);
+  }
+}
+
 onMounted(() => {
   loadAll();
+  loadConfigData();
 });
 </script>
 
@@ -494,7 +693,6 @@ onMounted(() => {
 .finances__subtitle {
   color: $grey-60;
   display: block;
-  margin-top: $spacing-xs;
 }
 
 .finances__header-actions {
@@ -649,6 +847,7 @@ onMounted(() => {
 
 .chart-card {
   @include card;
+  padding: $spacing-md;
 
   h2 {
     color: $grey-100;
@@ -669,7 +868,8 @@ onMounted(() => {
   color: $grey-60;
   display: block;
   font-size: $font-size-xs;
-  margin-top: math.div($spacing-xs, 2);
+  line-height: normal;
+  margin-top: $spacing-xs;
 }
 
 .chart-card__legend {
@@ -689,6 +889,85 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   margin-top: $spacing-md;
+}
+
+.urssaf-field {
+  align-items: flex-end;
+  display: inline-flex;
+  flex-direction: column;
+  gap: math.div($spacing-xs, 2);
+}
+
+.urssaf-field__input-row {
+  align-items: center;
+  display: inline-flex;
+  gap: $spacing-xs;
+}
+
+.urssaf-source {
+  align-items: center;
+  color: $grey-60;
+  display: inline-flex;
+  font-size: $font-size-xxs;
+  gap: math.div($spacing-xs, 2);
+  line-height: normal;
+  margin: 0;
+
+  &--manual {
+    color: $primary-color;
+  }
+}
+
+.urssaf-source__icon {
+  font-size: $font-size-sm;
+  line-height: 1;
+}
+
+.urssaf-source__reset {
+  background: none;
+  border: none;
+  color: $primary-color;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  margin-left: math.div($spacing-xs, 2);
+  padding: 0;
+  text-decoration: underline;
+
+  &:hover {
+    color: $grey-100;
+  }
+}
+
+.urssaf-input {
+  background: $white;
+  border: 1px solid $grey-20;
+  border-radius: $border-radius-md;
+  color: $grey-100;
+  font: inherit;
+  font-size: $font-size-base;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  padding: $spacing-xxs $spacing-sm;
+  text-align: right;
+  width: 110px;
+
+  &:focus {
+    border-color: $primary-color;
+    outline: none;
+  }
+
+  &:disabled {
+    background: $grey-10;
+    color: $grey-50;
+    cursor: not-allowed;
+  }
+}
+
+.urssaf-field__currency {
+  color: $grey-60;
+  font-size: $font-size-base;
+  font-weight: 600;
 }
 
 .legend-dot {
@@ -729,6 +1008,7 @@ onMounted(() => {
   color: $grey-60;
   display: block;
   font-size: $font-size-xs;
+  line-height: normal;
   margin-top: math.div($spacing-xs, 2);
 }
 
