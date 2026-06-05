@@ -59,7 +59,7 @@ function setupAutoUpdater(mainWindow) {
   // Vérification initiale (avec délai pour laisser l'app démarrer)
   setTimeout(() => {
     autoUpdater.checkForUpdates();
-  }, 10000);
+  }, 5000);
 
   // Vérification périodique
   setInterval(() => {
