@@ -6,6 +6,29 @@ import log from "electron-log";
 import { loadConfig } from "./fileManager";
 import paths from "./utils/paths";
 
+// Polices Noto Sans embarquées, copiées dans dist-electron/fonts/ par Vite
+// (cf. copyFontsPlugin). `__dirname` vaut dist-electron une fois le main process
+// bundlé (dev comme prod). L'embarquement des polices est requis pour la
+// conformité PDF/A-3 utilisée par l'export Factur-X.
+const FONT_DIR = path.join(__dirname, "fonts");
+const FONTS = {
+  NotoSans: "NotoSans-Regular.ttf",
+  "NotoSans-Bold": "NotoSans-Bold.ttf",
+  "NotoSans-Italic": "NotoSans-Italic.ttf",
+};
+
+/**
+ * Enregistre les polices Noto Sans sur un document PDFKit et sélectionne la
+ * variante par défaut.
+ * @param {PDFDocument} doc
+ */
+function registerFonts(doc) {
+  for (const [name, file] of Object.entries(FONTS)) {
+    doc.registerFont(name, path.join(FONT_DIR, file));
+  }
+  doc.font("NotoSans");
+}
+
 /**
  * Convertit une valeur en nombre (0 si invalide)
  */
@@ -71,18 +94,85 @@ function formatIban(iban) {
 }
 
 /**
- * Génère un PDF pour un devis ou une facture
+ * Crée un document PDFKit configuré pour un devis/facture, polices enregistrées.
+ * @param {string} type - 'devis' ou 'factures'
+ * @param {Object} document
+ * @param {Object} config
+ * @param {Object} [options] - options PDFDocument additionnelles (ex: subset PDF/A-3b)
+ * @returns {PDFDocument}
+ */
+function createInvoiceDoc(type, document, config, options = {}) {
+  const company = config?.company || {};
+  const doc = new PDFDocument({
+    size: "A4",
+    margins: { top: 50, bottom: 30, left: 50, right: 50 },
+    info: {
+      Title: `${type === "devis" ? "Devis" : "Facture"} ${document.numero || ""}`,
+      Author: company.companyName || "",
+    },
+    ...options,
+  });
+  registerFonts(doc);
+  return doc;
+}
+
+/**
+ * Rend le contenu complet d'un devis/facture sur un document existant.
+ * @param {PDFDocument} doc
+ * @param {string} type
+ * @param {Object} document
+ * @param {Object} config
+ */
+function renderInvoiceDocument(doc, type, document, config) {
+  const company = config?.company || {};
+  const billing = config?.billing || {};
+  const rib = config?.rib || {};
+
+  renderHeader(doc, company, type, document, document.customer || {});
+  renderObjet(doc, document.object, document.associatedQuote);
+  renderPrestationDelay(doc, document.prestationDelay);
+  renderServices(doc, document.services || []);
+  renderTotals(doc, document.totals || {}, billing, rib, type, document);
+  renderFooter(doc, company, billing, rib, type);
+}
+
+/**
+ * Génère le PDF d'un devis/facture en mémoire et renvoie un Buffer.
+ * Réutilisé par l'export PDF classique et par la génération Factur-X (Phase 3).
+ * @param {string} type - 'devis' ou 'factures'
+ * @param {Object} document
+ * @param {Object} config
+ * @param {Object} [options] - options PDFDocument (ex: { subset: "PDF/A-3b", pdfVersion: "1.7", tagged: true })
+ * @returns {Promise<Buffer>}
+ */
+export async function buildPdfBuffer(type, document, config, options = {}) {
+  const doc = createInvoiceDoc(type, document, config, options);
+
+  const chunks = [];
+  doc.on("data", (chunk) => chunks.push(chunk));
+  const done = new Promise((resolve, reject) => {
+    doc.on("end", resolve);
+    doc.on("error", reject);
+  });
+
+  renderInvoiceDocument(doc, type, document, config);
+  doc.end();
+
+  await done;
+  return Buffer.concat(chunks);
+}
+
+/**
+ * Génère un PDF pour un devis ou une facture et l'enregistre sur disque.
  * @param {string} type - 'devis' ou 'factures'
  * @param {Object} document - Document à exporter
- * @returns {Promise<string>} Chemin du fichier PDF créé
+ * @returns {Promise<string|null>} Chemin du fichier PDF créé (null si annulé)
  */
 export async function generatePDF(type, document) {
   try {
     // Charger la configuration
     const config = await loadConfig();
-    const company = config?.company || {};
     const billing = config?.billing || {};
-    const rib = config?.rib || {};
 
     // Construire le nom de fichier et le dossier par défaut
     const filename = `QBMaker ${type === "devis" ? "Devis" : "Facture"} ${document.numero || "document"}.pdf`;
@@ -107,36 +197,8 @@ export async function generatePDF(type, document) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    // Créer le document PDF
-    const doc = new PDFDocument({
-      size: "A4",
-      margins: { top: 50, bottom: 30, left: 50, right: 50 },
-      info: {
-        Title: `${type === "devis" ? "Devis" : "Facture"} ${document.numero || ""}`,
-        Author: company.companyName || "",
-      },
-    });
-
-    // Stream vers le fichier
-    const stream = fs.createWriteStream(filePath);
-    doc.pipe(stream);
-
-    // Rendre le contenu
-    renderHeader(doc, company, type, document, document.customer || {});
-    renderObjet(doc, document.object, document.associatedQuote);
-    renderPrestationDelay(doc, document.prestationDelay);
-    renderServices(doc, document.services || []);
-    renderTotals(doc, document.totals || {}, billing, rib, type, document);
-    renderFooter(doc, company, billing, rib, type);
-
-    // Finaliser le PDF
-    doc.end();
-
-    // Attendre que le stream soit terminé
-    await new Promise((resolve, reject) => {
-      stream.on("finish", resolve);
-      stream.on("error", reject);
-    });
+    const buffer = await buildPdfBuffer(type, document, config);
+    fs.writeFileSync(filePath, buffer);
 
     log.info(`PDF generated successfully: ${filePath}`);
     return filePath;
@@ -175,13 +237,13 @@ function renderHeader(doc, company, type, document, customer) {
   // Nom entreprise
   doc
     .fontSize(11)
-    .font("Helvetica-Bold")
+    .font("NotoSans-Bold")
     .fillColor("#1e293b")
     .text(company.companyName || "", margin, leftY, { width: colWidth });
   leftY += 16;
 
   // Adresse
-  doc.fontSize(11).font("Helvetica");
+  doc.fontSize(11).font("NotoSans");
   if (company.address) {
     doc.text(company.address, margin, leftY, { width: colWidth });
     leftY += 13;
@@ -215,7 +277,7 @@ function renderHeader(doc, company, type, document, customer) {
   // Titre DEVIS / FACTURE
   doc
     .fontSize(24)
-    .font("Helvetica-Bold")
+    .font("NotoSans-Bold")
     .fillColor("#244b63")
     .text(type === "devis" ? "DEVIS" : "FACTURE", rightX, rightY, {
       width: rightColWidth,
@@ -225,14 +287,14 @@ function renderHeader(doc, company, type, document, customer) {
   // Numéro
   doc
     .fontSize(12)
-    .font("Helvetica-Bold")
+    .font("NotoSans-Bold")
     .text(`N° ${document.numero || ""}`, rightX, rightY, {
       width: rightColWidth,
     });
   rightY += 20;
 
   // Date
-  doc.fontSize(10).font("Helvetica");
+  doc.fontSize(10).font("NotoSans");
   doc.text(`Date : ${document.date || ""}`, rightX, rightY, {
     width: rightColWidth,
   });
@@ -249,7 +311,7 @@ function renderHeader(doc, company, type, document, customer) {
   }
   rightY += 25;
 
-  doc.fontSize(11).font("Helvetica-Bold").fillColor("#1e293b");
+  doc.fontSize(11).font("NotoSans-Bold").fillColor("#1e293b");
   if (customer.customerName) {
     doc.text(customer.customerName, rightX, rightY, { width: rightColWidth });
     rightY += 14;
@@ -259,7 +321,7 @@ function renderHeader(doc, company, type, document, customer) {
     rightY += 14;
   }
 
-  doc.font("Helvetica");
+  doc.font("NotoSans");
   if (customer.companyId) {
     doc.text(`SIRET : ${formatSiret(customer.companyId)}`, rightX, rightY, {
       width: rightColWidth,
@@ -305,21 +367,21 @@ function renderObjet(doc, object, associatedQuote) {
   if (associatedQuote) {
     doc
       .fontSize(11)
-      .font("Helvetica-Bold")
+      .font("NotoSans-Bold")
       .text("Devis associé : ", margin, doc.y, { continued: true })
-      .font("Helvetica")
+      .font("NotoSans")
       .text(associatedQuote);
     doc.moveDown(0.5);
   }
 
   doc
     .fontSize(11)
-    .font("Helvetica-Bold")
+    .font("NotoSans-Bold")
     .text("Prestation de service :", margin, doc.y);
 
   doc
     .fontSize(11)
-    .font("Helvetica")
+    .font("NotoSans")
     .text(object, margin, doc.y, {
       width: doc.page.width - 2 * margin,
     });
@@ -335,11 +397,11 @@ function renderPrestationDelay(doc, prestationDelay) {
 
   const margin = doc.page.margins.left;
 
-  doc.fontSize(11).font("Helvetica-Bold").text("Délai :", margin, doc.y);
+  doc.fontSize(11).font("NotoSans-Bold").text("Délai :", margin, doc.y);
 
   doc
     .fontSize(11)
-    .font("Helvetica")
+    .font("NotoSans")
     .text(prestationDelay, margin, doc.y, {
       width: doc.page.width - 2 * margin,
     });
@@ -364,7 +426,7 @@ function renderServices(doc, services) {
   const col5Width = tableWidth * 0.15; // Total HT
 
   // En-têtes du tableau
-  doc.fontSize(10).font("Helvetica-Bold").fillColor("#1e293b");
+  doc.fontSize(10).font("NotoSans-Bold").fillColor("#1e293b");
 
   let y = tableTop;
 
@@ -392,7 +454,7 @@ function renderServices(doc, services) {
   const tableRadius = 6;
 
   // Pré-calculer la hauteur de chaque ligne selon le contenu
-  doc.fontSize(10).font("Helvetica");
+  doc.fontSize(10).font("NotoSans");
   const rowHeights = services.map((service) => {
     const textHeight = doc.heightOfString(service.description || "", {
       width: col1Width - 10,
@@ -408,7 +470,7 @@ function renderServices(doc, services) {
   doc.roundedRect(margin, y, tableWidth, tableHeight, tableRadius).clip();
 
   // En-tête
-  doc.font("Helvetica-Bold");
+  doc.font("NotoSans-Bold");
   doc.rect(margin, y, tableWidth, headerHeight).fill("#244b63");
 
   doc
@@ -438,7 +500,7 @@ function renderServices(doc, services) {
   y += headerHeight;
 
   // Lignes du tableau
-  doc.font("Helvetica");
+  doc.font("NotoSans");
   services.forEach((service, index) => {
     const rowHeight = rowHeights[index];
 
@@ -527,11 +589,11 @@ function renderTotals(doc, totals, billing, rib, type, document) {
   if (type === "devis" && quoteDeposit > 0) {
     doc
       .fontSize(10)
-      .font("Helvetica-Bold")
+      .font("NotoSans-Bold")
       .fillColor("#1e293b")
       .text("Acompte demandé :", margin, leftY, { width: leftWidth });
     leftY += 16;
-    doc.font("Helvetica").text(formatEUR(quoteDeposit), margin, leftY, {
+    doc.font("NotoSans").text(formatEUR(quoteDeposit), margin, leftY, {
       width: leftWidth,
     });
     leftY = doc.y + 10;
@@ -540,11 +602,11 @@ function renderTotals(doc, totals, billing, rib, type, document) {
   if (type === "devis" && billing.meansOfPayment) {
     doc
       .fontSize(11)
-      .font("Helvetica-Bold")
+      .font("NotoSans-Bold")
       .fillColor("#1e293b")
       .text("Moyens de règlement :", margin, leftY, { width: leftWidth });
     leftY += 16;
-    doc.font("Helvetica").text(billing.meansOfPayment, margin, leftY, {
+    doc.font("NotoSans").text(billing.meansOfPayment, margin, leftY, {
       width: leftWidth,
     });
     leftY = doc.y + 6;
@@ -553,11 +615,11 @@ function renderTotals(doc, totals, billing, rib, type, document) {
   if (type === "factures" && rib.iban) {
     doc
       .fontSize(11)
-      .font("Helvetica-Bold")
+      .font("NotoSans-Bold")
       .fillColor("#1e293b")
       .text("Coordonnées bancaires :", margin, leftY, { width: leftWidth });
     leftY += 16;
-    doc.fontSize(11).font("Helvetica");
+    doc.fontSize(11).font("NotoSans");
     doc.text(`IBAN : ${formatIban(rib.iban)}`, margin, leftY, {
       width: leftWidth,
     });
@@ -573,12 +635,12 @@ function renderTotals(doc, totals, billing, rib, type, document) {
     leftY += 12;
     doc
       .fontSize(11)
-      .font("Helvetica-Bold")
+      .font("NotoSans-Bold")
       .fillColor("#1e293b")
       .text("Conditions de paiement :", margin, leftY, { width: leftWidth });
     leftY += 16;
     doc
-      .font("Helvetica")
+      .font("NotoSans")
       .text(billing.paymentTerms, margin, leftY, { width: leftWidth });
     leftY = doc.y + 6;
   }
@@ -586,7 +648,7 @@ function renderTotals(doc, totals, billing, rib, type, document) {
   if (type === "factures" && billing.latePenalties) {
     doc
       .fontSize(8)
-      .font("Helvetica")
+      .font("NotoSans")
       .fillColor("#64748b")
       .text(billing.latePenalties, margin, leftY, { width: leftWidth });
     leftY = doc.y + 4;
@@ -595,7 +657,7 @@ function renderTotals(doc, totals, billing, rib, type, document) {
   if (billing.legalNotice) {
     doc
       .fontSize(8)
-      .font("Helvetica")
+      .font("NotoSans")
       .fillColor("#64748b")
       .text(billing.legalNotice, margin, leftY, { width: leftWidth });
   }
@@ -608,7 +670,7 @@ function renderTotals(doc, totals, billing, rib, type, document) {
 
   doc
     .fontSize(11)
-    .font("Helvetica")
+    .font("NotoSans")
     .fillColor("#1e293b")
     .text("Total HT:", contentX, contentY, { width: 120, align: "left" })
     .text(formatEUR(totals.totalHT), contentX + 120, contentY, {
@@ -626,7 +688,7 @@ function renderTotals(doc, totals, billing, rib, type, document) {
   // Total TTC en gras
   doc
     .fontSize(12)
-    .font("Helvetica-Bold")
+    .font("NotoSans-Bold")
     .text("Total TTC:", contentX, contentY + 40, {
       width: 120,
       align: "left",
@@ -651,7 +713,7 @@ function renderTotals(doc, totals, billing, rib, type, document) {
 
     doc
       .fontSize(10)
-      .font("Helvetica")
+      .font("NotoSans")
       .fillColor("#64748b")
       .text("Acompte :", contentX, contentY + 73, {
         width: 120,
@@ -664,7 +726,7 @@ function renderTotals(doc, totals, billing, rib, type, document) {
 
     doc
       .fontSize(10)
-      .font("Helvetica-Bold")
+      .font("NotoSans-Bold")
       .fillColor("#1e293b")
       .text("Reste à payer :", contentX, contentY + 90, {
         width: 120,
@@ -679,7 +741,7 @@ function renderTotals(doc, totals, billing, rib, type, document) {
   // Mention TVA
   doc
     .fontSize(9)
-    .font("Helvetica-Oblique")
+    .font("NotoSans-Italic")
     .fillColor("#64748b")
     .text(
       "TVA non applicable, art. 293 B du CGI",
@@ -718,7 +780,7 @@ function renderFooter(doc, company, billing, rib, type) {
 
     doc
       .fontSize(11)
-      .font("Helvetica")
+      .font("NotoSans")
       .fillColor("#1e293b")
       .text(
         "Devis à retourner signé avec la mention « BON POUR ACCORD » pour valider le devis et lancer la commande en production.",
@@ -752,7 +814,7 @@ function renderFooter(doc, company, billing, rib, type) {
 
   doc
     .fontSize(9)
-    .font("Helvetica")
+    .font("NotoSans")
     .fillColor("#64748b")
     .text(parts.join("  -  "), margin, identityY + 8, {
       width: contentWidth,

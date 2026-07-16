@@ -32,6 +32,32 @@ function copyPdfkitDataPlugin() {
   };
 }
 
+/**
+ * Plugin Vite qui copie les polices embarquées (Noto Sans) dans
+ * dist-electron/fonts/. pdfGenerator.js les charge via
+ * path.join(__dirname, "fonts", ...) — __dirname vaut dist-electron une fois
+ * le main process bundlé (dev comme prod). Ces polices doivent être embarquées
+ * dans le PDF pour la conformité PDF/A-3 (Factur-X).
+ */
+function copyFontsPlugin() {
+  const src = path.resolve(__dirname, "src/main/assets/fonts");
+  const dest = path.join(distElectron, "fonts");
+
+  return {
+    name: "copy-fonts",
+    writeBundle() {
+      if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+      }
+      for (const file of fs.readdirSync(src)) {
+        if (file.toLowerCase().endsWith(".ttf")) {
+          fs.copyFileSync(path.join(src, file), path.join(dest, file));
+        }
+      }
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     vue(),
@@ -40,7 +66,7 @@ export default defineConfig({
       {
         entry: path.resolve(__dirname, "src/main/index.js"),
         vite: {
-          plugins: [copyPdfkitDataPlugin()],
+          plugins: [copyPdfkitDataPlugin(), copyFontsPlugin()],
           build: {
             outDir: distElectron,
           },
