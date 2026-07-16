@@ -138,15 +138,27 @@ function renderInvoiceDocument(doc, type, document, config) {
 
 /**
  * Génère le PDF d'un devis/facture en mémoire et renvoie un Buffer.
- * Réutilisé par l'export PDF classique et par la génération Factur-X (Phase 3).
+ * Réutilisé par l'export PDF classique et par la génération Factur-X.
+ *
+ * Le hook `decorate` est appelé après le rendu mais avant `doc.end()` : il
+ * permet à l'assembleur Factur-X d'injecter le XMP et d'embarquer le XML CII
+ * sans coupler ce module à la couche PDP.
+ *
  * @param {string} type - 'devis' ou 'factures'
  * @param {Object} document
  * @param {Object} config
- * @param {Object} [options] - options PDFDocument (ex: { subset: "PDF/A-3b", pdfVersion: "1.7", tagged: true })
+ * @param {Object} [opts]
+ * @param {Object} [opts.docOptions] - options PDFDocument (ex: { subset: "PDF/A-3b", pdfVersion: "1.7", tagged: true })
+ * @param {(doc: PDFDocument) => void} [opts.decorate] - hook appelé avant doc.end()
  * @returns {Promise<Buffer>}
  */
-export async function buildPdfBuffer(type, document, config, options = {}) {
-  const doc = createInvoiceDoc(type, document, config, options);
+export async function buildPdfBuffer(
+  type,
+  document,
+  config,
+  { docOptions = {}, decorate } = {},
+) {
+  const doc = createInvoiceDoc(type, document, config, docOptions);
 
   const chunks = [];
   doc.on("data", (chunk) => chunks.push(chunk));
@@ -156,6 +168,7 @@ export async function buildPdfBuffer(type, document, config, options = {}) {
   });
 
   renderInvoiceDocument(doc, type, document, config);
+  if (typeof decorate === "function") decorate(doc);
   doc.end();
 
   await done;

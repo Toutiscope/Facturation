@@ -1,6 +1,6 @@
 # Plan — Factur-X à UI personnalisée (approche hybride)
 
-> Statut : Phases 0, 1 et 2 terminées ✅ — prochaine étape : Phase 3 (assemblage Factur-X)
+> Statut : Phases 0 à 4 terminées ✅ — reste : Phase 6 (validation) ; Phase 5 optionnelle
 > Date : 2026-07-16
 
 ## Objectif
@@ -94,33 +94,41 @@ générer un PDF) — le rendu doit être quasi identique à l'ancien Helvetica.
 
 ---
 
-## Phase 3 — Assemblage Factur-X
+## Phase 3 — Assemblage Factur-X ✅ FAIT
 
-- Nouvelle fonction `buildFacturXBuffer(config, invoice)` (dans `pdfGenerator.js`
-  ou nouveau `facturxBuilder.js`) :
-  1. `buildPdfBuffer("factures", invoice, config, { pdfa: "3B" })` → PDF/A-3 visuel.
-  2. `buildCiiXml(config, invoice)` → XML CII.
-  3. Embarquer le XML (`factur-x.xml`, relationship `Alternative`, MIME `text/xml`).
-  4. Injecter les **métadonnées XMP Factur-X** : extension schema `fx`
-     (`DocumentType=INVOICE`, `DocumentFileName=factur-x.xml`, `Version=1.0`,
-     `ConformanceLevel=EN 16931`) + XMP PDF/A (`pdfaid:part=3`, `conformance=B`).
-  5. **OutputIntent** avec profil ICC sRGB (fichier `.icc` à ajouter aux assets).
+- [x] Hook `decorate` ajouté à `buildPdfBuffer` (pdfGenerator.js) : appelé après
+  le rendu, avant `doc.end()`, pour injecter XMP + fichier embarqué **sans coupler
+  pdfGenerator à la couche PDP**.
+- [x] Nouveau module **`src/main/facturxBuilder.js`** avec `assembleFacturX({ document,
+  config, ciiXml, type, conformanceLevel })` — module « pur » (reçoit le CII, ne
+  dépend pas de `einvoiceApi` → pas de cycle). Il :
+  1. appelle `buildPdfBuffer(type, document, config, { docOptions: { subset:
+     "PDF/A-3b", pdfVersion: "1.7", tagged: true }, decorate })` → PDF/A-3 visuel ;
+  2. via `decorate` : `doc.appendXML(xmp)` (extension schema `fx` +
+     `DocumentType=INVOICE`, `DocumentFileName=factur-x.xml`, `Version=1.0`,
+     `ConformanceLevel=EN 16931`) puis `doc.file(cii, { name: "factur-x.xml",
+     type: "text/xml", relationship: "Alternative" })`.
+- [x] **OutputIntent + ICC sRGB** : fournis automatiquement par PDFKit (aucun asset
+  ICC à ajouter, cf. Phase 0).
+- [x] Chaîne de dépendances : `einvoiceApi → facturxBuilder → pdfGenerator` (validée
+  au build, pas de cycle).
+- [x] Spike d'assemblage complet vérifié : PDF/A-3 + Noto embarquée (`FontFile2`) +
+  `factur-x.xml` (`/EmbeddedFile`, `AFRelationship Alternative`) + XMP `fx` coexistent.
 
-**Fichiers :** `src/main/facturxBuilder.js` (nouveau), `src/main/assets/sRGB.icc`
-(nouveau).
+**Fichiers :** `src/main/facturxBuilder.js` (nouveau), `src/main/pdfGenerator.js`.
 
 ---
 
-## Phase 4 — Remplacement du chemin d'export
+## Phase 4 — Remplacement du chemin d'export ✅ FAIT
 
-- Modifier `einvoiceApi.exportFacturX` : au lieu de `convert(to: "factur-x")`,
-  appeler `buildFacturXBuffer(config, invoice)`.
-- Le handler `pdp:export-invoice`, le preload et le bouton UI **restent
+- [x] `einvoiceApi.exportFacturX` ne délègue plus la fabrication du PDF à la PDP :
+  il génère le CII (`buildCiiXml`) puis assemble localement (`assembleFacturX`).
+- [x] Le handler `pdp:export-invoice`, le preload et le bouton UI **restent
   inchangés** (déjà en place). ✅
-- Optionnel : valider le résultat via `POST /validation_reports` avant écriture
-  disque et remonter un warning si non conforme.
+- [ ] Optionnel (repoussé) : valider le résultat via `POST /validation_reports`
+  avant écriture disque et remonter un warning si non conforme.
 
-**Fichiers :** `src/main/einvoiceApi/index.js` (+ optionnellement `ipcHandlers.js`).
+**Fichiers :** `src/main/einvoiceApi/index.js`.
 
 ---
 

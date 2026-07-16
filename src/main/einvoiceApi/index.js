@@ -1,6 +1,7 @@
 import { createSuperPdpAdapter } from "./adapters/superpdp.js";
 import { buildUbl } from "./mappers/ubl.js";
 import { normalizeReceived } from "./mappers/receivedInvoice.js";
+import { assembleFacturX } from "../facturxBuilder.js";
 
 const ADAPTER_FACTORIES = {
   superpdp: createSuperPdpAdapter,
@@ -140,25 +141,24 @@ function recipientError(message) {
 
 /**
  * Produit un Factur-X (PDF/A-3 + XML CII embarqué) à partir d'une facture locale.
- * Pipeline : génération UBL → POST /invoices/convert?from=ubl&to=factur-x.
  *
- * Les adresses de routage sont déduites du SIREN (pas d'appel à l'annuaire) :
- * cet export vise l'archivage lisible / le partage manuel, pas le dépôt PDP.
- * Une facture non conforme au schematron (ex. client particulier sans SIREN)
- * sera rejetée par la conversion — l'erreur est alors remontée telle quelle.
+ * La couche visuelle est notre PDF PDFKit personnalisé (Noto Sans, mise en page
+ * maison) ; le XML CII est obtenu via la PDP (`buildCiiXml`) puis embarqué
+ * localement avec les métadonnées XMP Factur-X (cf. `assembleFacturX`).
+ *
+ * Les adresses de routage du CII sont déduites du SIREN (pas d'appel à
+ * l'annuaire) : cet export vise l'archivage lisible / le partage manuel, pas le
+ * dépôt PDP. Une facture non conforme au schematron (ex. client particulier
+ * sans SIREN) est rejetée par la conversion CII — l'erreur est remontée telle quelle.
  *
  * @param {Object} config
  * @param {Object} invoice - facture au format local (cf. CLAUDE.md)
  * @param {Object} [options] - { ublOptions }
- * @returns {Promise<Buffer>} PDF Factur-X
+ * @returns {Promise<Buffer>} PDF/A-3 Factur-X
  */
 export async function exportFacturX(config, invoice, options = {}) {
-  const ubl = buildUbl(invoice, config, options.ublOptions || {});
-  return convertDocument(config, ubl, {
-    from: "ubl",
-    to: "factur-x",
-    contentType: "application/xml",
-  });
+  const ciiXml = await buildCiiXml(config, invoice, options);
+  return assembleFacturX({ document: invoice, config, ciiXml });
 }
 
 /**
