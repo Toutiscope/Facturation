@@ -23,6 +23,7 @@ import log from "electron-log";
 import {
   testConnection as pdpTestConnection,
   sendInvoice as pdpSendInvoice,
+  exportFacturX as pdpExportFacturX,
   validateInvoiceFile as pdpValidateInvoiceFile,
   fetchReceivedInvoices as pdpFetchReceivedInvoices,
   downloadInvoice as pdpDownloadInvoice,
@@ -381,6 +382,27 @@ export function initializeIPC() {
 
       await saveDocument("factures", updated);
       return { invoice: updated, deposit: result.raw };
+    }),
+  );
+
+  ipcMain.handle("pdp:export-invoice", (event, invoice) =>
+    wrapPdp(async () => {
+      if (!invoice || typeof invoice !== "object") {
+        throw new PdpInputError("Facture requise pour l'export Factur-X");
+      }
+      const config = await loadConfig();
+      const buffer = await pdpExportFacturX(config, invoice);
+
+      const defaultName = `${invoice.numero || "facture"}-facturx.pdf`;
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: "Exporter en Factur-X (PDF/A-3)",
+        defaultPath: defaultName,
+        filters: [{ name: "PDF", extensions: ["pdf"] }],
+      });
+      if (canceled || !filePath) return { canceled: true };
+
+      await fsp.writeFile(filePath, buffer);
+      return { saved: true, path: filePath };
     }),
   );
 

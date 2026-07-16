@@ -216,6 +216,15 @@
             {{ generatingPDF ? "Génération du PDF..." : "Générer le PDF" }}
           </button>
           <button
+              v-if="canExportFacturX"
+              :disabled="saving || exportingFacturX"
+              class="btn btn-outline"
+              type="button"
+              @click="exportFacturX"
+          >
+            {{ exportingFacturX ? "Export en cours…" : "Exporter en Factur-X" }}
+          </button>
+          <button
               :disabled="saving"
               class="btn btn-primary"
               type="button"
@@ -339,6 +348,7 @@ const pdpProviderName = ref("");
 const pdpIsSandbox = ref(false);
 const showSendToPdpModal = ref(false);
 const sendingToPdp = ref(false);
+const exportingFacturX = ref(false);
 
 const {isDirty, setInitialState, markAsSaved} = useUnsavedChanges(invoice);
 
@@ -358,6 +368,11 @@ const canSendToPdp = computed(
 );
 
 const pdpButtonLabel = computed(() => "Envoyer à la plateforme");
+
+// L'export Factur-X passe par la conversion de la PDP : il exige donc une
+// plateforme configurée. Disponible quel que soit le statut d'envoi (utile
+// pour l'archivage lisible d'une facture déjà transmise).
+const canExportFacturX = computed(() => pdpReady.value);
 
 onBeforeRouteLeave((to) => {
   if (skipGuard) {
@@ -625,6 +640,39 @@ async function handleGeneratePDF() {
     showToast(msg, "error");
   } finally {
     generatingPDF.value = false;
+  }
+}
+
+async function exportFacturX() {
+  exportingFacturX.value = true;
+
+  try {
+    // Récupérer les totaux depuis le composant ServiceLinesTable
+    if (serviceLinesRef.value) {
+      invoice.value.totals = serviceLinesRef.value.totals;
+    }
+
+    // Convertir le proxy réactif en objet brut pour l'IPC
+    const raw = JSON.parse(JSON.stringify(toRaw(invoice.value)));
+    raw.date = formatDateToFrench(invoice.value.date);
+    raw.dueDate = formatDateToFrench(invoice.value.dueDate);
+
+    const result = await window.electronAPI.pdp.exportInvoice(raw);
+
+    if (!result.ok) {
+      const msg = result.error?.message || "Échec de l'export Factur-X";
+      error.value = msg;
+      showToast(msg, "error");
+      return;
+    }
+    if (result.data.canceled) return;
+    showToast(`Factur-X enregistré : ${result.data.path}`);
+  } catch (err) {
+    const msg = err.message || "Erreur lors de l'export Factur-X";
+    error.value = msg;
+    showToast(msg, "error");
+  } finally {
+    exportingFacturX.value = false;
   }
 }
 

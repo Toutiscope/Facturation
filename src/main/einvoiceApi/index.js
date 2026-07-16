@@ -138,6 +138,29 @@ function recipientError(message) {
   return err;
 }
 
+/**
+ * Produit un Factur-X (PDF/A-3 + XML CII embarqué) à partir d'une facture locale.
+ * Pipeline : génération UBL → POST /invoices/convert?from=ubl&to=factur-x.
+ *
+ * Les adresses de routage sont déduites du SIREN (pas d'appel à l'annuaire) :
+ * cet export vise l'archivage lisible / le partage manuel, pas le dépôt PDP.
+ * Une facture non conforme au schematron (ex. client particulier sans SIREN)
+ * sera rejetée par la conversion — l'erreur est alors remontée telle quelle.
+ *
+ * @param {Object} config
+ * @param {Object} invoice - facture au format local (cf. CLAUDE.md)
+ * @param {Object} [options] - { ublOptions }
+ * @returns {Promise<Buffer>} PDF Factur-X
+ */
+export async function exportFacturX(config, invoice, options = {}) {
+  const ubl = buildUbl(invoice, config, options.ublOptions || {});
+  return convertDocument(config, ubl, {
+    from: "ubl",
+    to: "factur-x",
+    contentType: "application/xml",
+  });
+}
+
 export async function validateInvoiceFile(config, file, fileName) {
   return getAdapter(config).validateInvoice(file, fileName);
 }

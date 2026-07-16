@@ -56,6 +56,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("pdp:has-credentials", providerName),
     sendInvoice: (invoiceId, options) =>
       ipcRenderer.invoke("pdp:send-invoice", invoiceId, options),
+    exportInvoice: (invoice) =>
+      ipcRenderer.invoke("pdp:export-invoice", invoice),
     validateInvoice: (file, fileName) =>
       ipcRenderer.invoke("pdp:validate-invoice", file, fileName),
     fetchReceived: (opts) => ipcRenderer.invoke("pdp:fetch-received", opts),
