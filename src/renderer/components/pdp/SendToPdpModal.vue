@@ -203,9 +203,7 @@ async function send() {
   phase.value = "sending";
   errorInfo.value = null;
   try {
-    const result = await window.electronAPI.pdp.sendInvoice(props.invoiceId, {
-      targetFormat: "ubl",
-    });
+    const result = await window.electronAPI.pdp.sendInvoice(props.invoiceId);
     if (!result.ok) {
       errorInfo.value = result.error;
       phase.value = "error";

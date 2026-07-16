@@ -1,6 +1,6 @@
 # Plan — Factur-X à UI personnalisée (approche hybride)
 
-> Statut : Phases 0 à 4 terminées ✅ — reste : Phase 6 (validation) ; Phase 5 optionnelle
+> Statut : Phases 0 à 5 terminées ✅ — reste : Phase 6 (validation manuelle)
 > Date : 2026-07-16
 
 ## Objectif
@@ -136,15 +136,23 @@ générer un PDF) — le rendu doit être quasi identique à l'ancien Helvetica.
 
 ---
 
-## Phase 5 — Envoi PDF plutôt qu'UBL (optionnel)
+## Phase 5 — Envoi du Factur-X (PDF) ✅ FAIT
 
-Aujourd'hui l'envoi PDP transmet de l'UBL. On pourrait envoyer le **Factur-X**
-(`sendInvoice` avec `contentType: application/pdf`) pour que le destinataire
-reçoive aussi le visuel.
+**Décision utilisateur nº2 : envoyer le Factur-X (PDF)** (le destinataire reçoit
+le visuel + les données).
 
-**Décision utilisateur nº2 :** garder l'envoi UBL (simple, valide) ou basculer
-sur Factur-X ? → **recommandation : garder UBL pour l'envoi** dans un premier
-temps, n'utiliser le Factur-X que pour l'export/archivage.
+- [x] `sendInvoice` (einvoiceApi/index.js) : après résolution du routage
+  (endpoints vendeur/acheteur via annuaire), génère le CII **portant ces
+  endpoints** (`buildCiiXml`), assemble le Factur-X (`assembleFacturX`) et le
+  dépose via `POST /invoices` avec `Content-Type: application/pdf`.
+- [x] `SendToPdpModal.vue` : suppression du `targetFormat: "ubl"` obsolète.
+- [x] Lint + build OK.
+
+**Fichiers :** `src/main/einvoiceApi/index.js`,
+`src/renderer/components/pdp/SendToPdpModal.vue`.
+
+**Reste à valider (Phase 6, manuel) :** envoyer réellement une facture en sandbox
+et confirmer le dépôt (statut `fr:200/201/202`) côté SuperPDP avec le Factur-X.
 
 ---
 

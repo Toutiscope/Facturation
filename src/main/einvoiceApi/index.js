@@ -67,11 +67,14 @@ export async function getSessionStatus(config) {
 }
 
 /**
- * Envoie une facture locale (JSON Facturation) à la PDP.
- * Pipeline : génération UBL → POST /invoices (corps brut XML).
+ * Envoie une facture locale (JSON Facturation) à la PDP sous forme de Factur-X.
+ * Pipeline : résolution du routage → génération CII (avec endpoints) →
+ * assemblage Factur-X (PDF/A-3 + CII embarqué) → POST /invoices (Content-Type
+ * application/pdf).
  *
- * SuperPDP n'ingère que du XML/PDF (pas de JSON), d'où la génération UBL
- * directe plutôt qu'un passage par /convert.
+ * Le destinataire reçoit ainsi la présentation visuelle personnalisée en plus
+ * des données structurées. Le routage (endpoints vendeur/acheteur) est porté
+ * par le CII embarqué, d'où la résolution de l'annuaire avant l'assemblage.
  *
  * @param {Object} config
  * @param {Object} invoice - facture au format local (cf. CLAUDE.md)
@@ -119,14 +122,18 @@ export async function sendInvoice(config, invoice, options = {}) {
     buyerEndpoint = recipient.endpoint;
   }
 
-  const ubl = buildUbl(invoice, config, {
-    sellerEndpoint,
-    buyerEndpoint,
-    ...(options.ublOptions || {}),
+  // CII portant le routage résolu, puis assemblage du Factur-X visuel.
+  const ciiXml = await buildCiiXml(config, invoice, {
+    ublOptions: {
+      sellerEndpoint,
+      buyerEndpoint,
+      ...(options.ublOptions || {}),
+    },
   });
+  const facturx = await assembleFacturX({ document: invoice, config, ciiXml });
 
-  const created = await adapter.sendInvoice(ubl, {
-    contentType: "application/xml",
+  const created = await adapter.sendInvoice(facturx, {
+    contentType: "application/pdf",
     disablePreCheck: options.disablePreCheck,
   });
 
