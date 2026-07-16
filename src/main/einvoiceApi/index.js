@@ -161,6 +161,28 @@ export async function exportFacturX(config, invoice, options = {}) {
   });
 }
 
+/**
+ * Produit le XML CII (EN16931) d'une facture locale.
+ * Pipeline : génération UBL → conversion PDP `ubl` → `cii`.
+ *
+ * Utilisé pour l'embarquement dans un Factur-X généré localement (le XML
+ * d'un Factur-X est au format CII, pas UBL). Isolé ici pour que le jour où
+ * l'on génère le CII sans passer par la PDP, seule cette fonction change.
+ *
+ * @param {Object} config
+ * @param {Object} invoice - facture au format local (cf. CLAUDE.md)
+ * @param {Object} [options] - { ublOptions }
+ * @returns {Promise<string>} XML CII
+ */
+export async function buildCiiXml(config, invoice, options = {}) {
+  const ubl = buildUbl(invoice, config, options.ublOptions || {});
+  return convertDocument(config, ubl, {
+    from: "ubl",
+    to: "cii",
+    contentType: "application/xml",
+  });
+}
+
 export async function validateInvoiceFile(config, file, fileName) {
   return getAdapter(config).validateInvoice(file, fileName);
 }

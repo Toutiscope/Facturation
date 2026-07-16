@@ -1,6 +1,6 @@
 # Plan — Factur-X à UI personnalisée (approche hybride)
 
-> Statut : Phases 0 et 1 terminées ✅ — prochaine étape : Phase 2 (XML CII)
+> Statut : Phases 0, 1 et 2 terminées ✅ — prochaine étape : Phase 3 (assemblage Factur-X)
 > Date : 2026-07-16
 
 ## Objectif
@@ -80,14 +80,17 @@ générer un PDF) — le rendu doit être quasi identique à l'ancien Helvetica.
 
 ---
 
-## Phase 2 — Récupération du XML CII
+## Phase 2 — Récupération du XML CII ✅ FAIT
 
-- Dans `einvoiceApi/index.js`, ajouter `buildCiiXml(config, invoice)` :
-  `buildUbl(...)` → `convertDocument(..., { from: "ubl", to: "cii" })` (string XML).
-- Abstraction préservée : si un jour on génère le CII localement, seule cette
+- [x] Dans `einvoiceApi/index.js`, ajout de `buildCiiXml(config, invoice, options)` :
+  `buildUbl(...)` → `convertDocument(..., { from: "ubl", to: "cii" })` (renvoie une
+  string XML — `convertInvoice` ne retourne un Buffer que pour `to: "factur-x"`).
+- [x] Abstraction préservée : si un jour on génère le CII localement, seule cette
   fonction change.
 
 **Fichiers :** `src/main/einvoiceApi/index.js`.
+
+**Note :** dépend de la PDP en ligne (conversion `ubl`→`cii`). Acceptable et isolé.
 
 ---
 
