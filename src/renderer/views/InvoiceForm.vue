@@ -763,6 +763,13 @@ function onPdpSent(updatedInvoice) {
   if (updatedInvoice?.einvoice) {
     invoice.value.einvoice = updatedInvoice.einvoice;
   }
+  // Refléter le statut métier calculé par le backend (brouillon → envoyé).
+  if (updatedInvoice?.status) {
+    invoice.value.status = updatedInvoice.status;
+  }
+  // Le backend a déjà persisté ces changements : réaligner l'état « sauvegardé »
+  // pour ne pas déclencher l'alerte de modifications non enregistrées.
+  markAsSaved();
   showToast(`Facture ${invoice.value.numero} transmise à la plateforme`);
 }
 </script>

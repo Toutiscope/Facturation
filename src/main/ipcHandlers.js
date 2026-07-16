@@ -366,9 +366,9 @@ export function initializeIPC() {
 
       const updated = {
         ...invoice,
-        // Statut métier : la facture transmise passe à "envoyé".
-        // On ne rétrograde pas une facture déjà encaissée.
-        status: invoice.status === "paid" ? invoice.status : "sent",
+        // Statut métier : une facture « brouillon » transmise passe à « envoyé ».
+        // Les autres statuts (payé, etc.) ne sont pas modifiés par l'envoi.
+        status: invoice.status === "draft" ? "sent" : invoice.status,
         einvoice: {
           ...(invoice.einvoice || defaultEinvoice()),
           isSent: true,
