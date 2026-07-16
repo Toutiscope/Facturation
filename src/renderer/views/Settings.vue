@@ -1,7 +1,24 @@
 <template>
   <div class="settings">
-    <header>
+    <header class="settings-header">
       <h1>Mes paramètres</h1>
+      <div class="update-check">
+        <button
+          type="button"
+          class="btn btn-outline"
+          :disabled="checkingUpdate"
+          @click="checkForUpdates"
+        >
+          {{
+            checkingUpdate
+              ? "Recherche en cours..."
+              : "Chercher des mises à jour"
+          }}
+        </button>
+        <small v-if="updateCheckMessage" :class="updateCheckMessageClass">
+          {{ updateCheckMessage }}
+        </small>
+      </div>
     </header>
 
     <div v-if="loading" class="loading">
@@ -594,6 +611,9 @@ const successMessage = ref("");
 const logoPreview = ref(null);
 const uploadingLogo = ref(false);
 const selectingFolder = ref(false);
+const checkingUpdate = ref(false);
+const updateCheckMessage = ref("");
+const updateCheckMessageClass = ref("");
 const showUnsavedModal = ref(false);
 const pendingRoute = ref(null);
 let skipGuard = false;
@@ -690,6 +710,32 @@ async function onTestConnection() {
 
 function openExternal(url) {
   window.electronAPI.openExternal(url);
+}
+
+async function checkForUpdates() {
+  checkingUpdate.value = true;
+  updateCheckMessage.value = "";
+  updateCheckMessageClass.value = "";
+  try {
+    const result = await window.electronAPI.checkForUpdates();
+    if (result?.devMode) {
+      updateCheckMessage.value =
+        "Vérification indisponible en mode développement.";
+      updateCheckMessageClass.value = "error-message";
+    } else if (!result?.ok) {
+      updateCheckMessage.value =
+        "Échec de la vérification" +
+        (result?.message ? ` : ${result.message}` : ".");
+      updateCheckMessageClass.value = "error-message";
+    }
+    // En cas de succès, la bannière en haut de l'app affiche le résultat
+    // (recherche, mise à jour disponible, ou application à jour).
+  } catch (error) {
+    updateCheckMessage.value = "Échec de la vérification : " + error.message;
+    updateCheckMessageClass.value = "error-message";
+  } finally {
+    checkingUpdate.value = false;
+  }
 }
 
 async function uploadLogo() {
@@ -805,6 +851,21 @@ async function saveConfig() {
 
 .settings {
   padding: $spacing-xl;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-lg;
+}
+
+.update-check {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: $spacing-xs;
+  text-align: right;
 }
 
 .logo-upload__container {

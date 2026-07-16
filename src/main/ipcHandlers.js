@@ -278,6 +278,25 @@ export function initializeIPC() {
     autoUpdater.quitAndInstall();
   });
 
+  ipcMain.handle("check-for-updates", async () => {
+    // En développement, l'updater est désactivé : pas de vérification possible.
+    if (!app.isPackaged) {
+      log.info("Manual update check skipped (development mode)");
+      return { ok: false, devMode: true };
+    }
+
+    try {
+      log.info("Manual update check requested");
+      // Les événements (checking-for-update, update-available, etc.) sont
+      // déjà relayés au renderer par setupAutoUpdater pour le retour visuel.
+      await autoUpdater.checkForUpdates();
+      return { ok: true };
+    } catch (error) {
+      log.error("Manual update check failed:", error);
+      return { ok: false, message: error.message };
+    }
+  });
+
   // ==================== PDP (Phase 4) ====================
 
   ipcMain.handle("pdp:test-connection", (event, platformOverride) =>

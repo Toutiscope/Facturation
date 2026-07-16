@@ -2,8 +2,7 @@
 
 ## Règles strictes
 
-- **Ne jamais exécuter de commandes git** (commit, push, pull, add, etc.)
-- **Ne jamais proposer de commit** ni de message de commit
+- Les commandes git (commit, push, pull, add, etc.) sont autorisées.
 
 ---
 

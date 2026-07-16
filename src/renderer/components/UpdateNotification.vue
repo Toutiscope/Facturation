@@ -1,9 +1,10 @@
 <script setup>
 import { ref, onMounted } from "vue";
 
-const status = ref(null); // 'checking' | 'downloading' | 'ready'
+const status = ref(null); // 'checking' | 'downloading' | 'ready' | 'error'
 const version = ref("");
 const dismissed = ref(false);
+const errorInfo = ref(null); // { code, message, detail }
 
 function onCheckingForUpdate() {
   status.value = "checking";
@@ -30,8 +31,10 @@ function onUpdateDownloaded(info) {
   dismissed.value = false;
 }
 
-function onUpdateError() {
-  dismissed.value = true;
+function onUpdateError(info) {
+  errorInfo.value = info || null;
+  status.value = "error";
+  dismissed.value = false;
 }
 
 function installNow() {
@@ -64,6 +67,15 @@ onMounted(() => {
           class="update-banner__message"
         >
           L'application est à jour.
+        </span>
+        <span v-else-if="status === 'error'" class="update-banner__message">
+          {{
+            errorInfo?.message ||
+            "Échec de la vérification des mises à jour. Vérifiez votre connexion internet et réessayez plus tard."
+          }}
+          <span v-if="errorInfo?.code" class="update-banner__code">
+            Code : {{ errorInfo.code }}
+          </span>
         </span>
         <span
           v-else-if="status === 'downloading'"
@@ -129,6 +141,10 @@ onMounted(() => {
     background-color: $success-color;
   }
 
+  &.error {
+    background-color: $error-color;
+  }
+
   &__content {
     display: flex;
     align-items: center;
@@ -141,6 +157,18 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: $spacing-sm;
+  }
+
+  &__code {
+    display: inline-block;
+    margin-left: $spacing-sm;
+    padding: 1px 8px;
+    border-radius: $radius-sm;
+    background-color: rgba($white, 0.2);
+    font-family: monospace;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    white-space: nowrap;
   }
 
   &__spinner {
