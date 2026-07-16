@@ -394,6 +394,17 @@ export function initializeIPC() {
       const buffer = await pdpExportFacturX(config, invoice);
 
       const defaultName = `${invoice.numero || "facture"}-facturx.pdf`;
+
+      // Validation non bloquante du Factur-X assemblé (dry-run schematron PDP).
+      // Un échec de l'appel de validation ne doit pas empêcher l'export.
+      let validation;
+      try {
+        const report = await pdpValidateInvoiceFile(config, buffer, defaultName);
+        validation = summarizeValidationReport(report);
+      } catch (err) {
+        validation = { checked: false, message: err.message };
+      }
+
       const { canceled, filePath } = await dialog.showSaveDialog({
         title: "Exporter en Factur-X (PDF/A-3)",
         defaultPath: defaultName,
@@ -402,7 +413,7 @@ export function initializeIPC() {
       if (canceled || !filePath) return { canceled: true };
 
       await fsp.writeFile(filePath, buffer);
-      return { saved: true, path: filePath };
+      return { saved: true, path: filePath, validation };
     }),
   );
 
@@ -589,6 +600,29 @@ function assertEventPayload(payload) {
   if (!payload || !payload.invoiceId || !payload.statusCode) {
     throw new PdpInputError("invoiceId et statusCode requis");
   }
+}
+
+/**
+ * Normalise un rapport de validation PDP (`/validation_reports`) en un résumé
+ * exploitable côté renderer. Défensif sur la forme exacte du rapport.
+ * @param {Object} report
+ * @returns {{ checked: boolean, isValid: boolean|null, messages: string[] }}
+ */
+function summarizeValidationReport(report) {
+  const item = Array.isArray(report?.data) ? report.data[0] : report;
+  if (!item) return { checked: true, isValid: null, messages: [] };
+
+  const isValid =
+    item.is_valid ?? item.isValid ?? (item.valid !== undefined ? item.valid : null);
+  const raw = item.messages || item.errors || [];
+  const messages = (Array.isArray(raw) ? raw : [])
+    .map((m) =>
+      typeof m === "string" ? m : m.message || m.text || m.description || "",
+    )
+    .filter(Boolean)
+    .slice(0, 10);
+
+  return { checked: true, isValid, messages };
 }
 
 /**

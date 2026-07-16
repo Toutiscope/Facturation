@@ -666,7 +666,19 @@ async function exportFacturX() {
       return;
     }
     if (result.data.canceled) return;
-    showToast(`Factur-X enregistré : ${result.data.path}`);
+
+    const validation = result.data.validation;
+    if (validation && validation.checked && validation.isValid === false) {
+      const count = validation.messages?.length || 0;
+      showToast(
+        `Factur-X enregistré, mais des anomalies de conformité ont été détectées${
+          count ? ` (${count})` : ""
+        }. Vérifiez le document avant de l'utiliser.`,
+        "warning",
+      );
+    } else {
+      showToast(`Factur-X enregistré : ${result.data.path}`);
+    }
   } catch (err) {
     const msg = err.message || "Erreur lors de l'export Factur-X";
     error.value = msg;

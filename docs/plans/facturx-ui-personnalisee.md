@@ -125,10 +125,14 @@ générer un PDF) — le rendu doit être quasi identique à l'ancien Helvetica.
   il génère le CII (`buildCiiXml`) puis assemble localement (`assembleFacturX`).
 - [x] Le handler `pdp:export-invoice`, le preload et le bouton UI **restent
   inchangés** (déjà en place). ✅
-- [ ] Optionnel (repoussé) : valider le résultat via `POST /validation_reports`
-  avant écriture disque et remonter un warning si non conforme.
+- [x] Validation non bloquante via `POST /validation_reports` : le Factur-X
+  assemblé est vérifié avant écriture ; un résumé (`{ checked, isValid, messages }`)
+  est renvoyé au renderer, qui affiche un avertissement (toast) si des anomalies
+  sont détectées. Un échec de l'appel de validation n'empêche pas l'export.
 
-**Fichiers :** `src/main/einvoiceApi/index.js`.
+**Fichiers :** `src/main/einvoiceApi/index.js`, `src/main/ipcHandlers.js`
+(handler `pdp:export-invoice` + `summarizeValidationReport`),
+`src/renderer/views/InvoiceForm.vue`.
 
 ---
 
