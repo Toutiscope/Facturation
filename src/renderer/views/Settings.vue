@@ -39,8 +39,8 @@
       </div>
 
       <div class="settings-grid flex flex-column gap-16">
-        <h2 class="mg-top-24">Mes informations</h2>
-        <!-- Section Entreprise -->
+        <AccordionSection title="Mes informations" :default-open="true">
+          <!-- Section Entreprise -->
         <section class="card settings-card grid grid--cols-3 gap-64 grid-start">
           <div>
             <h2>Entreprise</h2>
@@ -235,10 +235,11 @@
             </div>
           </div>
         </section>
+        </AccordionSection>
 
-        <h2 class="mg-top-24">Mentions légales</h2>
-        <!-- Section RIB -->
-        <div class="grid grid--cols-2 gap-16">
+        <AccordionSection title="Mentions légales" :default-open="true">
+          <!-- Section RIB -->
+          <div class="grid grid--cols-2 gap-16">
           <section class="card settings-card">
             <h2>Coordonnées bancaires</h2>
 
@@ -316,9 +317,10 @@
             </section>
           </div>
         </div>
+        </AccordionSection>
 
-        <h2 class="mg-top-24">Plateforme de facturation électronique</h2>
-        <section class="card settings-card pdp-section">
+        <AccordionSection title="Plateforme de facturation électronique">
+          <section class="card settings-card pdp-section">
           <p class="pdp-intro">
             Branchez votre plateforme agréée (PDP) pour envoyer vos factures au
             format électronique conformément à la réforme 2026-2027.
@@ -519,9 +521,10 @@
             </div>
           </template>
         </section>
+        </AccordionSection>
 
-        <h2 class="mg-top-24">Paramètres généraux</h2>
-        <section class="card settings-card" style="width: calc(50% - 8px)">
+        <AccordionSection title="Paramètres généraux">
+          <section class="card settings-card" style="width: calc(50% - 8px)">
           <div class="form-group">
             <label>Dernier n° de devis</label>
             <input
@@ -563,9 +566,11 @@
             <small>Les PDF seront enregistrés dans ce dossier par défaut</small>
           </div>
         </section>
+        </AccordionSection>
 
-        <h2 class="mg-top-24">Sauvegarde en ligne</h2>
-        <BackupSection />
+        <AccordionSection title="Sauvegarde en ligne">
+          <BackupSection />
+        </AccordionSection>
       </div>
 
       <ConfirmModal
@@ -603,6 +608,7 @@ import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import { usePdpConfig } from "@/composables/usePdpConfig";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import BackupSection from "@/components/settings/BackupSection.vue";
+import AccordionSection from "@/components/common/AccordionSection.vue";
 
 const router = useRouter();
 const globalLogo = inject("logo");
