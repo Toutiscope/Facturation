@@ -10,12 +10,32 @@ import paths from "./utils/paths";
 // (cf. copyFontsPlugin). `__dirname` vaut dist-electron une fois le main process
 // bundlé (dev comme prod). L'embarquement des polices est requis pour la
 // conformité PDF/A-3 utilisée par l'export Factur-X.
-const FONT_DIR = path.join(__dirname, "fonts");
+// Au runtime, __dirname vaut dist-electron et les polices sont dans
+// dist-electron/fonts (copiées par copyFontsPlugin). En test unitaire,
+// __dirname vaut src/main : on retombe alors sur les polices source
+// (src/main/assets/fonts). Le runtime privilégie toujours le premier chemin.
+const FONT_DIRS = [
+  path.join(__dirname, "fonts"),
+  path.join(__dirname, "assets", "fonts"),
+];
 const FONTS = {
   NotoSans: "NotoSans-Regular.ttf",
   "NotoSans-Bold": "NotoSans-Bold.ttf",
   "NotoSans-Italic": "NotoSans-Italic.ttf",
 };
+
+/**
+ * Résout le chemin d'une police en essayant les emplacements connus.
+ * @param {string} file - nom du fichier de police
+ * @returns {string} chemin absolu (défaut : emplacement runtime)
+ */
+function resolveFontPath(file) {
+  for (const dir of FONT_DIRS) {
+    const candidate = path.join(dir, file);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return path.join(FONT_DIRS[0], file);
+}
 
 /**
  * Enregistre les polices Noto Sans sur un document PDFKit et sélectionne la
@@ -24,7 +44,7 @@ const FONTS = {
  */
 function registerFonts(doc) {
   for (const [name, file] of Object.entries(FONTS)) {
-    doc.registerFont(name, path.join(FONT_DIR, file));
+    doc.registerFont(name, resolveFontPath(file));
   }
   doc.font("NotoSans");
 }
