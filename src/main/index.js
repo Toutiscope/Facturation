@@ -4,6 +4,8 @@ import { initializeIPC } from "./ipcHandlers.js";
 import { initializeDataFolder } from "./utils/paths";
 import log from "electron-log";
 import { setupAutoUpdater } from "./autoUpdater.js";
+import { runStartupCheck } from "./backup/scheduler.js";
+import { STARTUP_DELAY_MS } from "./backup/policy.js";
 
 // Configuration logging
 log.transports.file.level = "info";
@@ -96,6 +98,15 @@ app.whenReady().then(async () => {
 
     // Setup auto-updater
     setupAutoUpdater(mainWindow);
+
+    // Filet de sécurité de sauvegarde : vérifié ~2 min après l'ouverture, pour
+    // ne pas concurrencer le démarrage (poste lent). Sans effet si la
+    // sauvegarde n'est pas configurée.
+    setTimeout(() => {
+      runStartupCheck().catch((err) =>
+        log.warn("Startup backup check error:", err.message),
+      );
+    }, STARTUP_DELAY_MS);
 
     log.info("Application started successfully");
   } catch (error) {

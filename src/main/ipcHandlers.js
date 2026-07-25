@@ -15,6 +15,7 @@ import {
   loadTransactions,
   saveTransaction,
   deleteTransaction,
+  clearConfigCache,
 } from "./fileManager";
 import { validateDocument, defaultEinvoice } from "./validator";
 import { generatePDF } from "./pdfGenerator";
@@ -34,7 +35,23 @@ import {
   resetAdapterCache,
 } from "./einvoiceApi/index.js";
 import { searchCompanies as searchCompanyDirectory } from "./companyDirectory.js";
+import {
+  signIn as backupSignIn,
+  testConnection as backupTestConnection,
+  listBackups as backupList,
+  restoreBackup,
+  restoreFromFile,
+  resetAdapterCache as resetBackupAdapterCache,
+} from "./backup/index.js";
+import { performBackup, scheduleBackup } from "./backup/scheduler.js";
+import {
+  setPassphrase as setBackupPassphrase,
+  hasPassphrase as hasBackupPassphrase,
+  getSupabaseSession,
+  clearSupabaseSession,
+} from "./backup/secureBackupStore.js";
 import { promises as fsp } from "fs";
+import path from "path";
 import {
   saveProviderCredentials,
   deleteProviderCredentials,
@@ -59,7 +76,9 @@ export function initializeIPC() {
 
   ipcMain.handle("save-config", async (event, config) => {
     try {
-      return await saveConfig(config);
+      const result = await saveConfig(config);
+      scheduleBackup();
+      return result;
     } catch (error) {
       log.error("Failed to save config:", error);
       throw error;
@@ -148,7 +167,9 @@ export function initializeIPC() {
 
   ipcMain.handle("save-document", async (event, type, document) => {
     try {
-      return await saveDocument(type, document);
+      const saved = await saveDocument(type, document);
+      scheduleBackup();
+      return saved;
     } catch (error) {
       log.error(`Failed to save ${type}:`, error);
       throw error;
@@ -157,7 +178,9 @@ export function initializeIPC() {
 
   ipcMain.handle("delete-document", async (event, type, id) => {
     try {
-      return await deleteDocument(type, id);
+      const result = await deleteDocument(type, id);
+      scheduleBackup();
+      return result;
     } catch (error) {
       log.error(`Failed to delete ${type} ${id}:`, error);
       throw error;
@@ -177,7 +200,9 @@ export function initializeIPC() {
 
   ipcMain.handle("save-client", async (event, client) => {
     try {
-      return await saveClient(client);
+      const saved = await saveClient(client);
+      scheduleBackup();
+      return saved;
     } catch (error) {
       log.error("Failed to save client:", error);
       throw error;
@@ -186,7 +211,9 @@ export function initializeIPC() {
 
   ipcMain.handle("delete-client", async (event, id) => {
     try {
-      return await deleteClient(id);
+      const result = await deleteClient(id);
+      scheduleBackup();
+      return result;
     } catch (error) {
       log.error(`Failed to delete client ${id}:`, error);
       throw error;
@@ -206,7 +233,9 @@ export function initializeIPC() {
 
   ipcMain.handle("save-transaction", async (event, transaction) => {
     try {
-      return await saveTransaction(transaction);
+      const saved = await saveTransaction(transaction);
+      scheduleBackup();
+      return saved;
     } catch (error) {
       log.error("Failed to save transaction:", error);
       throw error;
@@ -215,7 +244,9 @@ export function initializeIPC() {
 
   ipcMain.handle("delete-transaction", async (event, id) => {
     try {
-      return await deleteTransaction(id);
+      const result = await deleteTransaction(id);
+      scheduleBackup();
+      return result;
     } catch (error) {
       log.error(`Failed to delete transaction ${id}:`, error);
       throw error;
@@ -494,8 +525,171 @@ export function initializeIPC() {
 
   ipcMain.handle("pdp:sync", () => wrapPdp(() => runEinvoiceSync()));
 
+  // ==================== Sauvegarde en ligne ====================
+
+  ipcMain.handle("backup:get-status", () =>
+    wrapBackup(async () => {
+      const config = await loadConfig();
+      const b = config.backup || {};
+      const session = await getSupabaseSession();
+      return {
+        enabled: Boolean(b.enabled),
+        provider: b.provider || "supabase",
+        supabaseUrl: b.supabaseUrl || "",
+        anonKey: b.anonKey || "",
+        bucket: b.bucket || "backups",
+        userEmail: b.userEmail || "",
+        retention: b.retention || 15,
+        configured: Boolean(b.supabaseUrl && b.anonKey && b.bucket),
+        signedIn: Boolean(session && session.refreshToken),
+        hasPassphrase: await hasBackupPassphrase(),
+        lastBackupAt: b.lastBackupAt || null,
+        lastError: b.lastError || null,
+      };
+    }),
+  );
+
+  ipcMain.handle("backup:configure", (event, settings) =>
+    wrapBackup(async () => {
+      assertBackupSettings(settings);
+      const config = await loadConfig();
+      config.backup = {
+        ...(config.backup || {}),
+        provider: "supabase",
+        supabaseUrl: String(settings.supabaseUrl).trim().replace(/\/$/, ""),
+        anonKey: String(settings.anonKey).trim(),
+        bucket: String(settings.bucket || "backups").trim(),
+        retention: Number(settings.retention) || 15,
+      };
+      await saveConfig(config);
+      resetBackupAdapterCache();
+      return { configured: true };
+    }),
+  );
+
+  ipcMain.handle("backup:sign-in", (event, email, password) =>
+    wrapBackup(async () => {
+      if (!email || !password) {
+        throw new BackupInputError("Email et mot de passe requis");
+      }
+      const config = await loadConfig();
+      const result = await backupSignIn(config, email, password);
+      // La connexion réussie active la sauvegarde et mémorise l'email (identifiant,
+      // non secret). Le mot de passe n'est jamais persisté : seule la session
+      // (refresh token) est stockée, chiffrée, par l'adaptateur.
+      config.backup = {
+        ...(config.backup || {}),
+        userEmail: email,
+        enabled: true,
+      };
+      await saveConfig(config);
+      return result;
+    }),
+  );
+
+  ipcMain.handle("backup:sign-out", () =>
+    wrapBackup(async () => {
+      await clearSupabaseSession();
+      const config = await loadConfig();
+      config.backup = { ...(config.backup || {}), enabled: false };
+      await saveConfig(config);
+      resetBackupAdapterCache();
+      return { signedOut: true };
+    }),
+  );
+
+  ipcMain.handle("backup:set-passphrase", (event, passphrase) =>
+    wrapBackup(async () => {
+      if (typeof passphrase !== "string" || passphrase.trim().length < 8) {
+        throw new BackupInputError(
+          "Phrase de récupération trop courte (8 caractères minimum).",
+        );
+      }
+      await setBackupPassphrase(passphrase);
+      return { set: true };
+    }),
+  );
+
+  ipcMain.handle("backup:test", () =>
+    wrapBackup(async () => {
+      const config = await loadConfig();
+      return backupTestConnection(config);
+    }),
+  );
+
+  ipcMain.handle("backup:run-now", () => wrapBackup(() => performBackup()));
+
+  ipcMain.handle("backup:list", () =>
+    wrapBackup(async () => {
+      const config = await loadConfig();
+      return backupList(config);
+    }),
+  );
+
+  ipcMain.handle("backup:restore", (event, name, passphrase) =>
+    wrapBackup(async () => {
+      assertBackupName(name);
+      const config = await loadConfig();
+      const result = await restoreBackup(
+        config,
+        name,
+        passphrase ? { passphrase } : {},
+      );
+      // config.json vient d'être réécrit sur disque : on invalide le cache
+      // mémoire pour éviter que d'anciennes valeurs soient resservies avant
+      // le redémarrage.
+      clearConfigCache();
+      return result;
+    }),
+  );
+
+  // Import manuel d'un fichier .fbak (restauration hors ligne / PC neuf).
+  // Le chemin choisi via le sélecteur natif reste en mémoire côté main : le
+  // renderer ne fournit jamais de chemin de fichier arbitraire.
+  ipcMain.handle("backup:pick-file", () =>
+    wrapBackup(async () => {
+      const { canceled, filePaths } = await dialog.showOpenDialog({
+        title: "Choisir un fichier de sauvegarde",
+        filters: [{ name: "Sauvegarde Facturation", extensions: ["fbak"] }],
+        properties: ["openFile"],
+      });
+      if (canceled || filePaths.length === 0) {
+        return { canceled: true };
+      }
+      pendingRestoreFilePath = filePaths[0];
+      return { canceled: false, fileName: path.basename(pendingRestoreFilePath) };
+    }),
+  );
+
+  ipcMain.handle("backup:restore-from-file", (event, passphrase) =>
+    wrapBackup(async () => {
+      if (!pendingRestoreFilePath) {
+        throw new BackupInputError("Aucun fichier de sauvegarde sélectionné.");
+      }
+      const filePath = pendingRestoreFilePath;
+      const result = await restoreFromFile(
+        filePath,
+        passphrase ? { passphrase } : {},
+      );
+      clearConfigCache();
+      pendingRestoreFilePath = null;
+      return result;
+    }),
+  );
+
+  ipcMain.handle("app:relaunch", () => {
+    log.info("Relaunching application after restore");
+    app.relaunch();
+    app.exit(0);
+  });
+
   log.info("IPC handlers initialized");
 }
+
+// Chemin du .fbak sélectionné via le sélecteur natif, en attente de
+// restauration. Gardé côté main pour ne pas exposer un chemin arbitraire au
+// renderer.
+let pendingRestoreFilePath = null;
 
 /**
  * Synchronise les statuts de cycle de vie des factures envoyées :
@@ -599,6 +793,66 @@ function assertCredentials(credentials) {
 function assertEventPayload(payload) {
   if (!payload || !payload.invoiceId || !payload.statusCode) {
     throw new PdpInputError("invoiceId et statusCode requis");
+  }
+}
+
+// ============================================================
+// Helpers Sauvegarde
+// ============================================================
+
+class BackupInputError extends Error {
+  constructor(message) {
+    super(message);
+    this.code = "BACKUP_INPUT";
+  }
+}
+
+function assertBackupSettings(settings) {
+  if (!settings || typeof settings !== "object") {
+    throw new BackupInputError("Paramètres de sauvegarde requis");
+  }
+  if (!settings.supabaseUrl || !/^https:\/\//.test(settings.supabaseUrl)) {
+    throw new BackupInputError(
+      "URL Supabase invalide : une URL sécurisée en https:// est requise " +
+        "(ex. https://xxxx.supabase.co).",
+    );
+  }
+  if (!settings.anonKey || String(settings.anonKey).trim().length < 20) {
+    throw new BackupInputError("Clé anon Supabase manquante ou invalide.");
+  }
+  if (!settings.bucket) {
+    throw new BackupInputError("Nom du bucket requis.");
+  }
+}
+
+// Format produit par backup/naming.js : "backup-<ISO sans : ni .>.fbak".
+// La validation stricte interdit tout caractère de chemin (/, \, ..) et
+// garantit que `name` ne peut pas sortir du préfixe utilisateur côté Storage.
+const BACKUP_NAME_RE = /^backup-[0-9TZ-]+\.fbak$/;
+
+function assertBackupName(name) {
+  if (typeof name !== "string" || !BACKUP_NAME_RE.test(name)) {
+    throw new BackupInputError("Nom de sauvegarde invalide.");
+  }
+}
+
+/**
+ * Wrappe une opération de sauvegarde pour normaliser les erreurs envoyées au
+ * renderer en { ok, data?, error? } (même contrat que wrapPdp).
+ */
+async function wrapBackup(operation) {
+  try {
+    const data = await operation();
+    return { ok: true, data };
+  } catch (err) {
+    const code = err.code || "BACKUP_UNKNOWN";
+    const status = err.status;
+    const message = err.message || "Erreur inconnue";
+    log.error(
+      `Backup operation failed [${code}${status ? ` HTTP ${status}` : ""}]:`,
+      message,
+    );
+    return { ok: false, error: { code, status, message } };
   }
 }
 

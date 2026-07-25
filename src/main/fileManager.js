@@ -78,6 +78,15 @@ export async function getLogoAsBase64() {
 let configCache = null;
 
 /**
+ * Vide le cache config en mémoire. À appeler quand config.json est réécrit
+ * hors du flux normal (ex. restauration d'une sauvegarde), pour forcer une
+ * relecture depuis le disque au prochain loadConfig.
+ */
+export function clearConfigCache() {
+  configCache = null;
+}
+
+/**
  * Charge la configuration depuis config.json
  * @returns {Promise<Object>} Configuration
  */

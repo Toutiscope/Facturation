@@ -71,4 +71,24 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("pdp:resolve-recipient", siren),
     sync: () => ipcRenderer.invoke("pdp:sync"),
   },
+
+  backup: {
+    getStatus: () => ipcRenderer.invoke("backup:get-status"),
+    configure: (settings) => ipcRenderer.invoke("backup:configure", settings),
+    signIn: (email, password) =>
+      ipcRenderer.invoke("backup:sign-in", email, password),
+    signOut: () => ipcRenderer.invoke("backup:sign-out"),
+    setPassphrase: (passphrase) =>
+      ipcRenderer.invoke("backup:set-passphrase", passphrase),
+    test: () => ipcRenderer.invoke("backup:test"),
+    runNow: () => ipcRenderer.invoke("backup:run-now"),
+    list: () => ipcRenderer.invoke("backup:list"),
+    restore: (name, passphrase) =>
+      ipcRenderer.invoke("backup:restore", name, passphrase),
+    pickFile: () => ipcRenderer.invoke("backup:pick-file"),
+    restoreFromFile: (passphrase) =>
+      ipcRenderer.invoke("backup:restore-from-file", passphrase),
+  },
+
+  restartApp: () => ipcRenderer.invoke("app:relaunch"),
 });

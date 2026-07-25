@@ -563,6 +563,9 @@
             <small>Les PDF seront enregistrés dans ce dossier par défaut</small>
           </div>
         </section>
+
+        <h2 class="mg-top-24">Sauvegarde en ligne</h2>
+        <BackupSection />
       </div>
 
       <ConfirmModal
@@ -599,6 +602,7 @@ import { useRouter, onBeforeRouteLeave } from "vue-router";
 import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import { usePdpConfig } from "@/composables/usePdpConfig";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
+import BackupSection from "@/components/settings/BackupSection.vue";
 
 const router = useRouter();
 const globalLogo = inject("logo");

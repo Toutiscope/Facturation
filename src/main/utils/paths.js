@@ -41,6 +41,20 @@ const DEFAULT_CONFIG = {
     isSandbox: false,
     lastSyncedEventId: null,
   },
+  // Sauvegarde chiffrée en ligne. Ne contient AUCUN secret : la clé `anon`
+  // Supabase est publique par nature, et le mot de passe du compte / la phrase
+  // de récupération vivent dans le store chiffré `backup-secrets.enc`.
+  backup: {
+    enabled: false,
+    provider: "supabase",
+    supabaseUrl: "",
+    anonKey: "",
+    bucket: "backups",
+    userEmail: "",
+    retention: 15,
+    lastBackupAt: null,
+    lastError: null,
+  },
 };
 
 export const DEFAULT_EINVOICE_PLATFORM = DEFAULT_CONFIG.einvoicePlatform;
