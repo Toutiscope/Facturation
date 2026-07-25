@@ -23,12 +23,24 @@
     "latePenalties": "En cas de retard de paiement, application de pénalités de retard au taux de 10% par an et d'une indemnité forfaitaire pour frais de recouvrement de 40€.",
     "latestQuoteNumber": 0,
     "latestInvoiceNumber": 0,
-    "pdfOutputPath": ""
+    "pdfOutputPath": "",
+    "urssafOverrides": {}
   },
   "einvoicePlatform": {
     "providerName": "",
     "urlApi": "",
     "isSandbox": false,
     "lastSyncedEventId": null
+  },
+  "backup": {
+    "enabled": false,
+    "provider": "supabase",
+    "supabaseUrl": "",
+    "anonKey": "",
+    "bucket": "backups",
+    "userEmail": "",
+    "retention": 15,
+    "lastBackupAt": null,
+    "lastError": null
   }
 }
